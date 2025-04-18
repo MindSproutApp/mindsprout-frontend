@@ -7,6 +7,9 @@ import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, Tooltip, Lege
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 function App() {
+  // Define API_URL with fallback to ensure it's never undefined
+  const API_URL = process.env.REACT_APP_API_URL || 'https://mindsprout-backend-new.onrender.com';
+
   const [token, setToken] = useState(null); // Removed localStorage.getItem to prevent auto-login
   const [role, setRole] = useState(null);
   const [regularSignupForm, setRegularSignupForm] = useState({ name: '', email: '', username: '', password: '' });
@@ -92,11 +95,11 @@ function App() {
     setIsLoading(true);
     try {
       const [goalsRes, reportsRes, lastChatRes, journalRes, insightsRes] = await Promise.all([
-        axios.get(`${process.env.REACT_APP_API_URL}/api/regular/goals`, { headers: { Authorization: authToken } }),
-        axios.get(`${process.env.REACT_APP_API_URL}/api/regular/reports`, { headers: { Authorization: authToken } }),
-        axios.get(`${process.env.REACT_APP_API_URL}/api/regular/last-chat`, { headers: { Authorization: authToken } }),
-        axios.get(`${process.env.REACT_APP_API_URL}/api/regular/journal`, { headers: { Authorization: authToken } }),
-        axios.get(`${process.env.REACT_APP_API_URL}/api/regular/journal-insights`, { headers: { Authorization: authToken } })
+        axios.get(`${API_URL}/api/regular/goals`, { headers: { Authorization: authToken } }),
+        axios.get(`${API_URL}/api/regular/reports`, { headers: { Authorization: authToken } }),
+        axios.get(`${API_URL}/api/regular/last-chat`, { headers: { Authorization: authToken } }),
+        axios.get(`${API_URL}/api/regular/journal`, { headers: { Authorization: authToken } }),
+        axios.get(`${API_URL}/api/regular/journal-insights`, { headers: { Authorization: authToken } })
       ]);
       setGoals(goalsRes.data || []);
       setReports(reportsRes.data || []);
@@ -183,7 +186,8 @@ function App() {
   const handleRegularSignup = (e) => {
     e.preventDefault();
     setIsLoading(true);
-    axios.post(`${process.env.REACT_APP_API_URL}/api/regular/signup`, regularSignupForm)
+    console.log('Signup API URL:', API_URL); // Debug log
+    axios.post(`${API_URL}/api/regular/signup`, regularSignupForm)
       .then(res => {
         setMessage(res.data.message);
         setToken(res.data.token);
@@ -198,7 +202,8 @@ function App() {
   const handleRegularLogin = (e) => {
     e.preventDefault();
     setIsLoading(true);
-    axios.post(`${process.env.REACT_APP_API_URL}/api/regular/login`, regularLoginForm)
+    console.log('Login API URL:', API_URL); // Debug log
+    axios.post(`${API_URL}/api/regular/login`, regularLoginForm)
       .then(res => {
         setToken(res.data.token);
         // Removed localStorage.setItem to prevent auto-login
@@ -276,7 +281,7 @@ function App() {
         setChat(prev => [...prev, { sender: 'pal', text: helpline, timestamp: new Date() }]);
         return;
       }
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/regular/chat`, { message: text, chatHistory: chat }, { headers: { Authorization: token } });
+      const response = await axios.post(`${API_URL}/api/regular/chat`, { message: text, chatHistory: chat }, { headers: { Authorization: token } });
       setChat(prev => [...prev, { sender: 'pal', text: response.data.text, timestamp: new Date(response.data.timestamp) }]);
     } catch (error) {
       setMessage('Error chatting: ' + (error.response?.data?.error || error.message));
@@ -287,7 +292,7 @@ function App() {
     setTimeLeft(0);
     setIsLoading(true);
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/regular/end-chat`, { chatHistory: chat, quiz }, { headers: { Authorization: token } });
+      const response = await axios.post(`${API_URL}/api/regular/end-chat`, { chatHistory: china, quiz }, { headers: { Authorization: token } });
       const newReport = response.data;
       setReports(prev => [...prev, newReport]);
       setLastChatTimestamp(new Date());
@@ -337,7 +342,7 @@ function App() {
       responses: { ...journalResponses }
     };
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/regular/insights`, journalData, {
+      const response = await axios.post(`${API_URL}/api/regular/insights`, journalData, {
         headers: { Authorization: token }
       });
       const newJournalEntry = { date: new Date(journalData.date), type: journalData.type, responses: journalData.responses };
@@ -370,7 +375,7 @@ function App() {
   const handleGenerateInsight = async (entry) => {
     setIsLoading(true);
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/regular/journal-insights`, {
+      const response = await axios.post(`${API_URL}/api/regular/journal-insights`, {
         journalDate: entry.date,
         responses: entry.responses
       }, { headers: { Authorization: token } });
