@@ -119,7 +119,7 @@ function App() {
       setJournal(journalRes.data || []);
       setJournalInsights(insightsRes.data || []);
     } catch (err) {
-      console.log('Error fetching user data:', err);
+      console.error('Error fetching user data:', err);
       setMessage('Error loading your data');
     } finally {
       setIsLoading(false);
@@ -283,6 +283,7 @@ function App() {
       const response = await axios.post(`${API_URL}/api/regular/chat`, { message: text, chatHistory: chat }, { headers: { Authorization: token } });
       setChat(prev => [...prev, { sender: 'pal', text: response.data.text, timestamp: new Date(response.data.timestamp) }]);
     } catch (error) {
+      console.error('Error chatting:', error);
       setMessage('Error chatting: ' + (error.response?.data?.error || error.message));
     }
   }, 300), [chat, timeLeft, token]);
@@ -307,7 +308,7 @@ function App() {
         fetchUserData(token);
       }, 1500);
     } catch (error) {
-      console.error('Error ending chat:', error.response?.data || error.message);
+      console.error('Error ending chat:', error);
       setMessage('Error ending chat: ' + (error.response?.data?.error || error.message));
     } finally {
       setIsLoading(false);
@@ -352,7 +353,7 @@ function App() {
       setMessage('Journal saved! Check your journal tab.');
       await fetchUserData(token);
     } catch (err) {
-      console.error('Error saving journal:', err.response?.data || err.message);
+      console.error('Error saving journal:', err);
       setMessage('Error saving journal: ' + (err.response?.data?.error || err.message));
     } finally {
       setIsLoading(false);
@@ -373,15 +374,15 @@ function App() {
     setIsLoading(true);
     try {
       await axios.delete(`${API_URL}/api/regular/journal/${entryId}`, {
-        headers: { Authorization: token }
+        headers: { Authorization: `Bearer ${token}` } // Explicit Bearer token
       });
       setJournal(prev => prev.filter(entry => entry._id !== entryId));
       setJournalInsights(prev => prev.filter(insight => new Date(insight.journalDate).getTime() !== new Date(journal.find(entry => entry._id === entryId)?.date).getTime()));
       setSelectedJournalEntry(null);
       setOpenNotepadSection(null);
-      setMessage('Journal entry deleted.');
+      setMessage('Journal entry deleted successfully.');
     } catch (err) {
-      console.error('Error deleting journal:', err.response?.data || err.message);
+      console.error('Error deleting journal:', err);
       setMessage('Error deleting journal: ' + (err.response?.data?.error || err.message));
     } finally {
       setIsLoading(false);
@@ -393,14 +394,14 @@ function App() {
     setIsLoading(true);
     try {
       await axios.delete(`${API_URL}/api/regular/reports/${reportId}`, {
-        headers: { Authorization: token }
+        headers: { Authorization: `Bearer ${token}` } // Explicit Bearer token
       });
       setReports(prev => prev.filter(report => report._id !== reportId));
       setSelectedReport(null);
       setOpenNotepadSection(null);
-      setMessage('Report deleted.');
+      setMessage('Report deleted successfully.');
     } catch (err) {
-      console.error('Error deleting report:', err.response?.data || err.message);
+      console.error('Error deleting report:', err);
       setMessage('Error deleting report: ' + (err.response?.data?.error || err.message));
     } finally {
       setIsLoading(false);
@@ -423,7 +424,7 @@ function App() {
       setJournalInsights(prev => [...prev, newInsight]);
       setMessage('Insight generated! View it in the notepad.');
     } catch (err) {
-      console.error('Error generating insight:', err.response?.data || err.message);
+      console.error('Error generating insight:', err);
       setMessage('Error generating insight: ' + (err.response?.data?.error || err.message));
     } finally {
       setIsLoading(false);
@@ -494,7 +495,7 @@ function App() {
           <p>{responses.emotions || 'Not available'}</p>
           {hasInsight ? (
             <>
-              <h4>Your Insights</h4>
+              <h4>Your Reidhts</h4>
               <p>{insight.insight}</p>
             </>
           ) : (
@@ -574,7 +575,7 @@ function App() {
       {deleteConfirm && (
         <div className="delete-confirm-modal">
           <div className="delete-confirm-content">
-            <h3>Are you sure?</h3>
+            <h3>Are you sure you want to delete this entry?</h3>
             <p>This action cannot be undone.</p>
             <div className="delete-confirm-buttons">
               <button
@@ -742,9 +743,9 @@ function App() {
                           }}
                         />
                         <button
-                          className="send-btn mobile-only"
+                          className="send-btn"
                           onClick={() => chatInput.trim() && handleChat(chatInput)}
-                          disabled={!chatInput.trim()}
+                          disabled={!chatន
                         >
                           Send
                         </button>
