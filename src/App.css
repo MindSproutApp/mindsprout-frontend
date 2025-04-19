@@ -739,9 +739,8 @@ button:disabled {
 /* Journal button */
 .journal-button {
   position: relative;
-  width: 100%;
-  max-width: 360px;
-  height: 120px;
+  width: 1101px;
+  height: 537px;
   border-radius: 10px;
   overflow: hidden;
   cursor: pointer;
@@ -765,6 +764,19 @@ button:disabled {
 
 .journal-button:hover img {
   opacity: 0.9;
+}
+
+.journal-button span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-family: 'Caveat', cursive;
+  font-size: 48px;
+  font-weight: 700;
+  text-align: center;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .journal-button::after {
@@ -864,7 +876,8 @@ button:disabled {
 
 .gradient-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   background: linear-gradient(135deg, #e0f2e9, #b3e0c6);
   border-radius: 10px;
   overflow: hidden;
@@ -873,24 +886,59 @@ button:disabled {
 
 .gradient-table th,
 .gradient-table td {
-  padding: 12px;
+  padding: 16px;
   text-align: left;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  border-bottom: 2px solid #ffffff;
+  border-right: 1px solid #ffffff;
   color: #388E3C;
+  font-size: 16px;
+}
+
+.gradient-table th:last-child,
+.gradient-table td:last-child {
+  border-right: none;
 }
 
 .gradient-table th {
   background: linear-gradient(135deg, #4CAF50, #388E3C);
   color: #fff;
   font-weight: 700;
+  text-align: center;
+}
+
+/* Journal table column widths */
+.gradient-table th:nth-child(1),
+.gradient-table td:nth-child(1) {
+  width: 40%; /* Journal Type */
+}
+
+.gradient-table th:nth-child(2),
+.gradient-table td:nth-child(2) {
+  width: 40%; /* Date */
+}
+
+.gradient-table th:nth-child(3),
+.gradient-table td:nth-child(3) {
+  width: 20%; /* Actions */
+}
+
+/* Reflect table column widths */
+.reflect .gradient-table th:nth-child(1),
+.reflect .gradient-table td:nth-child(1) {
+  width: 60%; /* Date */
+}
+
+.reflect .gradient-table th:nth-child(2),
+.reflect .gradient-table td:nth-child(2) {
+  width: 40%; /* Actions */
 }
 
 .gradient-table tr:nth-child(even) {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .gradient-table tr:hover {
-  background: rgba(224, 242, 233, 0.3);
+  background: rgba(224, 242, 233, 0.4);
 }
 
 .gradient-table button {
@@ -900,6 +948,8 @@ button:disabled {
   border-radius: 5px;
   border: none;
   cursor: pointer;
+  width: 100%;
+  text-align: center;
 }
 
 .gradient-table button:hover {
@@ -1121,12 +1171,44 @@ button:disabled {
   }
 
   .journal-button {
-    height: 100px;
+    width: 100%;
+    max-width: 360px;
+    height: 175px; /* Maintain aspect ratio: 537/1101 ≈ 0.488 */
+  }
+
+  .journal-button span {
+    font-size: 24px;
   }
 
   .gradient-table th,
   .gradient-table td {
     padding: 8px;
     font-size: 14px;
+  }
+
+  /* Adjust column widths for mobile */
+  .gradient-table th:nth-child(1),
+  .gradient-table td:nth-child(1) {
+    width: 35%;
+  }
+
+  .gradient-table th:nth-child(2),
+  .gradient-table td:nth-child(2) {
+    width: 35%;
+  }
+
+  .gradient-table th:nth-child(3),
+  .gradient-table td:nth-child(3) {
+    width: 30%;
+  }
+
+  .reflect .gradient-table th:nth-child(1),
+  .reflect .gradient-table td:nth-child(1) {
+    width: 50%;
+  }
+
+  .reflect .gradient-table th:nth-child(2),
+  .reflect .gradient-table td:nth-child(2) {
+    width: 50%;
   }
 }
