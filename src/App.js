@@ -40,11 +40,19 @@ function App() {
   const [chatInput, setChatInput] = useState('');
   const [journalPage, setJournalPage] = useState(1);
   const [reflectPage, setReflectPage] = useState(1);
-  const [showSignup, setShowSignup] = useState(false); // Toggle for signup/login
+  const [showSignup, setShowSignup] = useState(false); // Toggle for mobile only
   const [deleteConfirm, setDeleteConfirm] = useState(null); // For delete confirmation
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768); // Track desktop vs mobile
 
   const chatBoxRef = useRef(null);
   const reportDetailsRef = useRef(null); // For scrolling to report details
+
+  // Update isDesktop on window resize
+  useEffect(() => {
+    const handleResize = () => setIsDesktop(window.innerWidth > 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const emotionDescriptions = {
     happiness: {
@@ -593,17 +601,19 @@ function App() {
             <p className="tagline">Planting Seeds of Mindfulness!</p>
             {message && <p className="message">{message}</p>}
             <div className="standard-auth">
-              <h2>{showSignup ? 'Sign Up' : 'Log In'}</h2>
-              <div className="auth-toggle">
-                <button
-                  className="toggle-btn"
-                  onClick={() => setShowSignup(!showSignup)}
-                >
-                  {showSignup ? 'Switch to Log In' : 'Switch to Sign Up'}
-                </button>
-              </div>
+              <h2>{isDesktop ? 'Sign Up or Log In' : showSignup ? 'Sign Up' : 'Log In'}</h2>
+              {!isDesktop && (
+                <div className="auth-toggle">
+                  <button
+                    className="toggle-btn"
+                    onClick={() => setShowSignup(!showSignup)}
+                  >
+                    {showSignup ? 'Switch to Log In' : 'Switch to Sign Up'}
+                  </button>
+                </div>
+              )}
               <div className="form-container">
-                {showSignup && (
+                {(isDesktop || showSignup) && (
                   <div className="signup-form">
                     <form onSubmit={handleRegularSignup}>
                       <input
@@ -636,7 +646,7 @@ function App() {
                     </form>
                   </div>
                 )}
-                {!showSignup && (
+                {(isDesktop || !showSignup) && (
                   <div className="login-form">
                     <form onSubmit={handleRegularLogin}>
                       <input
