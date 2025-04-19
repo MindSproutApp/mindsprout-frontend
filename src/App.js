@@ -40,11 +40,11 @@ function App() {
   const [chatInput, setChatInput] = useState('');
   const [journalPage, setJournalPage] = useState(1);
   const [reflectPage, setReflectPage] = useState(1);
-  const [showSignup, setShowSignup] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState(null); // New state for delete confirmation
+  const [showSignup, setShowSignup] = useState(false); // Toggle for signup/login
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // For delete confirmation
 
   const chatBoxRef = useRef(null);
-  const reportDetailsRef = useRef(null); // New ref for scrolling to report details
+  const reportDetailsRef = useRef(null); // For scrolling to report details
 
   const emotionDescriptions = {
     happiness: {
@@ -594,16 +594,16 @@ function App() {
             {message && <p className="message">{message}</p>}
             <div className="standard-auth">
               <h2>{showSignup ? 'Sign Up' : 'Log In'}</h2>
+              <div className="auth-toggle">
+                <button
+                  className="toggle-btn"
+                  onClick={() => setShowSignup(!showSignup)}
+                >
+                  {showSignup ? 'Switch to Log In' : 'Switch to Sign Up'}
+                </button>
+              </div>
               <div className="form-container">
-                <div className="auth-toggle">
-                  <button
-                    className="toggle-btn"
-                    onClick={() => setShowSignup(!showSignup)}
-                  >
-                    {showSignup ? 'Log In' : 'Sign Up'}
-                  </button>
-                </div>
-                {showSignup ? (
+                {showSignup && (
                   <div className="signup-form">
                     <form onSubmit={handleRegularSignup}>
                       <input
@@ -635,7 +635,8 @@ function App() {
                       <button type="submit" className="signup-btn">Sign Up</button>
                     </form>
                   </div>
-                ) : (
+                )}
+                {!showSignup && (
                   <div className="login-form">
                     <form onSubmit={handleRegularLogin}>
                       <input
