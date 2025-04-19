@@ -7,10 +7,9 @@ import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, Tooltip, Lege
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 function App() {
-  // Define API_URL with fallback to ensure it's never undefined
   const API_URL = process.env.REACT_APP_API_URL || 'https://mindsprout-backend-new.onrender.com';
 
-  const [token, setToken] = useState(null); // Removed localStorage.getItem to prevent auto-login
+  const [token, setToken] = useState(null);
   const [role, setRole] = useState(null);
   const [regularSignupForm, setRegularSignupForm] = useState({ name: '', email: '', username: '', password: '' });
   const [regularLoginForm, setRegularLoginForm] = useState({ email: '', password: '' });
@@ -40,6 +39,8 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [showSummaryBuffer, setShowSummaryBuffer] = useState(false);
   const [chatInput, setChatInput] = useState('');
+  const [journalPage, setJournalPage] = useState(1); // Pagination for journal
+  const [reflectPage, setReflectPage] = useState(1); // Pagination for reflect
 
   const chatBoxRef = useRef(null);
 
@@ -115,7 +116,7 @@ function App() {
     }
   };
 
-  useEffect(() => {
+      useEffect(() => {
     if (token && role === 'regular') {
       fetchUserData(token);
     }
@@ -186,12 +187,11 @@ function App() {
   const handleRegularSignup = (e) => {
     e.preventDefault();
     setIsLoading(true);
-    console.log('Signup API URL:', API_URL); // Debug log
+    console.log('Signup API URL:', API_URL);
     axios.post(`${API_URL}/api/regular/signup`, regularSignupForm)
       .then(res => {
         setMessage(res.data.message);
         setToken(res.data.token);
-        // Removed localStorage.setItem to prevent auto-login
         setRole('regular');
         fetchUserData(res.data.token);
       })
@@ -202,11 +202,10 @@ function App() {
   const handleRegularLogin = (e) => {
     e.preventDefault();
     setIsLoading(true);
-    console.log('Login API URL:', API_URL); // Debug log
+    console.log('Login API URL:', API_URL);
     axios.post(`${API_URL}/api/regular/login`, regularLoginForm)
       .then(res => {
         setToken(res.data.token);
-        // Removed localStorage.setItem to prevent auto-login
         setRole('regular');
         setMessage(`Welcome, ${res.data.name || 'User'}!`);
         fetchUserData(res.data.token);
@@ -274,7 +273,6 @@ function App() {
     setChat(prev => [...prev, newUserMessage]);
     setChatInput('');
     try {
-      // Check for suicide-related terms
       const lowerText = text.toLowerCase();
       if (lowerText.includes('kill myself') || lowerText.includes('killing myself') || lowerText.includes('suicide') || lowerText.includes('end my life')) {
         const helpline = "If you're in the UK, please call Samaritans at 116 123. In the US, call 988. You're not alone, and help is available.";
@@ -292,7 +290,7 @@ function App() {
     setTimeLeft(0);
     setIsLoading(true);
     try {
-      const response = await axios.post(`${API_URL}/api/regular/end-chat`, { chatHistory: china, quiz }, { headers: { Authorization: token } });
+      const response = await axios.post(`${API_URL}/api/regular/end-chat`, { chatHistory: chat, quiz }, { headers: { Authorization: token } });
       const newReport = response.data;
       setReports(prev => [...prev, newReport]);
       setLastChatTimestamp(new Date());
@@ -364,7 +362,7 @@ function App() {
 
   const handleOpenJournalEntry = (entry) => {
     setSelectedJournalEntry(entry);
-    setOpenNotepadSection('reflect'); // Open notepad directly
+    setOpenNotepadSection('reflect');
   };
 
   const handleCloseJournalEntry = () => {
@@ -396,7 +394,7 @@ function App() {
 
   const handleLogout = () => {
     setToken(null);
-    localStorage.removeItem('token'); // Clear any leftover token
+    localStorage.removeItem('token');
     setRole(null);
     setIsQuizActive(false);
     setIsChatActive(false);
@@ -501,6 +499,21 @@ function App() {
     return <p>No responses available</p>;
   };
 
+  // Pagination for journal entries
+  const entriesPerPage = 5;
+  const sortedJournal = [...journal].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const journalPageCount = Math.ceil(sortedJournal.length / entriesPerPage);
+  const journalStartIndex = (journalPage - 1) * entriesPerPage;
+  const journalEndIndex = journalStartIndex + entriesPerPage;
+  const paginatedJournal = sortedJournal.slice(journalStartIndex, journalEndIndex);
+
+  // Pagination for reflect entries
+  const sortedReports = [...reports].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const reflectPageCount = Math.ceil(sortedReports.length / entriesPerPage);
+  const reflectStartIndex = (reflectPage - 1) * entriesPerPage;
+  const reflectEndIndex = reflectStartIndex + entriesPerPage;
+  const paginatedReports = sortedReports.slice(reflectStartIndex, reflectEndIndex);
+
   return (
     <div className="app">
       {(isLoading || showSummaryBuffer) && (
@@ -555,7 +568,7 @@ function App() {
                 {reports.length > 0 ? (
                   <>
                     <div className="date-buttons">
-                      {reports.map((report, i) => (
+                      {paginatedReports.map((report, i) => (
                         <button
                           key={i}
                           onClick={() => setSelectedReport(report)}
@@ -665,7 +678,7 @@ function App() {
                 <h2>Journal</h2>
                 <div className="journal-options">
                   <button
-                    className="journal-button"
+                    className="journal-button image-button"
                     onClick={() => handleOpenJournal('daily')}
                     role="button"
                     tabIndex={0}
@@ -673,10 +686,9 @@ function App() {
                     aria-label="Open Daily Reflection Journal"
                   >
                     <img src="/personal.png" alt="Daily Reflection" />
-                    <span>Daily Reflection</span>
                   </button>
                   <button
-                    className="journal-button"
+                    className="journal-button image-button"
                     onClick={() => handleOpenJournal('dream')}
                     role="button"
                     tabIndex={0}
@@ -684,10 +696,9 @@ function App() {
                     aria-label="Open Dream Journal"
                   >
                     <img src="/dream1.png" alt="Dream Journal" />
-                    <span>Dream Journal</span>
                   </button>
                   <button
-                    className="journal-button"
+                    className="journal-button image-button"
                     onClick={() => handleOpenJournal('freestyle')}
                     role="button"
                     tabIndex={0}
@@ -695,29 +706,26 @@ function App() {
                     aria-label="Open Freestyle Journal"
                   >
                     <img src="/freestyle.png" alt="Freestyle" />
-                    <span>Freestyle</span>
                   </button>
                 </div>
                 {openJournalType && (
                   <div className={`journal-modal ${openJournalType ? 'active' : ''}`}>
                     <div className="journal-content">
-                      <div className="journal-text">
-                        <button className="close-btn" onClick={handleCloseJournal}>X</button>
-                        <h3>{openJournalType === 'daily' ? 'Daily Reflection' : openJournalType === 'dream' ? 'Dream Journal' : 'Freestyle'}</h3>
-                        {journalPrompts[openJournalType].map(prompt => (
-                          <div key={prompt.key} className="journal-prompt">
-                            <h2>{prompt.heading}</h2>
-                            <p>{prompt.subheading}</p>
-                            <textarea
-                              placeholder="Write your response..."
-                              value={journalResponses[prompt.key] || ''}
-                              onChange={e => handleJournalInput(prompt.key, e.target.value)}
-                            />
-                          </div>
-                        ))}
-                        <div className="journal-actions">
-                          <button onClick={handleSaveJournal}>Save Journal</button>
+                      <button className="close-btn" onClick={handleCloseJournal}>X</button>
+                      <h3>{openJournalType === 'daily' ? 'Daily Reflection' : openJournalType === 'dream' ? 'Dream Journal' : 'Freestyle'}</h3>
+                      {journalPrompts[openJournalType].map(prompt => (
+                        <div key={prompt.key} className="journal-prompt">
+                          <h2>{prompt.heading}</h2>
+                          <p>{prompt.subheading}</p>
+                          <textarea
+                            placeholder="Write your response..."
+                            value={journalResponses[prompt.key] || ''}
+                            onChange={e => handleJournalInput(prompt.key, e.target.value)}
+                          />
                         </div>
+                      ))}
+                      <div className="journal-actions">
+                        <button onClick={handleSaveJournal}>Save Journal</button>
                       </div>
                     </div>
                   </div>
@@ -725,7 +733,7 @@ function App() {
                 <h3>Past Journal Entries</h3>
                 {journal.length > 0 ? (
                   <div className="journal-tables">
-                    <table className="journal-table">
+                    <table className="gradient-table">
                       <thead>
                         <tr>
                           <th>Journal Type</th>
@@ -734,7 +742,7 @@ function App() {
                         </tr>
                       </thead>
                       <tbody>
-                        {journal.map((entry, i) => (
+                        {paginatedJournal.map((entry, i) => (
                           <tr key={i}>
                             <td>{entry.type === 'daily' ? 'Daily Reflection' : entry.type === 'dream' ? 'Dream Journal' : 'Freestyle'}</td>
                             <td>{new Date(entry.date).toLocaleDateString()}</td>
@@ -745,6 +753,21 @@ function App() {
                         ))}
                       </tbody>
                     </table>
+                    <div className="pagination">
+                      <button
+                        onClick={() => setJournalPage(prev => Math.max(prev - 1, 1))}
+                        disabled={journalPage === 1}
+                      >
+                        Previous
+                      </button>
+                      <span>Page {journalPage} of {journalPageCount}</span>
+                      <button
+                        onClick={() => setJournalPage(prev => Math.min(prev + 1, journalPageCount))}
+                        disabled={journalPage === journalPageCount}
+                      >
+                        Next
+                      </button>
+                    </div>
                     {selectedJournalEntry && openNotepadSection === 'reflect' && (
                       <div className={`notepad-modal ${openNotepadSection ? 'active' : ''}`}>
                         <div className="notepad-content">
@@ -767,16 +790,43 @@ function App() {
                 <h3>Past Chat Sessions</h3>
                 {reports.length > 0 ? (
                   <>
-                    <div className="date-buttons">
-                      {reports.map((report, i) => (
-                        <button
-                          key={i}
-                          onClick={() => setSelectedReport(report)}
-                          className={selectedReport?.date === report.date ? 'active' : ''}
-                        >
-                          {new Date(report.date).toLocaleDateString()}
-                        </button>
-                      ))}
+                    <table className="gradient-table">
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {paginatedReports.map((report, i) => (
+                          <tr key={i}>
+                            <td>{new Date(report.date).toLocaleDateString()}</td>
+                            <td>
+                              <button
+                                onClick={() => setSelectedReport(report)}
+                                className={selectedReport?.date === report.date ? 'active' : ''}
+                              >
+                                View
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <div className="pagination">
+                      <button
+                        onClick={() => setReflectPage(prev => Math.max(prev - 1, 1))}
+                        disabled={reflectPage === 1}
+                      >
+                        Previous
+                      </button>
+                      <span>Page {reflectPage} of {reflectPageCount}</span>
+                      <button
+                        onClick={() => setReflectPage(prev => Math.min(prev + 1, reflectPageCount))}
+                        disabled={reflectPage === reflectPageCount}
+                      >
+                        Next
+                      </button>
                     </div>
                     {selectedReport && (
                       <div className="report-details">
@@ -806,6 +856,12 @@ function App() {
                             <div className="notepad-content">
                               <button className="close-btn" onClick={handleCloseNotepad}>X</button>
                               <div className="notepad-text">
+                                <h3>
+                                  {openNotepadSection === 'discussed' ? 'What We Discussed' : 
+                                   openNotepadSection === 'thoughtsFeelings' ? 'Your Thoughts & Feelings' : 
+                                   openNotepadSection === 'insights' ? 'Insights Uncovered' : 
+                                   openNotepadSection === 'moodReflection' ? 'Mood Reflection' : 'Recommendations'}
+                                </h3>
                                 {openNotepadSection === 'reflect' && selectedJournalEntry
                                   ? renderJournalResponses(selectedJournalEntry)
                                   : selectedReport.summary?.[openNotepadSection] || 'Not available'}
