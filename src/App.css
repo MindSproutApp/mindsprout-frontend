@@ -13,6 +13,7 @@ body {
   font-family: 'Roboto', sans-serif;
   background-color: #f4f4f4;
   color: #333;
+  line-height: 1.6;
 }
 
 /* App container */
@@ -23,6 +24,7 @@ body {
   min-height: 100vh;
   padding: 20px;
   background-color: #e0f2e9; /* Light green background */
+  transition: background 0.3s ease;
 }
 
 /* Canvas */
@@ -44,6 +46,11 @@ body {
 .auth .logo {
   width: 100px;
   margin-bottom: 20px;
+  transition: transform 0.3s ease;
+}
+
+.auth .logo:hover {
+  transform: scale(1.05);
 }
 
 .auth h1 {
@@ -62,6 +69,7 @@ body {
 .auth .message {
   color: #d32f2f;
   margin-bottom: 20px;
+  font-weight: 500;
 }
 
 .standard-auth h2 {
@@ -84,6 +92,11 @@ body {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   width: 100%;
   max-width: 400px;
+  transition: transform 0.2s ease;
+}
+
+.signup-form:hover, .login-form:hover {
+  transform: translateY(-2px);
 }
 
 .signup-form input, .login-form input {
@@ -93,6 +106,12 @@ body {
   border: 1px solid #ccc;
   border-radius: 5px;
   font-size: 1em;
+  transition: border-color 0.3s ease;
+}
+
+.signup-form input:focus, .login-form input:focus {
+  border-color: #388E3C;
+  outline: none;
 }
 
 .signup-form button, .login-form button {
@@ -104,11 +123,16 @@ body {
   border-radius: 5px;
   font-size: 1em;
   cursor: pointer;
-  transition: background 0.3s;
+  transition: background 0.3s ease;
 }
 
 .signup-form button:hover, .login-form button:hover {
   background: #2e7d32;
+}
+
+.signup-form button:disabled, .login-form button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
 }
 
 .auth-toggle {
@@ -123,15 +147,21 @@ body {
   border-radius: 5px;
   cursor: pointer;
   font-size: 1em;
+  transition: background 0.3s ease;
 }
 
 .toggle-btn:hover {
   background: #a5d6a7;
 }
 
+.toggle-btn:focus {
+  outline: 2px solid #388E3C;
+}
+
 /* Dashboard */
 .regular-dashboard {
   padding: 20px;
+  position: relative;
 }
 
 .regular-dashboard .logo {
@@ -143,11 +173,13 @@ body {
   color: #d32f2f;
   text-align: center;
   margin-bottom: 20px;
+  font-weight: 500;
 }
 
 /* Profile */
 .profile {
   text-align: center;
+  padding: 20px;
 }
 
 .profile h2 {
@@ -167,10 +199,15 @@ body {
   align-items: center;
   gap: 10px;
   font-size: 1em;
+  transition: background 0.3s ease;
 }
 
 .logout-btn:hover {
   background: #b71c1c;
+}
+
+.logout-btn:focus {
+  outline: 2px solid #d32f2f;
 }
 
 .logout-btn .icon {
@@ -180,6 +217,7 @@ body {
 /* Quiz */
 .quiz {
   text-align: center;
+  padding: 20px;
 }
 
 .quiz h2 {
@@ -201,10 +239,16 @@ body {
   border-radius: 5px;
   cursor: pointer;
   font-size: 1em;
+  transition: background 0.3s ease;
 }
 
 .quiz button:hover {
   background: #2e7d32;
+}
+
+.quiz button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
 }
 
 .quiz-fullscreen {
@@ -220,10 +264,12 @@ body {
   align-items: center;
   z-index: 1000;
   padding: 20px;
+  transition: opacity 0.3s ease;
 }
 
 .quiz-fullscreen.active {
   display: flex;
+  opacity: 1;
 }
 
 .quiz-question {
@@ -248,7 +294,7 @@ body {
   width: 120px;
   text-align: center;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
 }
 
 .quiz-option-box:hover {
@@ -259,6 +305,10 @@ body {
 .quiz-option-box.selected {
   background: #b3e0c6;
   border-color: #388E3C;
+}
+
+.quiz-option-box:focus {
+  outline: 2px solid #388E3C;
 }
 
 .quiz-value {
@@ -288,15 +338,22 @@ body {
   border-radius: 5px;
   cursor: pointer;
   font-size: 1em;
+  transition: background 0.3s ease;
 }
 
 .quiz-nav button:hover {
   background: #2e7d32;
 }
 
+.quiz-nav button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
 /* Breathe Animation */
 .breathe-animation {
   text-align: center;
+  padding: 20px;
 }
 
 .breathe-animation h2 {
@@ -308,11 +365,19 @@ body {
 .breathe-animation .breathe-count {
   font-size: 3em;
   color: #388E3C;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
 }
 
 /* Chat */
 .chat {
   text-align: center;
+  padding: 20px;
 }
 
 .chat h2 {
@@ -335,24 +400,25 @@ body {
   margin-bottom: 20px;
   display: flex;
   flex-direction: column-reverse;
+  border: 1px solid #ccc;
 }
 
 .chat-box p {
   margin: 10px 0;
   padding: 10px;
   border-radius: 5px;
+  max-width: 70%;
+  word-wrap: break-word;
 }
 
 .chat-box .user {
   background: #b3e0c6;
   align-self: flex-end;
-  max-width: 70%;
 }
 
 .chat-box .pal {
   background: #e0f2e9;
   align-self: flex-start;
-  max-width: 70%;
 }
 
 .chat-input-container {
@@ -369,6 +435,12 @@ body {
   border: 1px solid #ccc;
   border-radius: 5px;
   font-size: 1em;
+  transition: border-color 0.3s ease;
+}
+
+.chat-input-container input:focus {
+  border-color: #388E3C;
+  outline: none;
 }
 
 .send-btn {
@@ -380,6 +452,7 @@ body {
   cursor: pointer;
   font-size: 1em;
   display: inline-block; /* Visible on all screen sizes */
+  transition: background 0.3s ease;
 }
 
 .send-btn:hover {
@@ -389,6 +462,10 @@ body {
 .send-btn:disabled {
   background: #ccc;
   cursor: not-allowed;
+}
+
+.send-btn:focus {
+  outline: 2px solid #388E3C;
 }
 
 .char-counter {
@@ -405,15 +482,21 @@ body {
   cursor: pointer;
   font-size: 1em;
   margin-top: 10px;
+  transition: background 0.3s ease;
 }
 
 .chat button:hover {
   background: #b71c1c;
 }
 
+.chat button:focus {
+  outline: 2px solid #d32f2f;
+}
+
 /* Journal */
 .journal {
   text-align: center;
+  padding: 20px;
 }
 
 .journal h2, .journal h3 {
@@ -436,13 +519,14 @@ body {
   border-radius: 8px;
   padding: 10px;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
   width: 300px;
   height: 146px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
 
 .journal-button img {
@@ -453,13 +537,22 @@ body {
 }
 
 .journal-button span {
-  margin-top: 10px;
+  position: absolute;
+  bottom: 10px;
   font-size: 1.2em;
   color: #388E3C;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 5px 10px;
+  border-radius: 5px;
 }
 
 .journal-button:hover {
   background: #e0f2e9;
+  transform: translateY(-2px);
+}
+
+.journal-button:focus {
+  outline: 2px solid #388E3C;
 }
 
 .journal-modal {
@@ -488,6 +581,7 @@ body {
   max-height: 80vh;
   overflow-y: auto;
   position: relative;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .journal-content h3 {
@@ -516,6 +610,12 @@ body {
   border-radius: 5px;
   font-size: 1em;
   resize: vertical;
+  transition: border-color 0.3s ease;
+}
+
+.journal-prompt textarea:focus {
+  border-color: #388E3C;
+  outline: none;
 }
 
 .journal-actions {
@@ -531,10 +631,15 @@ body {
   border-radius: 5px;
   cursor: pointer;
   font-size: 1em;
+  transition: background 0.3s ease;
 }
 
 .journal-actions button:hover {
   background: #2e7d32;
+}
+
+.journal-actions button:focus {
+  outline: 2px solid #388E3C;
 }
 
 .close-btn {
@@ -549,10 +654,15 @@ body {
   border-radius: 50%;
   cursor: pointer;
   font-size: 1em;
+  transition: background 0.3s ease;
 }
 
 .close-btn:hover {
   background: #b71c1c;
+}
+
+.close-btn:focus {
+  outline: 2px solid #d32f2f;
 }
 
 .journal-tables {
@@ -563,17 +673,34 @@ body {
   width: 100%;
   border-collapse: collapse;
   background: linear-gradient(to bottom, #e0f2e9, #fff);
+  table-layout: fixed;
 }
 
 .gradient-table th, .gradient-table td {
   padding: 12px;
   border: 1px solid #ccc;
   text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gradient-table th:nth-child(1), .gradient-table td:nth-child(1) {
+  width: 40%; /* Journal Type */
+}
+
+.gradient-table th:nth-child(2), .gradient-table td:nth-child(2) {
+  width: 40%; /* Date */
+}
+
+.gradient-table th:nth-child(3), .gradient-table td:nth-child(3) {
+  width: 20%; /* Actions */
 }
 
 .gradient-table th {
   background: #b3e0c6;
   color: #388E3C;
+  font-weight: 700;
 }
 
 .gradient-table td button {
@@ -585,10 +712,15 @@ body {
   cursor: pointer;
   margin-right: 5px;
   font-size: 0.9em;
+  transition: background 0.3s ease;
 }
 
 .gradient-table td button:hover {
   background: #2e7d32;
+}
+
+.gradient-table td button:focus {
+  outline: 2px solid #388E3C;
 }
 
 .gradient-table td .delete-btn {
@@ -597,6 +729,10 @@ body {
 
 .gradient-table td .delete-btn:hover {
   background: #b71c1c;
+}
+
+.gradient-table td .delete-btn:focus {
+  outline: 2px solid #d32f2f;
 }
 
 .pagination {
@@ -615,11 +751,20 @@ body {
   border-radius: 5px;
   cursor: pointer;
   font-size: 0.9em;
+  transition: background 0.3s ease;
+}
+
+.pagination button:hover {
+  background: #2e7d32;
 }
 
 .pagination button:disabled {
   background: #ccc;
   cursor: not-allowed;
+}
+
+.pagination button:focus {
+  outline: 2px solid #388E3C;
 }
 
 .pagination span {
@@ -630,6 +775,7 @@ body {
 /* Reflect */
 .reflect {
   text-align: center;
+  padding: 20px;
 }
 
 .reflect h2, .reflect h3 {
@@ -676,12 +822,17 @@ body {
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
 }
 
 .summary-card:hover {
   background: #e0f2e9;
   border-color: #388E3C;
+  transform: translateY(-2px);
+}
+
+.summary-card:focus {
+  outline: 2px solid #388E3C;
 }
 
 .summary-front h4 {
@@ -716,6 +867,7 @@ body {
   max-height: 80vh;
   overflow-y: auto;
   position: relative;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .notepad-text h3 {
@@ -745,10 +897,15 @@ body {
   cursor: pointer;
   font-size: 1em;
   margin-top: 20px;
+  transition: background 0.3s ease;
 }
 
 .notepad-text button:hover {
   background: #2e7d32;
+}
+
+.notepad-text button:focus {
+  outline: 2px solid #388E3C;
 }
 
 /* Menu Bar */
@@ -770,12 +927,21 @@ body {
   align-items: center;
   font-size: 0.9em;
   color: #388E3C;
+  transition: background 0.3s ease;
 }
 
 .menu-bar button.active {
   background: #388E3C;
   color: #fff;
   border-radius: 5px;
+}
+
+.menu-bar button:hover {
+  background: #a5d6a7;
+}
+
+.menu-bar button:focus {
+  outline: 2px solid #388E3C;
 }
 
 .menu-bar button .icon {
@@ -843,6 +1009,7 @@ body {
   text-align: center;
   max-width: 400px;
   width: 90%;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .delete-confirm-content h3 {
@@ -869,6 +1036,7 @@ body {
   border-radius: 5px;
   cursor: pointer;
   font-size: 1em;
+  transition: background 0.3s ease;
 }
 
 .delete-confirm-buttons button:first-child {
@@ -880,6 +1048,10 @@ body {
   background: #b71c1c;
 }
 
+.delete-confirm-buttons button:first-child:focus {
+  outline: 2px solid #d32f2f;
+}
+
 .delete-confirm-buttons button:last-child {
   background: #388E3C;
   color: #fff;
@@ -889,16 +1061,27 @@ body {
   background: #2e7d32;
 }
 
-/* Mobile-only styles */
-.mobile-only {
+.delete-confirm-buttons button:last-child:focus {
+  outline: 2px solid #388E3C;
+}
+
+/* Accessibility Enhancements */
+:focus {
+  outline: 2px solid #388E3C;
+  outline-offset: 2px;
+}
+
+[aria-hidden="true"] {
   display: none;
 }
 
-@media (max-width: 768px) {
-  .mobile-only {
-    display: inline-block;
-  }
+[aria-disabled="true"] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
+/* Additional Responsive Styles */
+@media (max-width: 768px) {
   .app {
     padding: 10px;
   }
@@ -931,6 +1114,11 @@ body {
 
   .signup-form, .login-form {
     max-width: 100%;
+    padding: 15px;
+  }
+
+  .signup-form input, .login-form input {
+    margin: 8px 0;
   }
 
   .regular-dashboard .logo {
@@ -942,9 +1130,18 @@ body {
     height: 146px;
   }
 
+  .journal-button span {
+    font-size: 1em;
+  }
+
   .journal-content, .notepad-content {
     width: 95%;
     max-height: 90vh;
+    padding: 15px;
+  }
+
+  .journal-prompt textarea {
+    height: 80px;
   }
 
   .menu-bar {
@@ -967,6 +1164,10 @@ body {
     width: 20px;
   }
 
+  .menu-bar button span {
+    font-size: 0.7em;
+  }
+
   .quiz-option-box {
     width: 100px;
     padding: 10px;
@@ -976,16 +1177,59 @@ body {
     font-size: 1.5em;
   }
 
+  .quiz-value {
+    font-size: 1.2em;
+  }
+
+  .quiz-emoji {
+    font-size: 1.5em;
+  }
+
   .chat-box {
     height: 250px;
+  }
+
+  .chat-input-container {
+    gap: 8px;
   }
 
   .chat-input-container input {
     max-width: 90%;
   }
+
+  .send-btn {
+    padding: 8px 16px;
+  }
+
+  .gradient-table th, .gradient-table td {
+    padding: 8px;
+    font-size: 0.9em;
+  }
+
+  .gradient-table td button {
+    padding: 6px 10px;
+    font-size: 0.8em;
+  }
+
+  .pagination button {
+    padding: 6px 10px;
+    font-size: 0.8em;
+  }
+
+  .delete-confirm-content {
+    padding: 15px;
+  }
+
+  .delete-confirm-content h3 {
+    font-size: 1.4em;
+  }
+
+  .delete-confirm-buttons button {
+    padding: 8px 16px;
+    font-size: 0.9em;
+  }
 }
 
-/* Desktop-specific styles */
 @media (min-width: 769px) {
   .form-container {
     flex-direction: row;
@@ -1002,6 +1246,10 @@ body {
     height: 430px;
   }
 
+  .journal-button span {
+    font-size: 1.5em;
+  }
+
   .chat-input-container {
     flex-direction: row;
     justify-content: center;
@@ -1014,5 +1262,116 @@ body {
 
   .send-btn {
     margin-left: 10px;
+  }
+
+  .gradient-table th, .gradient-table td {
+    padding: 14px;
+  }
+
+  .gradient-table td button {
+    padding: 10px 14px;
+  }
+
+  .pagination button {
+    padding: 10px 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth .logo {
+    width: 60px;
+  }
+
+  .auth h1 {
+    font-size: 1.8em;
+  }
+
+  .standard-auth h2 {
+    font-size: 1.3em;
+  }
+
+  .signup-form, .login-form {
+    padding: 10px;
+  }
+
+  .journal-button {
+    width: 250px;
+    height: 122px;
+  }
+
+  .journal-content, .notepad-content {
+    width: 98%;
+  }
+
+  .quiz-option-box {
+    width: 80px;
+    padding: 8px;
+  }
+
+  .quiz-question {
+    font-size: 1.3em;
+  }
+
+  .chat-box {
+    height: 200px;
+  }
+
+  .delete-confirm-content {
+    max-width: 300px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .canvas {
+    max-width: 1400px;
+  }
+
+  .journal-button {
+    width: 900px;
+    height: 440px;
+  }
+
+  .journal-content, .notepad-content {
+    max-width: 800px;
+  }
+
+  .bar-chart-container {
+    max-width: 800px;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .app {
+    background: #fff;
+  }
+
+  .canvas {
+    border: 2px solid #000;
+  }
+
+  .auth h1, .standard-auth h2, .journal h2, .journal h3, .reflect h2, .reflect h3, .chat h2, .quiz h2 {
+    color: #000;
+  }
+
+  .signup-form button, .login-form button, .journal-actions button, .quiz-nav button, .pagination button, .gradient-table td button {
+    background: #000;
+    color: #fff;
+  }
+
+  .delete-btn {
+    background: #ff0000;
+  }
+
+  .send-btn {
+    background: #000;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .spinner, .breathe-count, .journal-button, .summary-card, .send-btn, .delete-confirm-buttons button {
+    animation: none;
+    transition: none;
   }
 }
