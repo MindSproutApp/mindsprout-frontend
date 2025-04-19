@@ -116,7 +116,7 @@ function App() {
     }
   };
 
-      useEffect(() => {
+  useEffect(() => {
     if (token && role === 'regular') {
       fetchUserData(token);
     }
@@ -683,9 +683,10 @@ function App() {
                     role="button"
                     tabIndex={0}
                     onKeyPress={(e) => e.key === 'Enter' && handleOpenJournal('daily')}
-                    aria-label="Open Daily Reflection Journal"
+                    aria-label="Open Daily Journal"
                   >
-                    <img src="/personal.png" alt="Daily Reflection" />
+                    <img src="/personal.png" alt="Daily Journal" />
+                    <span>Daily Journal</span>
                   </button>
                   <button
                     className="journal-button image-button"
@@ -696,6 +697,7 @@ function App() {
                     aria-label="Open Dream Journal"
                   >
                     <img src="/dream1.png" alt="Dream Journal" />
+                    <span>Dream Journal</span>
                   </button>
                   <button
                     className="journal-button image-button"
@@ -705,14 +707,15 @@ function App() {
                     onKeyPress={(e) => e.key === 'Enter' && handleOpenJournal('freestyle')}
                     aria-label="Open Freestyle Journal"
                   >
-                    <img src="/freestyle.png" alt="Freestyle" />
+                    <img src="/freestyle.png" alt="Freestyle Journal" />
+                    <span>Freestyle Journal</span>
                   </button>
                 </div>
                 {openJournalType && (
                   <div className={`journal-modal ${openJournalType ? 'active' : ''}`}>
                     <div className="journal-content">
                       <button className="close-btn" onClick={handleCloseJournal}>X</button>
-                      <h3>{openJournalType === 'daily' ? 'Daily Reflection' : openJournalType === 'dream' ? 'Dream Journal' : 'Freestyle'}</h3>
+                      <h3>{openJournalType === 'daily' ? 'Daily Journal' : openJournalType === 'dream' ? 'Dream Journal' : 'Freestyle Journal'}</h3>
                       {journalPrompts[openJournalType].map(prompt => (
                         <div key={prompt.key} className="journal-prompt">
                           <h2>{prompt.heading}</h2>
@@ -744,7 +747,7 @@ function App() {
                       <tbody>
                         {paginatedJournal.map((entry, i) => (
                           <tr key={i}>
-                            <td>{entry.type === 'daily' ? 'Daily Reflection' : entry.type === 'dream' ? 'Dream Journal' : 'Freestyle'}</td>
+                            <td>{entry.type === 'daily' ? 'Daily Journal' : entry.type === 'dream' ? 'Dream Journal' : 'Freestyle Journal'}</td>
                             <td>{new Date(entry.date).toLocaleDateString()}</td>
                             <td>
                               <button onClick={() => handleOpenJournalEntry(entry)}>Open</button>
@@ -773,7 +776,7 @@ function App() {
                         <div className="notepad-content">
                           <button className="close-btn" onClick={handleCloseJournalEntry}>X</button>
                           <div className="notepad-text">
-                            <h3>Entry: {new Date(selectedJournalEntry.date).toLocaleDateString()} ({selectedJournalEntry.type === 'daily' ? 'Daily Reflection' : selectedJournalEntry.type === 'dream' ? 'Dream Journal' : 'Freestyle'})</h3>
+                            <h3>Entry: {new Date(selectedJournalEntry.date).toLocaleDateString()} ({selectedJournalEntry.type === 'daily' ? 'Daily Journal' : selectedJournalEntry.type === 'dream' ? 'Dream Journal' : 'Freestyle Journal'})</h3>
                             {renderJournalResponses(selectedJournalEntry)}
                           </div>
                         </div>
