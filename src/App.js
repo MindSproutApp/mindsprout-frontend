@@ -30,7 +30,6 @@ function App() {
   const [activeTab, setActiveTab] = useState('chat');
   const [selectedReport, setSelectedReport] = useState(null);
   const [selectedJournalEntry, setSelectedJournalEntry] = useState(null);
-  const [xp, setXp] = useState(0);
   const [showBreathe, setShowBreathe] = useState(false);
   const [breatheCount, setBreatheCount] = useState(3);
   const [openNotepadSection, setOpenNotepadSection] = useState(null);
@@ -39,10 +38,13 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [showSummaryBuffer, setShowSummaryBuffer] = useState(false);
   const [chatInput, setChatInput] = useState('');
-  const [journalPage, setJournalPage] = useState(1); // Pagination for journal
-  const [reflectPage, setReflectPage] = useState(1); // Pagination for reflect
+  const [journalPage, setJournalPage] = useState(1);
+  const [reflectPage, setReflectPage] = useState(1);
+  const [showSignup, setShowSignup] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // New state for delete confirmation
 
   const chatBoxRef = useRef(null);
+  const reportDetailsRef = useRef(null); // New ref for scrolling to report details
 
   const emotionDescriptions = {
     happiness: {
@@ -163,14 +165,6 @@ function App() {
     }
   }, [chat]);
 
-  const calculatedXp = useMemo(() => {
-    return (reports.length * 10) + (goals.length * 5) + (lastChatTimestamp ? 15 : 0) + (journal.length * 10);
-  }, [reports, goals, lastChatTimestamp, journal]);
-
-  useEffect(() => {
-    setXp(calculatedXp);
-  }, [calculatedXp]);
-
   const getBarChartData = useMemo(() => {
     return (quizData) => {
       const pre = quizData.find(q => !q.isPostChat) || { happiness: 0, anger: 0, stress: 0, energy: 0, confidence: 0 };
@@ -187,7 +181,6 @@ function App() {
   const handleRegularSignup = (e) => {
     e.preventDefault();
     setIsLoading(true);
-    console.log('Signup API URL:', API_URL);
     axios.post(`${API_URL}/api/regular/signup`, regularSignupForm)
       .then(res => {
         setMessage(res.data.message);
@@ -202,8 +195,9 @@ function App() {
   const handleRegularLogin = (e) => {
     e.preventDefault();
     setIsLoading(true);
-    console.log('Login API URL:', API_URL);
-    axios.post(`${API_URL}/api/regular/login`, regularLoginForm)
+    // Convert email to lowercase for case-insensitive login
+    const loginData = { ...regularLoginForm, email: regularLoginForm.email.toLowerCase() };
+    axios.post(`${API_URL}/api/regular/login`, loginData)
       .then(res => {
         setToken(res.data.token);
         setRole('regular');
@@ -256,7 +250,6 @@ function App() {
     setQuiz({ ...quiz, [key]: selectedAnswer });
     setIsQuizActive(false);
     setShowBreathe(true);
-    setXp(prev => prev + 15);
   };
 
   const debounce = (func, wait) => {
@@ -303,7 +296,6 @@ function App() {
         setActiveTab('reflect');
         setSelectedReport(newReport);
         setMessage('Session complete! Check your Reflect tab for the summary.');
-        setXp(prev => prev + 15);
         fetchUserData(token);
       }, 1500);
     } catch (error) {
@@ -343,14 +335,13 @@ function App() {
       const response = await axios.post(`${API_URL}/api/regular/insights`, journalData, {
         headers: { Authorization: token }
       });
-      const newJournalEntry = { date: new Date(journalData.date), type: journalData.type, responses: journalData.responses };
+      const newJournalEntry = { _id: response.data._id, date: new Date(journalData.date), type: journalData.type, responses: journalData.responses };
       setJournal(prev => [...prev, newJournalEntry]);
       setOpenJournalType(null);
       setJournalResponses({});
       setActiveTab('journal');
       setSelectedJournalEntry(newJournalEntry);
       setMessage('Journal saved! Check your journal tab.');
-      setXp(prev => prev + 10);
       await fetchUserData(token);
     } catch (err) {
       console.error('Error saving journal:', err.response?.data || err.message);
@@ -368,6 +359,45 @@ function App() {
   const handleCloseJournalEntry = () => {
     setSelectedJournalEntry(null);
     setOpenNotepadSection(null);
+  };
+
+  const handleDeleteJournal = async (entryId) => {
+    setIsLoading(true);
+    try {
+      await axios.delete(`${API_URL}/api/regular/journal/${entryId}`, {
+        headers: { Authorization: token }
+      });
+      setJournal(prev => prev.filter(entry => entry._id !== entryId));
+      setJournalInsights(prev => prev.filter(insight => new Date(insight.journalDate).getTime() !== new Date(journal.find(entry => entry._id === entryId)?.date).getTime()));
+      setSelectedJournalEntry(null);
+      setOpenNotepadSection(null);
+      setMessage('Journal entry deleted.');
+    } catch (err) {
+      console.error('Error deleting journal:', err.response?.data || err.message);
+      setMessage('Error deleting journal: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setIsLoading(false);
+      setDeleteConfirm(null);
+    }
+  };
+
+  const handleDeleteReport = async (reportId) => {
+    setIsLoading(true);
+    try {
+      await axios.delete(`${API_URL}/api/regular/reports/${reportId}`, {
+        headers: { Authorization: token }
+      });
+      setReports(prev => prev.filter(report => report._id !== reportId));
+      setSelectedReport(null);
+      setOpenNotepadSection(null);
+      setMessage('Report deleted.');
+    } catch (err) {
+      console.error('Error deleting report:', err.response?.data || err.message);
+      setMessage('Error deleting report: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setIsLoading(false);
+      setDeleteConfirm(null);
+    }
   };
 
   const handleGenerateInsight = async (entry) => {
@@ -411,12 +441,13 @@ function App() {
     setActiveTab('chat');
     setSelectedReport(null);
     setSelectedJournalEntry(null);
-    setXp(0);
     setOpenNotepadSection(null);
     setOpenJournalType(null);
     setJournalResponses({});
     setShowSummaryBuffer(false);
     setChatInput('');
+    setShowSignup(false);
+    setDeleteConfirm(null);
   };
 
   const handleOpenNotepad = (section) => {
@@ -425,6 +456,16 @@ function App() {
 
   const handleCloseNotepad = () => {
     setOpenNotepadSection(null);
+  };
+
+  const handleViewReport = (report) => {
+    setSelectedReport(report);
+    // Scroll to the bottom of report-details
+    setTimeout(() => {
+      if (reportDetailsRef.current) {
+        reportDetailsRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }
+    }, 100);
   };
 
   const renderJournalResponses = (entry) => {
@@ -522,6 +563,28 @@ function App() {
           {showSummaryBuffer && <p>Preparing your summary...</p>}
         </div>
       )}
+      {deleteConfirm && (
+        <div className="delete-confirm-modal">
+          <div className="delete-confirm-content">
+            <h3>Are you sure?</h3>
+            <p>This action cannot be undone.</p>
+            <div className="delete-confirm-buttons">
+              <button
+                onClick={() => {
+                  if (deleteConfirm.type === 'journal') {
+                    handleDeleteJournal(deleteConfirm.id);
+                  } else {
+                    handleDeleteReport(deleteConfirm.id);
+                  }
+                }}
+              >
+                Yes
+              </button>
+              <button onClick={() => setDeleteConfirm(null)}>No</button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="canvas">
         {!token ? (
           <div className="auth">
@@ -530,26 +593,68 @@ function App() {
             <p className="tagline">Planting Seeds of Mindfulness!</p>
             {message && <p className="message">{message}</p>}
             <div className="standard-auth">
-              <h2>Let’s Get Started</h2>
+              <h2>{showSignup ? 'Sign Up' : 'Log In'}</h2>
               <div className="form-container">
-                <div className="signup-form">
-                  <h3>Sign Up</h3>
-                  <form onSubmit={handleRegularSignup}>
-                    <input placeholder="Name" value={regularSignupForm.name} onChange={e => setRegularSignupForm({ ...regularSignupForm, name: e.target.value })} required />
-                    <input placeholder="Email" type="email" value={regularSignupForm.email} onChange={e => setRegularSignupForm({ ...regularSignupForm, email: e.target.value })} required />
-                    <input placeholder="Username" value={regularSignupForm.username} onChange={e => setRegularSignupForm({ ...regularSignupForm, username: e.target.value })} required />
-                    <input placeholder="Password" type="password" value={regularSignupForm.password} onChange={e => setRegularSignupForm({ ...regularSignupForm, password: e.target.value })} required />
-                    <button type="submit" className="signup-btn">Sign Up</button>
-                  </form>
+                <div className="auth-toggle">
+                  <button
+                    className="toggle-btn"
+                    onClick={() => setShowSignup(!showSignup)}
+                  >
+                    {showSignup ? 'Log In' : 'Sign Up'}
+                  </button>
                 </div>
-                <div className="login-form">
-                  <h3>Login</h3>
-                  <form onSubmit={handleRegularLogin}>
-                    <input placeholder="Email" value={regularLoginForm.email} onChange={e => setRegularLoginForm({ ...regularLoginForm, email: e.target.value })} required />
-                    <input placeholder="Password" type="password" value={regularLoginForm.password} onChange={e => setRegularLoginForm({ ...regularLoginForm, password: e.target.value })} required />
-                    <button type="submit">Login</button>
-                  </form>
-                </div>
+                {showSignup ? (
+                  <div className="signup-form">
+                    <form onSubmit={handleRegularSignup}>
+                      <input
+                        placeholder="Name"
+                        value={regularSignupForm.name}
+                        onChange={e => setRegularSignupForm({ ...regularSignupForm, name: e.target.value })}
+                        required
+                      />
+                      <input
+                        placeholder="Email"
+                        type="email"
+                        value={regularSignupForm.email}
+                        onChange={e => setRegularSignupForm({ ...regularSignupForm, email: e.target.value })}
+                        required
+                      />
+                      <input
+                        placeholder="Username"
+                        value={regularSignupForm.username}
+                        onChange={e => setRegularSignupForm({ ...regularSignupForm, username: e.target.value })}
+                        required
+                      />
+                      <input
+                        placeholder="Password"
+                        type="password"
+                        value={regularSignupForm.password}
+                        onChange={e => setRegularSignupForm({ ...regularSignupForm, password: e.target.value })}
+                        required
+                      />
+                      <button type="submit" className="signup-btn">Sign Up</button>
+                    </form>
+                  </div>
+                ) : (
+                  <div className="login-form">
+                    <form onSubmit={handleRegularLogin}>
+                      <input
+                        placeholder="Email"
+                        value={regularLoginForm.email}
+                        onChange={e => setRegularLoginForm({ ...regularLoginForm, email: e.target.value })}
+                        required
+                      />
+                      <input
+                        placeholder="Password"
+                        type="password"
+                        value={regularLoginForm.password}
+                        onChange={e => setRegularLoginForm({ ...regularLoginForm, password: e.target.value })}
+                        required
+                      />
+                      <button type="submit">Log In</button>
+                    </form>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -560,35 +665,10 @@ function App() {
             {activeTab === 'profile' ? (
               <div className="profile">
                 <h2>Your Profile</h2>
-                <p>XP: {xp}</p>
-                <div className="xp-progress">
-                  <div className="xp-bar" style={{ width: `${Math.min(xp / 100 * 100, 100)}%` }}></div>
-                </div>
-                <h3>Past Sessions</h3>
-                {reports.length > 0 ? (
-                  <>
-                    <div className="date-buttons">
-                      {paginatedReports.map((report, i) => (
-                        <button
-                          key={i}
-                          onClick={() => setSelectedReport(report)}
-                          className={selectedReport?.date === report.date ? 'active' : ''}
-                        >
-                          {new Date(report.date).toLocaleDateString()}
-                        </button>
-                      ))}
-                    </div>
-                    {selectedReport && (
-                      <div className="report-details">
-                        <h3>Session: {new Date(selectedReport.date).toLocaleDateString()}</h3>
-                        {/* Removed bar chart */}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <p>No sessions yet. Start chatting to generate a summary!</p>
-                )}
-                <button onClick={handleLogout} className="logout-btn"><img src="/icons/logout.png" alt="Logout" className="icon" />Log Out</button>
+                <button onClick={handleLogout} className="logout-btn">
+                  <img src="/icons/logout.png" alt="Logout" className="icon" />
+                  Log Out
+                </button>
               </div>
             ) : activeTab === 'chat' ? (
               <>
@@ -639,7 +719,7 @@ function App() {
                       ))}
                     </div>
                     {timeLeft > 0 ? (
-                      <>
+                      <div className="chat-input-container">
                         <input
                           placeholder="Talk to Pal... (max 500 characters)"
                           value={chatInput}
@@ -650,9 +730,15 @@ function App() {
                             }
                           }}
                         />
+                        <button
+                          className="send-btn mobile-only"
+                          onClick={() => chatInput.trim() && handleChat(chatInput)}
+                          disabled={!chatInput.trim()}
+                        >
+                          Send
+                        </button>
                         <p className="char-counter">{chatInput.length}/500</p>
-                        <button onClick={handleEndChat}>End Chat</button>
-                      </>
+                      </div>
                     ) : (
                       <div>
                         <h2>Session Complete</h2>
@@ -660,6 +746,7 @@ function App() {
                         <button onClick={() => setActiveTab('reflect')}>View Reflect</button>
                       </div>
                     )}
+                    {timeLeft > 0 && <button onClick={handleEndChat}>End Chat</button>}
                   </div>
                 ) : (
                   <div className="quiz">
@@ -751,6 +838,12 @@ function App() {
                             <td>{new Date(entry.date).toLocaleDateString()}</td>
                             <td>
                               <button onClick={() => handleOpenJournalEntry(entry)}>Open</button>
+                              <button
+                                className="delete-btn"
+                                onClick={() => setDeleteConfirm({ type: 'journal', id: entry._id })}
+                              >
+                                Delete
+                              </button>
                             </td>
                           </tr>
                         ))}
@@ -806,10 +899,16 @@ function App() {
                             <td>{new Date(report.date).toLocaleDateString()}</td>
                             <td>
                               <button
-                                onClick={() => setSelectedReport(report)}
-                                className={selectedReport?.date === report.date ? 'active' : ''}
+                                onClick={() => handleViewReport(report)}
+                                className={selectedReport?._id === report._id ? 'active' : ''}
                               >
                                 View
+                              </button>
+                              <button
+                                className="delete-btn"
+                                onClick={() => setDeleteConfirm({ type: 'report', id: report._id })}
+                              >
+                                Delete
                               </button>
                             </td>
                           </tr>
@@ -832,7 +931,7 @@ function App() {
                       </button>
                     </div>
                     {selectedReport && (
-                      <div className="report-details">
+                      <div className="report-details" ref={reportDetailsRef}>
                         <h3>Session: {new Date(selectedReport.date).toLocaleDateString()}</h3>
                         <div className="bar-chart-container">
                           {barChartData && <Bar data={barChartData} options={barChartData.options} />}
