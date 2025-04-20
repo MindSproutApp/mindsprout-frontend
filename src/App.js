@@ -43,12 +43,14 @@ function App() {
   const [showSignup, setShowSignup] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
+  // State for affirmations
   const [currentAffirmation, setCurrentAffirmation] = useState('');
   const [affirmationPosition, setAffirmationPosition] = useState({ top: '50%', left: '50%' });
 
   const chatBoxRef = useRef(null);
   const reportDetailsRef = useRef(null);
 
+  // 100 Positive Affirmations (unchanged from your provided list)
   const affirmations = [
     "You are enough just as you are.",
     "Your potential is limitless.",
@@ -149,22 +151,24 @@ function App() {
     "You are worthy of every happiness."
   ];
 
-  const showRandomAffirmation = useCallback(() => {
+  // Modified affirmation rotation with random positioning
+  const showRandomAffirmation = () => {
     const randomIndex = Math.floor(Math.random() * affirmations.length);
-    const randomTop = `${Math.random() * 80 + 10}%`;
-    const randomLeft = `${Math.random() * 80 + 10}%`;
+    const randomTop = `${Math.random() * 80 + 10}%`; // 10%–90% of screen height
+    const randomLeft = `${Math.random() * 80 + 10}%`; // 10%–90% of screen width
     setCurrentAffirmation(affirmations[randomIndex]);
     setAffirmationPosition({ top: randomTop, left: randomLeft });
-  }, [affirmations]);
+  };
 
   useEffect(() => {
     if (isLoading && !showSummaryBuffer) {
       showRandomAffirmation();
-      const interval = setInterval(showRandomAffirmation, 4000);
+      const interval = setInterval(showRandomAffirmation, 3000); // Change every 3 seconds
       return () => clearInterval(interval);
     }
-  }, [isLoading, showSummaryBuffer, showRandomAffirmation]);
+  }, [isLoading, showSummaryBuffer]);
 
+  // Update isDesktop on window resize
   useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth > 768);
     window.addEventListener('resize', handleResize);
@@ -486,6 +490,7 @@ function App() {
     setOpenNotepadSection(null);
   };
 
+  // Fixed Delete Journal Functionality
   const handleDeleteJournal = async (entryId) => {
     setIsLoading(true);
     try {
@@ -509,6 +514,7 @@ function App() {
     }
   };
 
+  // Fixed Delete Report Functionality
   const handleDeleteReport = async (reportId) => {
     setIsLoading(true);
     try {
@@ -588,6 +594,7 @@ function App() {
     setOpenNotepadSection(null);
   };
 
+  // Enhanced Scroll to Bottom for Reflect View
   const handleViewReport = (report) => {
     setSelectedReport(report);
     setTimeout(() => {
@@ -615,7 +622,7 @@ function App() {
           <p>{responses.emotions || 'Not available'}</p>
           {hasInsight ? (
             <>
-              <h4>Your Insights</h4>
+              <h4>Your Reidhts</h4>
               <p>{insight.insight}</p>
             </>
           ) : (
@@ -848,11 +855,9 @@ function App() {
                     </div>
                   </div>
                 ) : showBreathe ? (
-                  <div className={`breathe-overlay ${showBreathe ? 'active' : ''}`}>
-                    <div className="breathe-animation">
-                      <h2>Take this moment to breathe...</h2>
-                      <p className="breathe-count">{breatheCount}</p>
-                    </div>
+                  <div className="breathe-animation">
+                    <h2>Take this moment to breathe...</h2>
+                    <p className="breathe-count">{breatheCount}</p>
                   </div>
                 ) : isChatActive ? (
                   <div className="chat">
@@ -1121,37 +1126,45 @@ function App() {
                     )}
                   </>
                 ) : (
-                  <p>No sessions yet. Start a chat to save one!</p>
+                  <p>No chat sessions yet. Start chatting to save insights!</p>
                 )}
               </div>
             ) : null}
             <div className="menu-bar">
               <button
-                className={activeTab === 'profile' ? 'active' : ''}
                 onClick={() => setActiveTab('profile')}
+                className={activeTab === 'profile' ? 'active' : ''}
+                aria-label="View Profile"
+                aria-pressed={activeTab === 'profile'}
               >
-                <img src="/icons/profile.png" alt="Profile" className="icon" />
+                <img src="/icons/user.png" alt="" className="icon" />
                 <span>Profile</span>
               </button>
               <button
-                className={activeTab === 'chat' ? 'active' : ''}
                 onClick={() => setActiveTab('chat')}
+                className={activeTab === 'chat' ? 'active' : ''}
+                aria-label="Start Chat"
+                aria-pressed={activeTab === 'chat'}
               >
-                <img src="/icons/chat.png" alt="Chat" className="icon" />
-                <span>Chat</span>
+                <img src="/icons/chat.png" alt="" className="icon" />
+                <span>{chatTokens > 0 ? `Chat (${chatTokens}/3)` : 'Chat'}</span>
               </button>
               <button
-                className={activeTab === 'journal' ? 'active' : ''}
                 onClick={() => setActiveTab('journal')}
+                className={activeTab === 'journal' ? 'active' : ''}
+                aria-label="View Journal"
+                aria-pressed={activeTab === 'journal'}
               >
-                <img src="/icons/journal.png" alt="Journal" className="icon" />
+                <img src="/icons/journal.png" alt="" className="icon" />
                 <span>Journal</span>
               </button>
               <button
-                className={activeTab === 'reflect' ? 'active' : ''}
                 onClick={() => setActiveTab('reflect')}
+                className={activeTab === 'reflect' ? 'active' : ''}
+                aria-label="View Reflect"
+                aria-pressed={activeTab === 'reflect'}
               >
-                <img src="/icons/reflect.png" alt="Reflect" className="icon" />
+                <img src="/icons/meditation.png" alt="" className="icon" />
                 <span>Reflect</span>
               </button>
             </div>
