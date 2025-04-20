@@ -43,13 +43,14 @@ function App() {
   const [showSignup, setShowSignup] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
-  // New state for affirmations
+  // State for affirmations
   const [currentAffirmation, setCurrentAffirmation] = useState('');
+  const [affirmationPosition, setAffirmationPosition] = useState({ top: '50%', left: '50%' });
 
   const chatBoxRef = useRef(null);
   const reportDetailsRef = useRef(null);
 
-  // 100 Positive Affirmations
+  // 100 Positive Affirmations (unchanged from your provided list)
   const affirmations = [
     "You are enough just as you are.",
     "Your potential is limitless.",
@@ -150,15 +151,19 @@ function App() {
     "You are worthy of every happiness."
   ];
 
-  // Rotate affirmations during loading
+  // Modified affirmation rotation with random positioning
+  const showRandomAffirmation = () => {
+    const randomIndex = Math.floor(Math.random() * affirmations.length);
+    const randomTop = `${Math.random() * 80 + 10}%`; // 10%–90% of screen height
+    const randomLeft = `${Math.random() * 80 + 10}%`; // 10%–90% of screen width
+    setCurrentAffirmation(affirmations[randomIndex]);
+    setAffirmationPosition({ top: randomTop, left: randomLeft });
+  };
+
   useEffect(() => {
     if (isLoading && !showSummaryBuffer) {
-      setCurrentAffirmation(affirmations[0]);
-      let index = 0;
-      const interval = setInterval(() => {
-        index = (index + 1) % affirmations.length;
-        setCurrentAffirmation(affirmations[index]);
-      }, 3000);
+      showRandomAffirmation();
+      const interval = setInterval(showRandomAffirmation, 3000); // Change every 3 seconds
       return () => clearInterval(interval);
     }
   }, [isLoading, showSummaryBuffer]);
@@ -490,7 +495,7 @@ function App() {
     setIsLoading(true);
     try {
       await axios.delete(`${API_URL}/api/regular/journal/${entryId}`, {
-        headers: { Authorization: token } // Simplified header
+        headers: { Authorization: token }
       });
       setJournal(prev => prev.filter(entry => entry._id !== entryId));
       setJournalInsights(prev => prev.filter(insight => {
@@ -514,7 +519,7 @@ function App() {
     setIsLoading(true);
     try {
       await axios.delete(`${API_URL}/api/regular/reports/${reportId}`, {
-        headers: { Authorization: token } // Simplified header
+        headers: { Authorization: token }
       });
       setReports(prev => prev.filter(report => report._id !== reportId));
       setSelectedReport(null);
@@ -578,6 +583,7 @@ function App() {
     setShowSignup(false);
     setDeleteConfirm(null);
     setCurrentAffirmation('');
+    setAffirmationPosition({ top: '50%', left: '50%' });
   };
 
   const handleOpenNotepad = (section) => {
@@ -691,12 +697,22 @@ function App() {
           {showSummaryBuffer ? (
             <p>Preparing your summary...</p>
           ) : (
-            <p className="affirmation">{currentAffirmation}</p>
+            <p
+              className="affirmation"
+              style={{
+                position: 'absolute',
+                top: affirmationPosition.top,
+                left: affirmationPosition.left,
+                transform: 'translate(-50%, -50%)'
+              }}
+            >
+              {currentAffirmation}
+            </p>
           )}
         </div>
       )}
       {deleteConfirm && (
-        <div className="delete-confirm-modal">
+        <div className={`delete-confirm-modal ${deleteConfirm ? 'active' : ''}`}>
           <div className="delete-confirm-content">
             <h3>Are you sure you want to delete this entry?</h3>
             <p>This action cannot be undone.</p>
@@ -865,7 +881,6 @@ function App() {
                             }
                           }}
                         />
-                        {/* Added Send Button for Mobile and Desktop */}
                         <button
                           className="send-btn"
                           onClick={() => chatInput.trim() && handleChat(chatInput)}
