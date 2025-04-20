@@ -32,6 +32,7 @@ function App() {
   const [selectedJournalEntry, setSelectedJournalEntry] = useState(null);
   const [showBreathe, setShowBreathe] = useState(false);
   const [breatheCount, setBreatheCount] = useState(3);
+  const [breatheProgress, setBreatheProgress] = useState(100); // New state for breathe timer progress
   const [openNotepadSection, setOpenNotepadSection] = useState(null);
   const [openJournalType, setOpenJournalType] = useState(null);
   const [journalResponses, setJournalResponses] = useState({});
@@ -160,11 +161,14 @@ function App() {
     setAffirmationPosition({ top: randomTop, left: randomLeft });
   }, [affirmations]);
 
-  // Affirmation cycling during loading
+  // Modified affirmation cycling during loading
   useEffect(() => {
     if (isLoading && !showSummaryBuffer) {
       showRandomAffirmation(); // Show first affirmation immediately
-      const interval = setInterval(showRandomAffirmation, 2000); // Change every 2 seconds
+      const interval = setInterval(() => {
+        setCurrentAffirmation(''); // Clear affirmation to ensure only one shows
+        setTimeout(showRandomAffirmation, 500); // Show next after fade-out
+      }, 3000); // 3-second cycle: 0.5s fade-in, 2s display, 0.5s fade-out
       return () => clearInterval(interval); // Cleanup on unmount or dependency change
     }
   }, [isLoading, showSummaryBuffer, showRandomAffirmation]);
@@ -268,13 +272,20 @@ function App() {
     }
   }, [isChatActive, timeLeft]);
 
+  // Modified breathe animation with progress timer
   useEffect(() => {
     if (showBreathe) {
       setBreatheCount(3);
-      const countdown = setInterval(() => {
+      setBreatheProgress(100); // Start progress at 100%
+      let startTime = Date.now();
+      const totalDuration = 3000; // 3 seconds total
+      const interval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.max(0, 100 - (elapsed / totalDuration) * 100); // Decrease progress
+        setBreatheProgress(progress);
         setBreatheCount(prev => {
           if (prev <= 1) {
-            clearInterval(countdown);
+            clearInterval(interval);
             setShowBreathe(false);
             setIsChatActive(true);
             setChat([{ sender: 'pal', text: 'Hello, welcome to this safe space, what is on your mind today?', timestamp: new Date() }]);
@@ -284,8 +295,8 @@ function App() {
           }
           return prev - 1;
         });
-      }, 1000);
-      return () => clearInterval(countdown);
+      }, 100); // Update every 100ms for smooth progress
+      return () => clearInterval(interval);
     }
   }, [showBreathe]);
 
@@ -622,7 +633,7 @@ function App() {
           <p>{responses.emotions || 'Not available'}</p>
           {hasInsight ? (
             <>
-              <h4>Your Reidhts</h4>
+              <h4>Your Insights</h4>
               <p>{insight.insight}</p>
             </>
           ) : (
@@ -859,6 +870,12 @@ function App() {
                     <div className="breathe-animation">
                       <h2>Take this moment to breathe...</h2>
                       <p className="breathe-count">{breatheCount}</p>
+                      <div className="breathe-progress-bar">
+                        <div
+                          className="breathe-progress"
+                          style={{ width: `${breatheProgress}%` }}
+                        ></div>
+                      </div>
                     </div>
                   </div>
                 ) : isChatActive ? (
