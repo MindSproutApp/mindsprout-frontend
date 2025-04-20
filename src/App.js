@@ -40,12 +40,128 @@ function App() {
   const [chatInput, setChatInput] = useState('');
   const [journalPage, setJournalPage] = useState(1);
   const [reflectPage, setReflectPage] = useState(1);
-  const [showSignup, setShowSignup] = useState(false); // Toggle for mobile only
-  const [deleteConfirm, setDeleteConfirm] = useState(null); // For delete confirmation
-  const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768); // Track desktop vs mobile
+  const [showSignup, setShowSignup] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
+  // New state for affirmations
+  const [currentAffirmation, setCurrentAffirmation] = useState('');
 
   const chatBoxRef = useRef(null);
-  const reportDetailsRef = useRef(null); // For scrolling to report details
+  const reportDetailsRef = useRef(null);
+
+  // 100 Positive Affirmations
+  const affirmations = [
+    "You are enough just as you are.",
+    "Your potential is limitless.",
+    "You radiate positivity and love.",
+    "Every day is a fresh start.",
+    "You are capable of amazing things.",
+    "Your strength is inspiring.",
+    "You deserve happiness and peace.",
+    "You are growing every day.",
+    "Your voice matters.",
+    "You are worthy of love and respect.",
+    "You have the power to change your story.",
+    "You are resilient and strong.",
+    "Your dreams are valid.",
+    "You bring light to those around you.",
+    "You are in control of your happiness.",
+    "You are brave for trying.",
+    "Your heart is full of courage.",
+    "You are a gift to the world.",
+    "You are making a difference.",
+    "You are surrounded by love.",
+    "You are stronger than you know.",
+    "Your journey is beautiful.",
+    "You are allowed to take up space.",
+    "You are learning and growing.",
+    "You are a masterpiece in progress.",
+    "You have the courage to face anything.",
+    "You are deserving of all good things.",
+    "Your kindness changes lives.",
+    "You are unstoppable.",
+    "You are creating a beautiful life.",
+    "You are full of potential.",
+    "You are a beacon of hope.",
+    "You are worthy of success.",
+    "You are loved beyond measure.",
+    "You have the strength to overcome.",
+    "You are a unique and wonderful soul.",
+    "You are capable of great things.",
+    "Your presence is powerful.",
+    "You are on the right path.",
+    "You are a force for good.",
+    "You are blooming beautifully.",
+    "You have everything you need within you.",
+    "You are a spark of divine light.",
+    "You are worthy of your dreams.",
+    "You are enough, always.",
+    "You are a warrior of love.",
+    "You are creating your own magic.",
+    "You are a blessing to others.",
+    "You are growing into your best self.",
+    "You are surrounded by abundance.",
+    "You are a source of inspiration.",
+    "You are free to be yourself.",
+    "You are a beautiful soul.",
+    "You are capable of anything.",
+    "You are a light in the darkness.",
+    "You are worthy of every opportunity.",
+    "You are stronger every day.",
+    "You are a masterpiece.",
+    "You are loved for who you are.",
+    "You are building a bright future.",
+    "You are a gift to those around you.",
+    "You are full of courage and grace.",
+    "You are exactly where you need to be.",
+    "You are a radiant being.",
+    "You are making the world better.",
+    "You are worthy of all your desires.",
+    "You are a powerful creator.",
+    "You are filled with infinite potential.",
+    "You are a beautiful work in progress.",
+    "You are deserving of joy.",
+    "You are a shining star.",
+    "You are stronger than any challenge.",
+    "You are a unique treasure.",
+    "You are creating a life you love.",
+    "You are surrounded by positivity.",
+    "You are a source of joy.",
+    "You are worthy of greatness.",
+    "You are a beautiful spirit.",
+    "You are capable of miracles.",
+    "You are a light for others.",
+    "You are growing stronger every day.",
+    "You are a blessing to the world.",
+    "You are full of love and kindness.",
+    "You are on a path to greatness.",
+    "You are a radiant soul.",
+    "You are worthy of every dream.",
+    "You are a powerful force.",
+    "You are creating a legacy of love.",
+    "You are a beautiful being.",
+    "You are deserving of peace.",
+    "You are a spark of brilliance.",
+    "You are stronger than you realize.",
+    "You are a unique gift.",
+    "You are building a life of purpose.",
+    "You are surrounded by love and light.",
+    "You are a source of strength.",
+    "You are worthy of every happiness."
+  ];
+
+  // Rotate affirmations during loading
+  useEffect(() => {
+    if (isLoading && !showSummaryBuffer) {
+      setCurrentAffirmation(affirmations[0]);
+      let index = 0;
+      const interval = setInterval(() => {
+        index = (index + 1) % affirmations.length;
+        setCurrentAffirmation(affirmations[index]);
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [isLoading, showSummaryBuffer]);
 
   // Update isDesktop on window resize
   useEffect(() => {
@@ -203,7 +319,6 @@ function App() {
   const handleRegularLogin = (e) => {
     e.preventDefault();
     setIsLoading(true);
-    // Convert email to lowercase for case-insensitive login
     const loginData = { ...regularLoginForm, email: regularLoginForm.email.toLowerCase() };
     axios.post(`${API_URL}/api/regular/login`, loginData)
       .then(res => {
@@ -370,14 +485,18 @@ function App() {
     setOpenNotepadSection(null);
   };
 
+  // Fixed Delete Journal Functionality
   const handleDeleteJournal = async (entryId) => {
     setIsLoading(true);
     try {
       await axios.delete(`${API_URL}/api/regular/journal/${entryId}`, {
-        headers: { Authorization: `Bearer ${token}` } // Explicit Bearer token
+        headers: { Authorization: token } // Simplified header
       });
       setJournal(prev => prev.filter(entry => entry._id !== entryId));
-      setJournalInsights(prev => prev.filter(insight => new Date(insight.journalDate).getTime() !== new Date(journal.find(entry => entry._id === entryId)?.date).getTime()));
+      setJournalInsights(prev => prev.filter(insight => {
+        const journalDate = journal.find(entry => entry._id === entryId)?.date;
+        return journalDate ? new Date(insight.journalDate).getTime() !== new Date(journalDate).getTime() : true;
+      }));
       setSelectedJournalEntry(null);
       setOpenNotepadSection(null);
       setMessage('Journal entry deleted successfully.');
@@ -390,11 +509,12 @@ function App() {
     }
   };
 
+  // Fixed Delete Report Functionality
   const handleDeleteReport = async (reportId) => {
     setIsLoading(true);
     try {
       await axios.delete(`${API_URL}/api/regular/reports/${reportId}`, {
-        headers: { Authorization: `Bearer ${token}` } // Explicit Bearer token
+        headers: { Authorization: token } // Simplified header
       });
       setReports(prev => prev.filter(report => report._id !== reportId));
       setSelectedReport(null);
@@ -457,6 +577,7 @@ function App() {
     setChatInput('');
     setShowSignup(false);
     setDeleteConfirm(null);
+    setCurrentAffirmation('');
   };
 
   const handleOpenNotepad = (section) => {
@@ -467,9 +588,9 @@ function App() {
     setOpenNotepadSection(null);
   };
 
+  // Enhanced Scroll to Bottom for Reflect View
   const handleViewReport = (report) => {
     setSelectedReport(report);
-    // Scroll to the bottom of report-details
     setTimeout(() => {
       if (reportDetailsRef.current) {
         reportDetailsRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -549,7 +670,6 @@ function App() {
     return <p>No responses available</p>;
   };
 
-  // Pagination for journal entries
   const entriesPerPage = 5;
   const sortedJournal = [...journal].sort((a, b) => new Date(b.date) - new Date(a.date));
   const journalPageCount = Math.ceil(sortedJournal.length / entriesPerPage);
@@ -557,7 +677,6 @@ function App() {
   const journalEndIndex = journalStartIndex + entriesPerPage;
   const paginatedJournal = sortedJournal.slice(journalStartIndex, journalEndIndex);
 
-  // Pagination for reflect entries
   const sortedReports = [...reports].sort((a, b) => new Date(b.date) - new Date(a.date));
   const reflectPageCount = Math.ceil(sortedReports.length / entriesPerPage);
   const reflectStartIndex = (reflectPage - 1) * entriesPerPage;
@@ -569,7 +688,11 @@ function App() {
       {(isLoading || showSummaryBuffer) && (
         <div className="loading-overlay">
           <div className="spinner"></div>
-          {showSummaryBuffer && <p>Preparing your summary...</p>}
+          {showSummaryBuffer ? (
+            <p>Preparing your summary...</p>
+          ) : (
+            <p className="affirmation">{currentAffirmation}</p>
+          )}
         </div>
       )}
       {deleteConfirm && (
@@ -742,6 +865,7 @@ function App() {
                             }
                           }}
                         />
+                        {/* Added Send Button for Mobile and Desktop */}
                         <button
                           className="send-btn"
                           onClick={() => chatInput.trim() && handleChat(chatInput)}
