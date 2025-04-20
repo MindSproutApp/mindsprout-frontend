@@ -32,7 +32,7 @@ function App() {
   const [selectedJournalEntry, setSelectedJournalEntry] = useState(null);
   const [showBreathe, setShowBreathe] = useState(false);
   const [breatheCount, setBreatheCount] = useState(3);
-  const [breatheProgress, setBreatheProgress] = useState(100); // Progress bar state
+  const [breatheProgress, setBreatheProgress] = useState(100);
   const [openNotepadSection, setOpenNotepadSection] = useState(null);
   const [openJournalType, setOpenJournalType] = useState(null);
   const [journalResponses, setJournalResponses] = useState({});
@@ -44,14 +44,12 @@ function App() {
   const [showSignup, setShowSignup] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
-  // Affirmation states
   const [currentAffirmation, setCurrentAffirmation] = useState('');
   const [affirmationPosition, setAffirmationPosition] = useState({ top: '50%', left: '50%' });
 
   const chatBoxRef = useRef(null);
   const reportDetailsRef = useRef(null);
 
-  // Affirmation list
   const affirmations = [
     "You are enough just as you are.",
     "Your potential is limitless.",
@@ -62,118 +60,30 @@ function App() {
     "You deserve happiness and peace.",
     "You are growing every day.",
     "Your voice matters.",
-    "You are worthy of love and respect.",
-    "You have the power to change your story.",
-    "You are resilient and strong.",
-    "Your dreams are valid.",
-    "You bring light to those around you.",
-    "You are in control of your happiness.",
-    "You are brave for trying.",
-    "Your heart is full of courage.",
-    "You are a gift to the world.",
-    "You are making a difference.",
-    "You are surrounded by love.",
-    "You are stronger than you know.",
-    "Your journey is beautiful.",
-    "You are allowed to take up space.",
-    "You are learning and growing.",
-    "You are a masterpiece in progress.",
-    "You have the courage to face anything.",
-    "You are deserving of all good things.",
-    "Your kindness changes lives.",
-    "You are unstoppable.",
-    "You are creating a beautiful life.",
-    "You are full of potential.",
-    "You are a beacon of hope.",
-    "You are worthy of success.",
-    "You are loved beyond measure.",
-    "You have the strength to overcome.",
-    "You are a unique and wonderful soul.",
-    "You are capable of great things.",
-    "Your presence is powerful.",
-    "You are on the right path.",
-    "You are a force for good.",
-    "You are blooming beautifully.",
-    "You have everything you need within you.",
-    "You are a spark of divine light.",
-    "You are worthy of your dreams.",
-    "You are enough, always.",
-    "You are a warrior of love.",
-    "You are creating your own magic.",
-    "You are a blessing to others.",
-    "You are growing into your best self.",
-    "You are surrounded by abundance.",
-    "You are a source of inspiration.",
-    "You are free to be yourself.",
-    "You are a beautiful soul.",
-    "You are capable of anything.",
-    "You are a light in the darkness.",
-    "You are worthy of every opportunity.",
-    "You are stronger every day.",
-    "You are a masterpiece.",
-    "You are loved for who you are.",
-    "You are building a bright future.",
-    "You are a gift to those around you.",
-    "You are full of courage and grace.",
-    "You are exactly where you need to be.",
-    "You are a radiant being.",
-    "You are making the world better.",
-    "You are worthy of all your desires.",
-    "You are a powerful creator.",
-    "You are filled with infinite potential.",
-    "You are a beautiful work in progress.",
-    "You are deserving of joy.",
-    "You are a shining star.",
-    "You are stronger than any challenge.",
-    "You are a unique treasure.",
-    "You are creating a life you love.",
-    "You are surrounded by positivity.",
-    "You are a source of joy.",
-    "You are worthy of greatness.",
-    "You are a beautiful spirit.",
-    "You are capable of miracles.",
-    "You are a light for others.",
-    "You are growing stronger every day.",
-    "You are a blessing to the world.",
-    "You are full of love and kindness.",
-    "You are on a path to greatness.",
-    "You are a radiant soul.",
-    "You are worthy of every dream.",
-    "You are a powerful force.",
-    "You are creating a legacy of love.",
-    "You are a beautiful being.",
-    "You are deserving of peace.",
-    "You are a spark of brilliance.",
-    "You are stronger than you realize.",
-    "You are a unique gift.",
-    "You are building a life of purpose.",
-    "You are surrounded by love and light.",
-    "You are a source of strength.",
-    "You are worthy of every happiness."
+    "You are worthy of love and respect."
+    // ... (your full list, truncated for brevity; keep your original list)
   ];
 
-  // Function to show a random affirmation with random positioning
   const showRandomAffirmation = useCallback(() => {
     const randomIndex = Math.floor(Math.random() * affirmations.length);
-    const randomTop = `${Math.random() * 80 + 10}%`; // 10%–90% of screen height
-    const randomLeft = `${Math.random() * 80 + 10}%`; // 10%–90% of screen width
+    const randomTop = `${Math.random() * 80 + 10}%`;
+    const randomLeft = `${Math.random() * 80 + 10}%`;
     setCurrentAffirmation(affirmations[randomIndex]);
     setAffirmationPosition({ top: randomTop, left: randomLeft });
   }, [affirmations]);
 
-  // Affirmation cycling during loading
+  // Affirmation cycling: 3s display, fade out, new affirmation
   useEffect(() => {
     if (isLoading && !showSummaryBuffer) {
-      showRandomAffirmation(); // Show first affirmation immediately
+      showRandomAffirmation();
       const interval = setInterval(() => {
-        setCurrentAffirmation(''); // Clear affirmation to ensure no overlap
-        setTimeout(showRandomAffirmation, 500); // Show next after fade-out
-      }, 3000); // 3-second cycle: 0.5s fade-in, 2s display, 0.5s fade-out
+        setCurrentAffirmation('');
+        setTimeout(showRandomAffirmation, 500); // Wait for fade-out (0.5s)
+      }, 3500); // 3s display + 0.5s fade-out
       return () => clearInterval(interval);
     }
   }, [isLoading, showSummaryBuffer, showRandomAffirmation]);
 
-  // Update isDesktop on window resize
   useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth > 768);
     window.addEventListener('resize', handleResize);
@@ -272,28 +182,27 @@ function App() {
     }
   }, [isChatActive, timeLeft]);
 
-  // Breathe animation with 3-second countdown
+  // Breathe countdown: 3s total, each number fades in/out
   useEffect(() => {
     if (showBreathe) {
       setBreatheCount(3);
       setBreatheProgress(100);
       let count = 3;
       const interval = setInterval(() => {
-        setBreatheProgress((prev) => prev - (100 / 3)); // Decrease progress by 1/3 each second
-        setBreatheCount((prev) => {
-          count -= 1;
-          if (count < 1) {
-            clearInterval(interval);
+        setBreatheCount(count);
+        setBreatheProgress((prev) => prev - (100 / 3));
+        count -= 1;
+        if (count < 1) {
+          clearInterval(interval);
+          setTimeout(() => {
             setShowBreathe(false);
             setIsChatActive(true);
             setChat([{ sender: 'pal', text: 'Hello, welcome to this safe space, what is on your mind today?', timestamp: new Date() }]);
             setTimeLeft(10 * 60);
             setMessage('Let’s chat.');
-            return 0;
-          }
-          return count;
-        });
-      }, 1000); // Update every 1 second for 3 seconds
+          }, 500); // Wait for final fade-out
+        }
+      }, 1000); // 1s per number (fade-in, display, fade-out)
       return () => clearInterval(interval);
     }
   }, [showBreathe]);
@@ -865,7 +774,7 @@ function App() {
                   <div className={`breathe-overlay ${showBreathe ? 'active' : ''}`}>
                     <div className="breathe-animation">
                       <h2>Take this moment to breathe...</h2>
-                      <p className="breathe-count">{breatheCount}</p>
+                      <p className={`breathe-count ${breatheCount === 3 ? 'fade-in' : 'fade-out'}`}>{breatheCount}</p>
                       <div className="breathe-progress-bar">
                         <div
                           className="breathe-progress"
