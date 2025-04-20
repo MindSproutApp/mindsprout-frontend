@@ -44,8 +44,7 @@ function App() {
   const [showSignup, setShowSignup] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
-  const [currentAffirmation, setCurrentAffirmation] = useState('');
-  const [affirmationPosition, setAffirmationPosition] = useState({ top: '50%', left: '50%' });
+  const [currentAffirmationIndex, setCurrentAffirmationIndex] = useState(0);
 
   const chatBoxRef = useRef(null);
   const reportDetailsRef = useRef(null);
@@ -61,28 +60,18 @@ function App() {
     "You are growing every day.",
     "Your voice matters.",
     "You are worthy of love and respect."
-    // ... (your full list, truncated for brevity; keep your original list)
+    // ... (keep your full list; truncated for brevity)
   ];
 
-  const showRandomAffirmation = useCallback(() => {
-    const randomIndex = Math.floor(Math.random() * affirmations.length);
-    const randomTop = `${Math.random() * 80 + 10}%`;
-    const randomLeft = `${Math.random() * 80 + 10}%`;
-    setCurrentAffirmation(affirmations[randomIndex]);
-    setAffirmationPosition({ top: randomTop, left: randomLeft });
-  }, [affirmations]);
-
-  // Affirmation cycling: 3s display, fade out, new affirmation
+  // Cycle through affirmations during loading
   useEffect(() => {
     if (isLoading && !showSummaryBuffer) {
-      showRandomAffirmation();
       const interval = setInterval(() => {
-        setCurrentAffirmation('');
-        setTimeout(showRandomAffirmation, 500); // Wait for fade-out (0.5s)
-      }, 3500); // 3s display + 0.5s fade-out
+        setCurrentAffirmationIndex((prevIndex) => (prevIndex + 1) % affirmations.length);
+      }, 4000); // 3s display + 1s fade (0.5s in, 0.5s out)
       return () => clearInterval(interval);
     }
-  }, [isLoading, showSummaryBuffer, showRandomAffirmation]);
+  }, [isLoading, showSummaryBuffer, affirmations.length]);
 
   useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth > 768);
@@ -182,7 +171,6 @@ function App() {
     }
   }, [isChatActive, timeLeft]);
 
-  // Breathe countdown: 3s total, each number fades in/out
   useEffect(() => {
     if (showBreathe) {
       setBreatheCount(3);
@@ -200,9 +188,9 @@ function App() {
             setChat([{ sender: 'pal', text: 'Hello, welcome to this safe space, what is on your mind today?', timestamp: new Date() }]);
             setTimeLeft(10 * 60);
             setMessage('Let’s chat.');
-          }, 500); // Wait for final fade-out
+          }, 500);
         }
-      }, 1000); // 1s per number (fade-in, display, fade-out)
+      }, 1000);
       return () => clearInterval(interval);
     }
   }, [showBreathe]);
@@ -499,8 +487,7 @@ function App() {
     setChatInput('');
     setShowSignup(false);
     setDeleteConfirm(null);
-    setCurrentAffirmation('');
-    setAffirmationPosition({ top: '50%', left: '50%' });
+    setCurrentAffirmationIndex(0);
   };
 
   const handleOpenNotepad = (section) => {
@@ -583,7 +570,7 @@ function App() {
             </>
           ) : (
             <button onClick={() => handleGenerateInsight(entry)} disabled={isLoading}>
-              Gain Profound Insights
+              Gain Profound Insights Vignette
             </button>
           )}
         </div>
@@ -613,17 +600,7 @@ function App() {
           {showSummaryBuffer ? (
             <p>Preparing your summary...</p>
           ) : (
-            <p
-              className="affirmation"
-              style={{
-                position: 'absolute',
-                top: affirmationPosition.top,
-                left: affirmationPosition.left,
-                transform: 'translate(-50%, -50%)'
-              }}
-            >
-              {currentAffirmation}
-            </p>
+            <p className="affirmation">{affirmations[currentAffirmationIndex]}</p>
           )}
         </div>
       )}
@@ -741,33 +718,35 @@ function App() {
               <>
                 {isQuizActive ? (
                   <div className={`quiz-fullscreen ${isQuizActive ? 'active' : ''}`}>
-                    <h3 className="quiz-question">{emotionDescriptions[quizQuestions[currentQuizQuestion]].question}</h3>
-                    <div className="quiz-options">
-                      {[1, 2, 3, 4, 5].map(value => (
-                        <button
-                          key={value}
-                          className={`quiz-option-box ${selectedAnswer === value ? 'selected' : ''}`}
-                          onClick={() => handleQuizAnswer(value)}
-                          onKeyPress={(e) => handleQuizKeyPress(e, value)}
-                          tabIndex={0}
-                          role="radio"
-                          aria-checked={selectedAnswer === value}
-                          aria-label={`${emotionDescriptions[quizQuestions[currentQuizQuestion]].feedback(value)} (${value}/5)`}
-                        >
-                          <span className="quiz-value">{value}</span>
-                          <span className="quiz-feedback">{emotionDescriptions[quizQuestions[currentQuizQuestion]].feedback(value)}</span>
-                          <span className="quiz-emoji">{emotionDescriptions[quizQuestions[currentQuizQuestion]].emojis[value - 1]}</span>
-                        </button>
-                      ))}
-                    </div>
-                    <div className="quiz-nav">
-                      {selectedAnswer !== null && (
-                        currentQuizQuestion < quizQuestions.length - 1 ? (
-                          <button onClick={handleQuizNext}>Next</button>
-                        ) : (
-                          <button onClick={handleStartChat}>Start Chat</button>
-                        )
-                      )}
+                    <div className="quiz-content">
+                      <h3 className="quiz-question">{emotionDescriptions[quizQuestions[currentQuizQuestion]].question}</h3>
+                      <div className="quiz-options">
+                        {[1, 2, 3, 4, 5].map(value => (
+                          <button
+                            key={value}
+                            className={`quiz-option-box ${selectedAnswer === value ? 'selected' : ''}`}
+                            onClick={() => handleQuizAnswer(value)}
+                            onKeyPress={(e) => handleQuizKeyPress(e, value)}
+                            tabIndex={0}
+                            role="radio"
+                            aria-checked={selectedAnswer === value}
+                            aria-label={`${emotionDescriptions[quizQuestions[currentQuizQuestion]].feedback(value)} (${value}/5)`}
+                          >
+                            <span className="quiz-value">{value}</span>
+                            <span className="quiz-feedback">{emotionDescriptions[quizQuestions[currentQuizQuestion]].feedback(value)}</span>
+                            <span className="quiz-emoji">{emotionDescriptions[quizQuestions[currentQuizQuestion]].emojis[value - 1]}</span>
+                          </button>
+                        ))}
+                      </div>
+                      <div className="quiz-nav">
+                        {selectedAnswer !== null && (
+                          currentQuizQuestion < quizQuestions.length - 1 ? (
+                            <button onClick={handleQuizNext}>Next</button>
+                          ) : (
+                            <button onClick={handleStartChat}>Start Chat</button>
+                          )
+                        )}
+                      </div>
                     </div>
                   </div>
                 ) : showBreathe ? (
@@ -840,7 +819,7 @@ function App() {
                 <h2>Journal</h2>
                 <div className="journal-options">
                   <button
-                    className="journal-button image-button"
+                    className="journal-button"
                     onClick={() => handleOpenJournal('daily')}
                     role="button"
                     tabIndex={0}
@@ -851,7 +830,7 @@ function App() {
                     <span>Daily Journal</span>
                   </button>
                   <button
-                    className="journal-button image-button"
+                    className="journal-button"
                     onClick={() => handleOpenJournal('dream')}
                     role="button"
                     tabIndex={0}
@@ -862,7 +841,7 @@ function App() {
                     <span>Dream Journal</span>
                   </button>
                   <button
-                    className="journal-button image-button"
+                    className="journal-button"
                     onClick={() => handleOpenJournal('freestyle')}
                     role="button"
                     tabIndex={0}
@@ -1061,7 +1040,7 @@ function App() {
                 aria-label="View Profile"
                 aria-pressed={activeTab === 'profile'}
               >
-                <img src="/icons/user.png" alt="" className="icon" />
+                <img src="/icons/user.png" alt="Profile" className="icon" />
                 <span>Profile</span>
               </button>
               <button
@@ -1070,7 +1049,7 @@ function App() {
                 aria-label="Start Chat"
                 aria-pressed={activeTab === 'chat'}
               >
-                <img src="/icons/chat.png" alt="" className="icon" />
+                <img src="/icons/chat.png" alt="Chat" className="icon" />
                 <span>{chatTokens > 0 ? `Chat (${chatTokens}/3)` : 'Chat'}</span>
               </button>
               <button
@@ -1079,7 +1058,7 @@ function App() {
                 aria-label="View Journal"
                 aria-pressed={activeTab === 'journal'}
               >
-                <img src="/icons/journal.png" alt="" className="icon" />
+                <img src="/icons/journal.png" alt="Journal" className="icon" />
                 <span>Journal</span>
               </button>
               <button
@@ -1088,7 +1067,7 @@ function App() {
                 aria-label="View Reflect"
                 aria-pressed={activeTab === 'reflect'}
               >
-                <img src="/icons/meditation.png" alt="" className="icon" />
+                <img src="/icons/meditation.png" alt="Reflect" className="icon" />
                 <span>Reflect</span>
               </button>
             </div>
