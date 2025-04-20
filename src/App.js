@@ -164,8 +164,8 @@ function App() {
   useEffect(() => {
     if (isLoading && !showSummaryBuffer) {
       showRandomAffirmation(); // Show first affirmation immediately
-      const interval = setInterval(showRandomAffirmation, 2000); // Change every 2 seconds
-      return () => clearInterval(interval); // Cleanup on unmount or dependency change
+      const interval = setInterval(showRandomAffirmation, 4000); // Change every 4 seconds
+      return () => clearInterval(interval); // Cleanup to prevent overlap
     }
   }, [isLoading, showSummaryBuffer, showRandomAffirmation]);
 
@@ -622,7 +622,7 @@ function App() {
           <p>{responses.emotions || 'Not available'}</p>
           {hasInsight ? (
             <>
-              <h4>Your Reidhts</h4>
+              <h4>Your Insights</h4>
               <p>{insight.insight}</p>
             </>
           ) : (
@@ -1128,46 +1128,38 @@ function App() {
                     )}
                   </>
                 ) : (
-                  <p>No chat sessions yet. Start chatting to save insights!</p>
+                  <p>No sessions yet. Start a chat to save one!</p>
                 )}
               </div>
             ) : null}
             <div className="menu-bar">
               <button
-                onClick={() => setActiveTab('profile')}
-                className={activeTab === 'profile' ? 'active' : ''}
-                aria-label="View Profile"
-                aria-pressed={activeTab === 'profile'}
-              >
-                <img src="/icons/user.png" alt="" className="icon" />
-                <span>Profile</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('chat')}
                 className={activeTab === 'chat' ? 'active' : ''}
-                aria-label="Start Chat"
-                aria-pressed={activeTab === 'chat'}
+                onClick={() => setActiveTab('chat')}
               >
-                <img src="/icons/chat.png" alt="" className="icon" />
-                <span>{chatTokens > 0 ? `Chat (${chatTokens}/3)` : 'Chat'}</span>
+                <img src="/icons/chat.png" alt="Chat" className="icon" />
+                <span>Chat</span>
               </button>
               <button
-                onClick={() => setActiveTab('journal')}
                 className={activeTab === 'journal' ? 'active' : ''}
-                aria-label="View Journal"
-                aria-pressed={activeTab === 'journal'}
+                onClick={() => setActiveTab('journal')}
               >
-                <img src="/icons/journal.png" alt="" className="icon" />
+                <img src="/icons/journal.png" alt="Journal" className="icon" />
                 <span>Journal</span>
               </button>
               <button
-                onClick={() => setActiveTab('reflect')}
                 className={activeTab === 'reflect' ? 'active' : ''}
-                aria-label="View Reflect"
-                aria-pressed={activeTab === 'reflect'}
+                onClick={() => setActiveTab('reflect')}
               >
-                <img src="/icons/meditation.png" alt="" className="icon" />
+                <img src="/icons/reflect.png" alt="Reflect" className="icon" />
                 <span>Reflect</span>
+              </button>
+              <button
+                className={activeTab === 'profile' ? 'active' : ''}
+                onClick={() => setActiveTab('profile')}
+              >
+                <img src="/icons/profile.png" alt="Profile" className="icon" />
+                <span>Profile</span>
               </button>
             </div>
           </div>
