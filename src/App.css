@@ -504,7 +504,7 @@ button:disabled {
   color: #fff;
   text-align: center;
   max-width: 80%;
-  animation: fadeInOut 3s ease-in-out forwards; /* 3-second cycle */
+  animation: fadeInOut 3s ease-in-out forwards;
   position: absolute;
   z-index: 2001;
 }
@@ -512,9 +512,9 @@ button:disabled {
 /* Affirmation fade keyframes */
 @keyframes fadeInOut {
   0% { opacity: 0; transform: translateY(10px); }
-  16.67% { opacity: 1; transform: translateY(0); } /* Fade in by 0.5s */
-  83.33% { opacity: 1; transform: translateY(0); } /* Stay visible for ~2s */
-  100% { opacity: 0; transform: translateY(-10px); } /* Fade out by 0.5s */
+  16.67% { opacity: 1; transform: translateY(0); } /* Fade in over 0.5s */
+  83.33% { opacity: 1; transform: translateY(0); } /* Visible for ~2s */
+  100% { opacity: 0; transform: translateY(-10px); } /* Fade out over 0.5s */
 }
 
 /* Responsive affirmations */
@@ -579,7 +579,7 @@ button:disabled {
 .breathe-progress {
   height: 100%;
   background: #388E3C;
-  transition: width 0.1s linear;
+  transition: width 1s linear;
 }
 
 /* Responsive breathe animation */
