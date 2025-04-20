@@ -43,14 +43,12 @@ function App() {
   const [showSignup, setShowSignup] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
-  // State for affirmations
   const [currentAffirmation, setCurrentAffirmation] = useState('');
   const [affirmationPosition, setAffirmationPosition] = useState({ top: '50%', left: '50%' });
 
   const chatBoxRef = useRef(null);
   const reportDetailsRef = useRef(null);
 
-  // 100 Positive Affirmations
   const affirmations = [
     "You are enough just as you are.",
     "Your potential is limitless.",
@@ -151,25 +149,22 @@ function App() {
     "You are worthy of every happiness."
   ];
 
-  // Modified affirmation rotation with random positioning
   const showRandomAffirmation = useCallback(() => {
     const randomIndex = Math.floor(Math.random() * affirmations.length);
-    const randomTop = `${Math.random() * 80 + 10}%`; // 10%–90% of screen height
-    const randomLeft = `${Math.random() * 80 + 10}%`; // 10%–90% of screen width
+    const randomTop = `${Math.random() * 80 + 10}%`;
+    const randomLeft = `${Math.random() * 80 + 10}%`;
     setCurrentAffirmation(affirmations[randomIndex]);
     setAffirmationPosition({ top: randomTop, left: randomLeft });
   }, [affirmations]);
 
-  // Affirmation cycling during loading
   useEffect(() => {
     if (isLoading && !showSummaryBuffer) {
-      showRandomAffirmation(); // Show first affirmation immediately
-      const interval = setInterval(showRandomAffirmation, 4000); // Change every 4 seconds
-      return () => clearInterval(interval); // Cleanup to prevent overlap
+      showRandomAffirmation();
+      const interval = setInterval(showRandomAffirmation, 4000);
+      return () => clearInterval(interval);
     }
   }, [isLoading, showSummaryBuffer, showRandomAffirmation]);
 
-  // Update isDesktop on window resize
   useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth > 768);
     window.addEventListener('resize', handleResize);
@@ -491,7 +486,6 @@ function App() {
     setOpenNotepadSection(null);
   };
 
-  // Delete Journal Functionality
   const handleDeleteJournal = async (entryId) => {
     setIsLoading(true);
     try {
@@ -515,7 +509,6 @@ function App() {
     }
   };
 
-  // Delete Report Functionality
   const handleDeleteReport = async (reportId) => {
     setIsLoading(true);
     try {
@@ -1134,6 +1127,13 @@ function App() {
             ) : null}
             <div className="menu-bar">
               <button
+                className={activeTab === 'profile' ? 'active' : ''}
+                onClick={() => setActiveTab('profile')}
+              >
+                <img src="/icons/profile.png" alt="Profile" className="icon" />
+                <span>Profile</span>
+              </button>
+              <button
                 className={activeTab === 'chat' ? 'active' : ''}
                 onClick={() => setActiveTab('chat')}
               >
@@ -1153,13 +1153,6 @@ function App() {
               >
                 <img src="/icons/reflect.png" alt="Reflect" className="icon" />
                 <span>Reflect</span>
-              </button>
-              <button
-                className={activeTab === 'profile' ? 'active' : ''}
-                onClick={() => setActiveTab('profile')}
-              >
-                <img src="/icons/profile.png" alt="Profile" className="icon" />
-                <span>Profile</span>
               </button>
             </div>
           </div>
