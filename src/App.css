@@ -498,22 +498,23 @@ button:disabled {
 
 /* Affirmation text */
 .affirmation {
-  font-size: 28px; /* Increased font size */
-  font-family: 'Roboto', sans-serif; /* Changed to Roboto */
+  font-size: 28px;
+  font-family: 'Roboto', sans-serif;
   font-weight: 500;
   color: #fff;
   text-align: center;
   max-width: 80%;
-  animation: fadeInOut 2s ease-in-out forwards; /* 2-second cycle */
+  animation: fadeInOut 3s ease-in-out forwards; /* 3-second cycle */
   position: absolute;
-  z-index: 2001; /* Above spinner */
+  z-index: 2001;
 }
 
 /* Affirmation fade keyframes */
 @keyframes fadeInOut {
   0% { opacity: 0; transform: translateY(10px); }
-  50% { opacity: 1; transform: translateY(0); }
-  100% { opacity: 0; transform: translateY(-10px); }
+  16.67% { opacity: 1; transform: translateY(0); } /* Fade in by 0.5s */
+  83.33% { opacity: 1; transform: translateY(0); } /* Stay visible for ~2s */
+  100% { opacity: 0; transform: translateY(-10px); } /* Fade out by 0.5s */
 }
 
 /* Responsive affirmations */
@@ -539,7 +540,7 @@ button:disabled {
   left: 0;
   right: 0;
   bottom: 0;
-  background: #E0F2E9; /* Soft green background */
+  background: #E0F2E9;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -564,6 +565,23 @@ button:disabled {
   color: #388E3C;
 }
 
+/* Breathe progress bar */
+.breathe-progress-bar {
+  width: 200px;
+  height: 10px;
+  background: #ddd;
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 20px auto;
+}
+
+/* Breathe progress */
+.breathe-progress {
+  height: 100%;
+  background: #388E3C;
+  transition: width 0.1s linear;
+}
+
 /* Responsive breathe animation */
 @media (max-width: 768px) {
   .breathe-count {
@@ -571,6 +589,9 @@ button:disabled {
   }
   .breathe-animation h2 {
     font-size: 18px;
+  }
+  .breathe-progress-bar {
+    width: 150px;
   }
 }
 
@@ -1357,9 +1378,9 @@ button:disabled {
 /* Quiz options container */
 .quiz-options {
   display: flex;
-  flex-direction: column; /* Vertically stacked */
+  flex-direction: column;
   align-items: center;
-  gap: 15px; /* Space between boxes */
+  gap: 15px;
   max-width: 400px;
   width: 100%;
 }
@@ -1368,17 +1389,17 @@ button:disabled {
 .quiz-option-box {
   background: #f9fafb;
   border: 2px solid #ddd;
-  border-radius: 8px; /* Slightly rounded for rectangles */
+  border-radius: 8px;
   padding: 15px;
   width: 100%;
-  max-width: 350px; /* Fixed width for consistency */
+  max-width: 350px;
   text-align: center;
   cursor: pointer;
   transition: background 0.2s, border-color 0.2s, transform 0.2s;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px; /* Even spacing for content */
+  gap: 10px;
 }
 
 /* Selected quiz option */
@@ -1669,7 +1690,7 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
 /* The .auth section uses a dynamic gradient for a welcoming login screen. */
 /* The .journal-button styles preserve the original aesthetic. */
 /* The .affirmation styles ensure frequent, readable text with random positioning. */
-/* The .breathe-overlay restores the full-screen green background. */
+/* The .breathe-overlay restores the full-screen green background with a progress bar. */
 /* The .quiz-option-box styles create vertically stacked, rectangular options. */
 /* Accessibility enhancements improve usability for all users. */
 /* Edge-case styles handle overflow and responsive tweaks. */
