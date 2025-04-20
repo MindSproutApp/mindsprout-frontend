@@ -2,14 +2,14 @@
 /* MindSprout App CSS - Core Styles for the Application */
 /* ========================================================================== */
 
-/* Import Google Fonts for consistent typography across the application */
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Caveat&display=swap');
+/* Import Google Fonts for consistent typography */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
 /* ========================================================================== */
 /* Base Styles */
 /* ========================================================================== */
 
-/* Body styling for consistent background, typography, and full viewport coverage */
+/* Body styling for consistent background and typography */
 body {
   margin: 0;
   padding: 0;
@@ -21,7 +21,7 @@ body {
   color: #388E3C;
 }
 
-/* Main app container to center content */
+/* Main app container */
 .app {
   padding: 20px;
   display: flex;
@@ -30,7 +30,7 @@ body {
   min-height: 100vh;
 }
 
-/* Canvas for authenticated content, with a clean white background */
+/* Canvas for authenticated content */
 .canvas {
   background: #fff;
   border-radius: 15px;
@@ -42,7 +42,7 @@ body {
   opacity: 1;
 }
 
-/* Ensure canvas is responsive on smaller screens */
+/* Responsive canvas */
 @media (max-width: 768px) {
   .canvas {
     padding: 15px;
@@ -54,7 +54,7 @@ body {
 /* Authentication Styles */
 /* ========================================================================== */
 
-/* Auth container with animated gradient background */
+/* Auth container with animated gradient */
 .auth {
   background: none;
   border-radius: 0;
@@ -69,14 +69,14 @@ body {
   background-size: 200% 200%;
 }
 
-/* Keyframes for smooth gradient animation */
+/* Gradient animation keyframes */
 @keyframes gradientShift {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
 
-/* Responsive auth container for smaller screens */
+/* Responsive auth */
 @media (max-width: 768px) {
   .auth {
     padding: 10px;
@@ -87,7 +87,7 @@ body {
 /* Dashboard Styles */
 /* ========================================================================== */
 
-/* Dashboard containers for different user roles */
+/* Dashboard containers */
 .dashboard, .client-dashboard, .regular-dashboard {
   background: none;
   border-radius: 0;
@@ -98,10 +98,10 @@ body {
   text-align: center;
 }
 
-/* Ensure dashboard is scrollable on smaller screens */
+/* Responsive dashboard */
 @media (max-width: 768px) {
   .regular-dashboard {
-    padding-bottom: 60px; /* Space for menu bar */
+    padding-bottom: 60px;
   }
 }
 
@@ -109,7 +109,7 @@ body {
 /* Typography */
 /* ========================================================================== */
 
-/* Heading styles for consistent hierarchy */
+/* Heading styles */
 h1 {
   color: #388E3C;
   font-size: 28px;
@@ -138,21 +138,21 @@ h4 {
   margin-bottom: 15px;
 }
 
-/* Paragraph styles for readability */
+/* Paragraph styles */
 p {
   font-size: 14px;
   color: #388E3C;
   line-height: 1.5;
 }
 
-/* Feedback text for user guidance */
+/* Feedback text */
 .feedback {
   font-size: 12px;
   color: #388E3C;
   margin-bottom: 10px;
 }
 
-/* Session message for chat completion */
+/* Session message */
 .session-message {
   font-size: 14px;
   color: #388E3C;
@@ -160,14 +160,14 @@ p {
   margin: 10px 0;
 }
 
-/* Message styling for alerts and notifications */
+/* Message styling */
 .message {
   color: #388E3C;
   font-size: 16px;
   margin: 10px 0;
 }
 
-/* Responsive typography for smaller screens */
+/* Responsive typography */
 @media (max-width: 768px) {
   h1 { font-size: 24px; }
   h2 { font-size: 20px; }
@@ -181,7 +181,7 @@ p {
 /* Form Inputs */
 /* ========================================================================== */
 
-/* Form inputs for consistency across the app */
+/* Input styles */
 input, select, textarea {
   width: 100%;
   max-width: 400px;
@@ -196,26 +196,26 @@ input, select, textarea {
   color: #388E3C;
 }
 
-/* Textarea for journal entries */
+/* Textarea styles */
 textarea {
   height: 80px;
   resize: vertical;
   max-width: 400px;
 }
 
-/* Focus states for accessibility */
+/* Focus states */
 input:focus, select:focus, textarea:focus {
   border-color: #388E3C;
   outline: none;
 }
 
-/* Disabled input styles */
+/* Disabled inputs */
 input:disabled, textarea:disabled {
   background: #eee;
   cursor: not-allowed;
 }
 
-/* Responsive form inputs */
+/* Responsive inputs */
 @media (max-width: 768px) {
   input, select, textarea {
     max-width: 100%;
@@ -230,7 +230,7 @@ input:disabled, textarea:disabled {
 /* Chat Input Styles */
 /* ========================================================================== */
 
-/* Chat input with distinct styling */
+/* Chat input */
 .chat input {
   border: 2px solid #000;
   border-radius: 10px;
@@ -240,27 +240,27 @@ input:disabled, textarea:disabled {
   flex-grow: 1;
 }
 
-/* Chat input focus state */
+/* Chat input focus */
 .chat input:focus {
   border-color: #388E3C;
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* Chat input placeholder animation */
+/* Chat placeholder animation */
 .chat input::placeholder {
   color: #999;
   opacity: 0;
   animation: fadeInPlaceholder 2s ease infinite;
 }
 
-/* Keyframes for placeholder animation */
+/* Placeholder keyframes */
 @keyframes fadeInPlaceholder {
   0% { opacity: 0; }
   50% { opacity: 1; }
   100% { opacity: 0; }
 }
 
-/* Chat input container for layout */
+/* Chat input container */
 .chat-input-container {
   display: flex;
   align-items: center;
@@ -284,7 +284,7 @@ input:disabled, textarea:disabled {
 /* Button Styles */
 /* ========================================================================== */
 
-/* Send button for chat */
+/* Send button */
 .send-btn {
   background: #388E3C;
   color: white;
@@ -297,14 +297,14 @@ input:disabled, textarea:disabled {
   transition: background 0.3s, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* Send button hover effect */
+/* Send button hover */
 .send-btn:hover {
   background: #2E7D32;
   transform: translateY(-3px);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* Send button disabled state */
+/* Send button disabled */
 .send-btn:disabled {
   background: #ccc;
   cursor: not-allowed;
@@ -324,32 +324,32 @@ button {
   transition: background 0.3s, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* Button hover effect */
+/* Button hover */
 button:hover {
   background: #2E7D32;
   transform: translateY(-3px);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* Button disabled state */
+/* Button disabled */
 button:disabled {
   background: #ccc;
   cursor: not-allowed;
 }
 
-/* Delete button for journal/report entries */
+/* Delete button */
 .delete-btn {
-  background: #EF9A9A; /* Pale red */
+  background: #EF9A9A;
   padding: 8px 16px;
 }
 
-/* Delete button hover effect */
+/* Delete button hover */
 .delete-btn:hover {
-  background: #E57373; /* Darker pale red */
+  background: #E57373;
   transform: translateY(-2px);
 }
 
-/* Responsive button styles */
+/* Responsive buttons */
 @media (max-width: 768px) {
   button, .send-btn {
     padding: 8px 16px;
@@ -364,7 +364,7 @@ button:disabled {
 /* Delete Confirmation Modal */
 /* ========================================================================== */
 
-/* Delete confirmation modal overlay */
+/* Delete modal overlay */
 .delete-confirm-modal {
   position: fixed;
   top: 0;
@@ -381,39 +381,39 @@ button:disabled {
   transform: scale(0.9);
 }
 
-/* Active state for delete modal */
+/* Active delete modal */
 .delete-confirm-modal.active {
   opacity: 1;
   transform: scale(1);
 }
 
-/* Delete modal content with soft green background and black text */
+/* Delete modal content */
 .delete-confirm-content {
-  background: #E0F2E9; /* Soft light safe green */
+  background: #E0F2E9;
   border-radius: 10px;
   padding: 20px;
   width: 100%;
   max-width: 400px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   text-align: center;
-  color: #000; /* Black text */
+  color: #000;
 }
 
 /* Delete modal heading */
 .delete-confirm-content h3 {
   font-size: 18px;
-  color: #000; /* Black text */
+  color: #000;
   margin-bottom: 10px;
 }
 
 /* Delete modal paragraph */
 .delete-confirm-content p {
   font-size: 14px;
-  color: #000; /* Black text */
+  color: #000;
   margin-bottom: 20px;
 }
 
-/* Delete modal buttons container */
+/* Delete modal buttons */
 .delete-confirm-buttons {
   display: flex;
   justify-content: center;
@@ -428,12 +428,12 @@ button:disabled {
 
 /* Confirm delete button */
 .delete-confirm-buttons button:first-child {
-  background: #EF9A9A; /* Pale red */
+  background: #EF9A9A;
 }
 
 /* Confirm delete button hover */
 .delete-confirm-buttons button:first-child:hover {
-  background: #E57373; /* Darker pale red */
+  background: #E57373;
 }
 
 /* Cancel delete button */
@@ -463,7 +463,7 @@ button:disabled {
 /* Loading Overlay with Affirmations */
 /* ========================================================================== */
 
-/* Loading overlay for full-screen loading states */
+/* Loading overlay */
 .loading-overlay {
   position: fixed;
   top: 0;
@@ -479,7 +479,7 @@ button:disabled {
   color: #fff;
 }
 
-/* Spinner animation */
+/* Spinner */
 .spinner {
   border: 4px solid #f3f3f3;
   border-top: 4px solid #388E3C;
@@ -496,28 +496,30 @@ button:disabled {
   100% { transform: rotate(360deg); }
 }
 
-/* Affirmation text with random positioning and fade animation */
+/* Affirmation text */
 .affirmation {
-  font-size: 20px;
-  font-family: 'Caveat', cursive;
+  font-size: 28px; /* Increased font size */
+  font-family: 'Roboto', sans-serif; /* Changed to Roboto */
+  font-weight: 500;
   color: #fff;
   text-align: center;
   max-width: 80%;
-  animation: fadeInOut 3s ease-in-out forwards; /* Fade in and out */
-  position: absolute; /* For random positioning via JS */
+  animation: fadeInOut 2s ease-in-out forwards; /* 2-second cycle */
+  position: absolute;
+  z-index: 2001; /* Above spinner */
 }
 
-/* Keyframes for affirmation fade effect */
+/* Affirmation fade keyframes */
 @keyframes fadeInOut {
   0% { opacity: 0; transform: translateY(10px); }
   50% { opacity: 1; transform: translateY(0); }
   100% { opacity: 0; transform: translateY(-10px); }
 }
 
-/* Responsive affirmation text */
+/* Responsive affirmations */
 @media (max-width: 768px) {
   .affirmation {
-    font-size: 16px;
+    font-size: 20px;
     max-width: 90%;
   }
   .spinner {
@@ -527,15 +529,61 @@ button:disabled {
 }
 
 /* ========================================================================== */
+/* Breathe Animation Overlay */
+/* ========================================================================== */
+
+/* Breathe overlay */
+.breathe-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #E0F2E9; /* Soft green background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* Active breathe overlay */
+.breathe-overlay.active {
+  opacity: 1;
+}
+
+/* Breathe animation container */
+.breathe-animation {
+  text-align: center;
+}
+
+/* Breathe count */
+.breathe-count {
+  font-size: 48px;
+  color: #388E3C;
+}
+
+/* Responsive breathe animation */
+@media (max-width: 768px) {
+  .breathe-count {
+    font-size: 36px;
+  }
+  .breathe-animation h2 {
+    font-size: 18px;
+  }
+}
+
+/* ========================================================================== */
 /* Authentication Forms */
 /* ========================================================================== */
 
-/* Standard auth container */
+/* Standard auth */
 .standard-auth {
   padding: 20px;
 }
 
-/* Form container for signup/login */
+/* Form container */
 .form-container {
   display: flex;
   flex-direction: column;
@@ -543,12 +591,12 @@ button:disabled {
   gap: 10px;
 }
 
-/* Auth toggle for mobile */
+/* Auth toggle */
 .auth-toggle {
   margin-bottom: 10px;
 }
 
-/* Toggle button for switching between signup/login */
+/* Toggle button */
 .toggle-btn {
   background: #e0f2e9;
   color: #388E3C;
@@ -561,7 +609,7 @@ button:disabled {
   transition: background 0.3s, transform 0.2s ease, box-shadow 0.3s ease;
 }
 
-/* Toggle button hover effect */
+/* Toggle button hover */
 .toggle-btn:hover {
   background: #2E7D32;
   color: white;
@@ -569,7 +617,7 @@ button:disabled {
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* Signup and login form containers */
+/* Signup and login forms */
 .signup-form, .login-form {
   background: #fff;
   padding: 20px;
@@ -596,14 +644,14 @@ button:disabled {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-/* Signup and login button hover */
+/* Button hover */
 .signup-btn:hover, .login-form button:hover {
   background: #2E7D32;
   transform: translateY(-3px);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
 }
 
-/* Responsive auth forms */
+/* Responsive forms */
 @media (max-width: 768px) {
   .signup-form, .login-form {
     padding: 15px;
@@ -619,7 +667,7 @@ button:disabled {
 /* Component Containers */
 /* ========================================================================== */
 
-/* Component containers for quiz, chat, etc. */
+/* Component containers */
 .quiz, .chat, .goals, .summary, .explore, .reflect, .profile {
   background: #fff;
   padding: 20px;
@@ -627,7 +675,7 @@ button:disabled {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-/* Responsive component containers */
+/* Responsive containers */
 @media (max-width: 768px) {
   .quiz, .chat, .goals, .summary, .explore, .reflect, .profile {
     padding: 15px;
@@ -638,7 +686,7 @@ button:disabled {
 /* Chat Box */
 /* ========================================================================== */
 
-/* Chat box for conversation display */
+/* Chat box */
 .chat-box {
   background: #f9fafb;
   border: 1px solid #e0f2e9;
@@ -662,19 +710,19 @@ button:disabled {
   color: #388E3C;
 }
 
-/* User message styling */
+/* User message */
 .user {
   background: #e0f2e9;
   align-self: flex-start;
 }
 
-/* Pal message styling */
+/* Pal message */
 .pal {
   background: #e6f3ff;
   align-self: flex-end;
 }
 
-/* Character counter for chat input */
+/* Character counter */
 .chat p.char-counter {
   font-size: 12px;
   margin: 5px 0;
@@ -696,7 +744,7 @@ button:disabled {
 /* Emotion Box and Slider */
 /* ========================================================================== */
 
-/* Emotion box for quiz */
+/* Emotion box */
 .emotion-box {
   background: #f9fafb;
   border: 1px solid #e0f2e9;
@@ -706,7 +754,7 @@ button:disabled {
   text-align: center;
 }
 
-/* Emotion slider for quiz */
+/* Emotion slider */
 .emotion-slider {
   width: 100%;
   max-width: 400px;
@@ -720,7 +768,7 @@ button:disabled {
   position: relative;
 }
 
-/* Slider thumb for WebKit */
+/* Slider thumb (WebKit) */
 .emotion-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 20px;
@@ -732,12 +780,12 @@ button:disabled {
   transition: transform 0.2s ease;
 }
 
-/* Slider thumb hover for WebKit */
+/* Slider thumb hover (WebKit) */
 .emotion-slider::-webkit-slider-thumb:hover {
   transform: scale(1.2);
 }
 
-/* Slider thumb for Mozilla */
+/* Slider thumb (Mozilla) */
 .emotion-slider::-moz-range-thumb {
   width: 20px;
   height: 20px;
@@ -748,7 +796,7 @@ button:disabled {
   transition: transform 0.2s ease;
 }
 
-/* Slider thumb hover for Mozilla */
+/* Slider thumb hover (Mozilla) */
 .emotion-slider::-moz-range-thumb:hover {
   transform: scale(1.2);
 }
@@ -763,7 +811,7 @@ button:disabled {
   --value: attr(value);
 }
 
-/* Emoji for quiz */
+/* Emoji */
 .emoji {
   font-size: 32px;
   margin-top: 10px;
@@ -787,7 +835,7 @@ button:disabled {
 /* Goal List */
 /* ========================================================================== */
 
-/* Goal list container */
+/* Goal list */
 .goal-list {
   margin-top: 20px;
 }
@@ -800,7 +848,7 @@ button:disabled {
   border-bottom: 1px solid #eee;
 }
 
-/* Achieved goal item */
+/* Achieved goal */
 .goal-item.achieved {
   background: #e0f7e0;
 }
@@ -817,7 +865,7 @@ button:disabled {
 /* Report Details */
 /* ========================================================================== */
 
-/* Report details container */
+/* Report details */
 .report-details {
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   border-radius: 15px;
@@ -885,7 +933,7 @@ button:disabled {
 /* Logo and Icons */
 /* ========================================================================== */
 
-/* Logo styling */
+/* Logo */
 .logo {
   width: 200px;
   height: 200px;
@@ -893,7 +941,7 @@ button:disabled {
   display: block;
 }
 
-/* Icons for menu and buttons */
+/* Icons */
 .icon {
   width: 25px;
   height: 25px;
@@ -943,7 +991,7 @@ button:disabled {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-/* Journal options layout */
+/* Journal options */
 .journal-options {
   display: flex;
   justify-content: center;
@@ -951,7 +999,7 @@ button:disabled {
   margin-bottom: 20px;
 }
 
-/* Journal button styling (preserved original look) */
+/* Journal button */
 .journal-button {
   background: #fff;
   border: 2px solid #388E3C;
@@ -968,7 +1016,7 @@ button:disabled {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* Journal button hover effect */
+/* Journal button hover */
 .journal-button:hover {
   transform: translateY(-3px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
@@ -1027,9 +1075,9 @@ button:disabled {
   transform: scale(1);
 }
 
-/* Journal modal content with soft green background and black text */
+/* Journal modal content */
 .journal-content {
-  background: #E0F2E9; /* Soft light safe green */
+  background: #E0F2E9;
   border-radius: 10px;
   padding: 20px;
   width: 100%;
@@ -1037,10 +1085,10 @@ button:disabled {
   max-height: 80vh;
   overflow-y: auto;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  color: #000; /* Black text */
+  color: #000;
 }
 
-/* Journal prompt styling */
+/* Journal prompt */
 .journal-prompt {
   margin-bottom: 20px;
 }
@@ -1048,14 +1096,14 @@ button:disabled {
 /* Journal prompt heading */
 .journal-prompt h2 {
   font-size: 18px;
-  color: #000; /* Black text */
+  color: #000;
   margin-bottom: 5px;
 }
 
 /* Journal prompt paragraph */
 .journal-prompt p {
   font-size: 14px;
-  color: #000; /* Black text */
+  color: #000;
   margin-bottom: 10px;
 }
 
@@ -1065,7 +1113,7 @@ button:disabled {
   max-width: 100%;
   height: 100px;
   background: #fff;
-  color: #000; /* Black text */
+  color: #000;
 }
 
 /* Journal actions */
@@ -1073,7 +1121,7 @@ button:disabled {
   text-align: center;
 }
 
-/* Close button for modals */
+/* Close button */
 .close-btn {
   position: absolute;
   top: 10px;
@@ -1144,9 +1192,9 @@ button:disabled {
   transform: scale(1);
 }
 
-/* Notepad modal content with soft green background and black text */
+/* Notepad modal content */
 .notepad-content {
-  background: #E0F2E9; /* Soft light safe green */
+  background: #E0F2E9;
   border-radius: 10px;
   padding: 20px;
   width: 100%;
@@ -1154,20 +1202,20 @@ button:disabled {
   max-height: 80vh;
   overflow-y: auto;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  color: #000; /* Black text */
+  color: #000;
 }
 
 /* Notepad text */
 .notepad-text h3 {
   font-size: 18px;
-  color: #000; /* Black text */
+  color: #000;
   margin-bottom: 10px;
 }
 
 /* Notepad text paragraph */
 .notepad-text p {
   font-size: 14px;
-  color: #000; /* Black text */
+  color: #000;
   line-height: 1.6;
 }
 
@@ -1189,7 +1237,7 @@ button:disabled {
 /* Tables */
 /* ========================================================================== */
 
-/* Gradient table styling */
+/* Gradient table */
 .gradient-table {
   width: 100%;
   border-collapse: collapse;
@@ -1249,7 +1297,7 @@ button:disabled {
   padding: 8px 16px;
 }
 
-/* Pagination disabled buttons */
+/* Pagination disabled */
 .pagination button:disabled {
   background: #ccc;
   cursor: not-allowed;
@@ -1306,24 +1354,31 @@ button:disabled {
   text-align: center;
 }
 
-/* Quiz options */
+/* Quiz options container */
 .quiz-options {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
+  flex-direction: column; /* Vertically stacked */
+  align-items: center;
+  gap: 15px; /* Space between boxes */
+  max-width: 400px;
+  width: 100%;
 }
 
 /* Quiz option box */
 .quiz-option-box {
   background: #f9fafb;
   border: 2px solid #ddd;
-  border-radius: 10px;
+  border-radius: 8px; /* Slightly rounded for rectangles */
   padding: 15px;
-  width: 150px;
+  width: 100%;
+  max-width: 350px; /* Fixed width for consistency */
   text-align: center;
   cursor: pointer;
   transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px; /* Even spacing for content */
 }
 
 /* Selected quiz option */
@@ -1342,18 +1397,19 @@ button:disabled {
 .quiz-value {
   font-size: 18px;
   color: #388E3C;
+  font-weight: 700;
 }
 
 /* Quiz feedback */
 .quiz-feedback {
-  font-size: 12px;
+  font-size: 14px;
   color: #388E3C;
+  line-height: 1.4;
 }
 
 /* Quiz emoji */
 .quiz-emoji {
   font-size: 24px;
-  margin-top: 5px;
 }
 
 /* Quiz navigation */
@@ -1370,39 +1426,17 @@ button:disabled {
     font-size: 18px;
   }
   .quiz-option-box {
-    width: 120px;
+    max-width: 300px;
     padding: 10px;
   }
   .quiz-value {
     font-size: 16px;
   }
   .quiz-feedback {
-    font-size: 10px;
+    font-size: 12px;
   }
   .quiz-emoji {
     font-size: 20px;
-  }
-}
-
-/* ========================================================================== */
-/* Breathe Animation */
-/* ========================================================================== */
-
-/* Breathe animation container */
-.breathe-animation {
-  text-align: center;
-}
-
-/* Breathe count */
-.breathe-count {
-  font-size: 48px;
-  color: #388E3C;
-}
-
-/* Responsive breathe animation */
-@media (max-width: 768px) {
-  .breathe-count {
-    font-size: 36px;
   }
 }
 
@@ -1461,7 +1495,7 @@ button:disabled {
 /* Menu Bar */
 /* ========================================================================== */
 
-/* Menu bar for navigation */
+/* Menu bar */
 .menu-bar {
   position: fixed;
   bottom: 0;
@@ -1492,7 +1526,7 @@ button:disabled {
   color: #2E7D32;
 }
 
-/* Menu bar button hover */
+/* Menu button hover */
 .menu-bar button:hover {
   color: #2E7D32;
 }
@@ -1518,7 +1552,7 @@ button:disabled {
 /* Accessibility Enhancements */
 /* ========================================================================== */
 
-/* Focus styles for accessibility */
+/* Focus styles */
 button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-box:focus {
   outline: 2px solid #388E3C;
   outline-offset: 2px;
@@ -1552,9 +1586,9 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
   }
 }
 
-/* Reduced motion preference */
+/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  .canvas, .journal-modal, .notepad-modal, .delete-confirm-modal, .quiz-fullscreen, .affirmation {
+  .canvas, .journal-modal, .notepad-modal, .delete-confirm-modal, .quiz-fullscreen, .affirmation, .breathe-overlay {
     transition: none;
   }
   .spinner {
@@ -1564,30 +1598,34 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
     animation: none;
     opacity: 1;
   }
+  .affirmation {
+    animation: none;
+    opacity: 1;
+  }
 }
 
 /* ========================================================================== */
 /* Edge Case Styles */
 /* ========================================================================== */
 
-/* Ensure modals are above other content */
-.journal-modal, .notepad-modal, .delete-confirm-modal, .quiz-fullscreen {
+/* Ensure modals are above content */
+.journal-modal, .notepad-modal, .delete-confirm-modal, .quiz-fullscreen, .breathe-overlay {
   z-index: 1000;
 }
 
-/* Prevent text overflow in modals */
+/* Prevent text overflow */
 .journal-content, .notepad-content, .delete-confirm-content {
   word-wrap: break-word;
   white-space: pre-wrap;
 }
 
-/* Ensure long journal entries are readable */
+/* Journal textarea height */
 .journal-prompt textarea {
   min-height: 80px;
   max-height: 300px;
 }
 
-/* Handle overflow in chat box */
+/* Chat box scrollbar */
 .chat-box::-webkit-scrollbar {
   width: 8px;
 }
@@ -1601,17 +1639,17 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
   background: #f9fafb;
 }
 
-/* Ensure table cells don't overflow */
+/* Table cell overflow */
 .gradient-table td, .gradient-table th {
   word-break: break-word;
 }
 
-/* Prevent layout shift on loading */
+/* Loading text width */
 .loading-overlay p {
   max-width: 90%;
 }
 
-/* Ensure buttons are distinguishable in dark mode */
+/* Dark mode buttons */
 @media (prefers-color-scheme: dark) {
   button, .send-btn, .signup-btn, .login-form button {
     background: #2E7D32;
@@ -1623,33 +1661,20 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
 }
 
 /* ========================================================================== */
-/* Additional Comments for Line Count */
+/* Additional Comments for Clarity */
 /* ========================================================================== */
 
-/* The following comments are added to meet the ~1300 line requirement while preserving all original styles. They describe the purpose of key sections and ensure clarity for maintenance. */
+/* The .app section centers content and ensures responsiveness. */
+/* The .canvas provides a clean, card-like appearance for authenticated content. */
+/* The .auth section uses a dynamic gradient for a welcoming login screen. */
+/* The .journal-button styles preserve the original aesthetic. */
+/* The .affirmation styles ensure frequent, readable text with random positioning. */
+/* The .breathe-overlay restores the full-screen green background. */
+/* The .quiz-option-box styles create vertically stacked, rectangular options. */
+/* Accessibility enhancements improve usability for all users. */
+/* Edge-case styles handle overflow and responsive tweaks. */
 
-/* The .app section defines the main container, ensuring content is centered and responsive across devices. */
-/* The .canvas section provides a clean, card-like appearance for authenticated content, with a subtle shadow for depth. */
-/* The .auth section uses an animated gradient to create a welcoming, dynamic login/signup screen. */
-/* The .regular-dashboard section is designed to be flexible, accommodating various tabs like chat, journal, and reflect. */
-/* The .journal-button styles are critical for maintaining the original aesthetic, with a white background and green border. */
-/* The .delete-confirm-modal ensures a clear, user-friendly confirmation dialog for destructive actions. */
-/* The .affirmation styles enable random positioning and smooth fade transitions for a calming loading experience. */
-/* The .journal-modal and .notepad-modal share a consistent soft green background to create a cohesive look. */
-/* The .gradient-table uses a subtle gradient to make past entries visually appealing and easy to read. */
-/* The .menu-bar is fixed at the bottom on mobile for easy navigation, transitioning to a static layout on desktop. */
-/* Accessibility styles ensure the app is usable for all users, including those with visual impairments or motion sensitivities. */
-/* Edge-case styles handle overflow, scrollbars, and responsive tweaks to prevent UI issues. */
-/* The use of #E0F2E9 for modal backgrounds creates a calming, safe aesthetic aligned with the app’s mindfulness theme. */
-/* The affirmation animation uses a 3-second cycle to avoid overwhelming users during loading states. */
-/* The chat-box’s reverse flex direction ensures the latest messages are always visible without manual scrolling. */
-/* The quiz-fullscreen overlay provides an immersive experience for emotional assessments, with clear options. */
-/* The breathe-animation section uses a large countdown to guide users through a calming pre-chat ritual. */
-/* The summary-container and summary-card styles make post-chat insights engaging and easy to navigate. */
-/* The pagination section ensures users can browse through journal entries and reports without clutter. */
-/* The emotion-slider and quiz-option-box styles provide tactile, interactive feedback during the quiz. */
-
-/* Final line count padding with additional accessibility tweaks */
+/* Responsive tweaks for larger screens */
 @media (min-width: 1200px) {
   .canvas {
     max-width: 1000px;
@@ -1658,10 +1683,11 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
     max-width: 700px;
   }
   .quiz-option-box {
-    width: 180px;
+    max-width: 400px;
   }
 }
 
+/* Smaller screens */
 @media (max-width: 480px) {
   .journal-button {
     width: 90px;
@@ -1672,7 +1698,7 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
     height: 35px;
   }
   .quiz-option-box {
-    width: 100px;
+    max-width: 280px;
   }
   .summary-card {
     width: 130px;
@@ -1680,19 +1706,14 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
   }
 }
 
-/* Ensure modals are keyboard-accessible */
-.journal-modal:focus-within, .notepad-modal:focus-within, .delete-confirm-modal:focus-within {
+/* Keyboard-accessible modals */
+.journal-modal:focus-within, .notepad-modal:focus-within, .delete-confirm-modal:focus-within, .breathe-overlay:focus-within {
   outline: none;
 }
 
-/* Prevent accidental text selection in modals */
+/* Prevent text selection in modals */
 .journal-content, .notepad-content, .delete-confirm-content {
   user-select: text;
-}
-
-/* Ensure affirmations don’t overlap spinner */
-.affirmation {
-  z-index: 2001;
 }
 
 /* End of CSS */
