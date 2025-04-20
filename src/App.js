@@ -50,7 +50,7 @@ function App() {
   const chatBoxRef = useRef(null);
   const reportDetailsRef = useRef(null);
 
-  // 100 Positive Affirmations (unchanged from your provided list)
+  // 100 Positive Affirmations
   const affirmations = [
     "You are enough just as you are.",
     "Your potential is limitless.",
@@ -152,21 +152,22 @@ function App() {
   ];
 
   // Modified affirmation rotation with random positioning
-  const showRandomAffirmation = () => {
+  const showRandomAffirmation = useCallback(() => {
     const randomIndex = Math.floor(Math.random() * affirmations.length);
     const randomTop = `${Math.random() * 80 + 10}%`; // 10%–90% of screen height
     const randomLeft = `${Math.random() * 80 + 10}%`; // 10%–90% of screen width
     setCurrentAffirmation(affirmations[randomIndex]);
     setAffirmationPosition({ top: randomTop, left: randomLeft });
-  };
+  }, [affirmations]);
 
+  // Affirmation cycling during loading
   useEffect(() => {
     if (isLoading && !showSummaryBuffer) {
-      showRandomAffirmation();
-      const interval = setInterval(showRandomAffirmation, 3000); // Change every 3 seconds
-      return () => clearInterval(interval);
+      showRandomAffirmation(); // Show first affirmation immediately
+      const interval = setInterval(showRandomAffirmation, 2000); // Change every 2 seconds
+      return () => clearInterval(interval); // Cleanup on unmount or dependency change
     }
-  }, [isLoading, showSummaryBuffer]);
+  }, [isLoading, showSummaryBuffer, showRandomAffirmation]);
 
   // Update isDesktop on window resize
   useEffect(() => {
@@ -490,7 +491,7 @@ function App() {
     setOpenNotepadSection(null);
   };
 
-  // Fixed Delete Journal Functionality
+  // Delete Journal Functionality
   const handleDeleteJournal = async (entryId) => {
     setIsLoading(true);
     try {
@@ -514,7 +515,7 @@ function App() {
     }
   };
 
-  // Fixed Delete Report Functionality
+  // Delete Report Functionality
   const handleDeleteReport = async (reportId) => {
     setIsLoading(true);
     try {
@@ -594,7 +595,6 @@ function App() {
     setOpenNotepadSection(null);
   };
 
-  // Enhanced Scroll to Bottom for Reflect View
   const handleViewReport = (report) => {
     setSelectedReport(report);
     setTimeout(() => {
@@ -855,9 +855,11 @@ function App() {
                     </div>
                   </div>
                 ) : showBreathe ? (
-                  <div className="breathe-animation">
-                    <h2>Take this moment to breathe...</h2>
-                    <p className="breathe-count">{breatheCount}</p>
+                  <div className={`breathe-overlay ${showBreathe ? 'active' : ''}`}>
+                    <div className="breathe-animation">
+                      <h2>Take this moment to breathe...</h2>
+                      <p className="breathe-count">{breatheCount}</p>
+                    </div>
                   </div>
                 ) : isChatActive ? (
                   <div className="chat">
