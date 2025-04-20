@@ -745,7 +745,7 @@ function App() {
                         <button
                           className="send-btn"
                           onClick={() => chatInput.trim() && handleChat(chatInput)}
-                          disabled={!chatន
+                          disabled={!chatInput.trim()}
                         >
                           Send
                         </button>
