@@ -786,17 +786,17 @@ button:disabled, .send-btn:disabled {
 }
 
 .journal-button.daily-journal {
-  background: url('/personal.png') no-repeat center center;
+  background: img src('/personal.png') no-repeat center center;
   background-size: cover;
 }
 
 .journal-button.dream-journal {
-  background: url('/dream1.png') no-repeat center center;
+  background: img src('/dream1.png') no-repeat center center;
   background-size: cover;
 }
 
 .journal-button.freestyle-journal {
-  background: url('/freestyle.png') no-repeat center center;
+  background: img src('/freestyle.png') no-repeat center center;
   background-size: cover;
 }
 
