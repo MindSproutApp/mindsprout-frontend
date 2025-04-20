@@ -32,7 +32,7 @@ function App() {
   const [selectedJournalEntry, setSelectedJournalEntry] = useState(null);
   const [showBreathe, setShowBreathe] = useState(false);
   const [breatheCount, setBreatheCount] = useState(3);
-  const [breatheProgress, setBreatheProgress] = useState(100); // New state for breathe timer progress
+  const [breatheProgress, setBreatheProgress] = useState(100); // Progress bar state
   const [openNotepadSection, setOpenNotepadSection] = useState(null);
   const [openJournalType, setOpenJournalType] = useState(null);
   const [journalResponses, setJournalResponses] = useState({});
@@ -44,14 +44,14 @@ function App() {
   const [showSignup, setShowSignup] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
-  // State for affirmations
+  // Affirmation states
   const [currentAffirmation, setCurrentAffirmation] = useState('');
   const [affirmationPosition, setAffirmationPosition] = useState({ top: '50%', left: '50%' });
 
   const chatBoxRef = useRef(null);
   const reportDetailsRef = useRef(null);
 
-  // 100 Positive Affirmations
+  // Affirmation list
   const affirmations = [
     "You are enough just as you are.",
     "Your potential is limitless.",
@@ -152,7 +152,7 @@ function App() {
     "You are worthy of every happiness."
   ];
 
-  // Modified affirmation rotation with random positioning
+  // Function to show a random affirmation with random positioning
   const showRandomAffirmation = useCallback(() => {
     const randomIndex = Math.floor(Math.random() * affirmations.length);
     const randomTop = `${Math.random() * 80 + 10}%`; // 10%–90% of screen height
@@ -161,15 +161,15 @@ function App() {
     setAffirmationPosition({ top: randomTop, left: randomLeft });
   }, [affirmations]);
 
-  // Modified affirmation cycling during loading
+  // Affirmation cycling during loading
   useEffect(() => {
     if (isLoading && !showSummaryBuffer) {
       showRandomAffirmation(); // Show first affirmation immediately
       const interval = setInterval(() => {
-        setCurrentAffirmation(''); // Clear affirmation to ensure only one shows
+        setCurrentAffirmation(''); // Clear affirmation to ensure no overlap
         setTimeout(showRandomAffirmation, 500); // Show next after fade-out
       }, 3000); // 3-second cycle: 0.5s fade-in, 2s display, 0.5s fade-out
-      return () => clearInterval(interval); // Cleanup on unmount or dependency change
+      return () => clearInterval(interval);
     }
   }, [isLoading, showSummaryBuffer, showRandomAffirmation]);
 
@@ -272,19 +272,17 @@ function App() {
     }
   }, [isChatActive, timeLeft]);
 
-  // Modified breathe animation with progress timer
+  // Breathe animation with 3-second countdown
   useEffect(() => {
     if (showBreathe) {
       setBreatheCount(3);
-      setBreatheProgress(100); // Start progress at 100%
-      let startTime = Date.now();
-      const totalDuration = 3000; // 3 seconds total
+      setBreatheProgress(100);
+      let count = 3;
       const interval = setInterval(() => {
-        const elapsed = Date.now() - startTime;
-        const progress = Math.max(0, 100 - (elapsed / totalDuration) * 100); // Decrease progress
-        setBreatheProgress(progress);
-        setBreatheCount(prev => {
-          if (prev <= 1) {
+        setBreatheProgress((prev) => prev - (100 / 3)); // Decrease progress by 1/3 each second
+        setBreatheCount((prev) => {
+          count -= 1;
+          if (count < 1) {
             clearInterval(interval);
             setShowBreathe(false);
             setIsChatActive(true);
@@ -293,9 +291,9 @@ function App() {
             setMessage('Let’s chat.');
             return 0;
           }
-          return prev - 1;
+          return count;
         });
-      }, 100); // Update every 100ms for smooth progress
+      }, 1000); // Update every 1 second for 3 seconds
       return () => clearInterval(interval);
     }
   }, [showBreathe]);
@@ -502,7 +500,6 @@ function App() {
     setOpenNotepadSection(null);
   };
 
-  // Delete Journal Functionality
   const handleDeleteJournal = async (entryId) => {
     setIsLoading(true);
     try {
@@ -526,7 +523,6 @@ function App() {
     }
   };
 
-  // Delete Report Functionality
   const handleDeleteReport = async (reportId) => {
     setIsLoading(true);
     try {
