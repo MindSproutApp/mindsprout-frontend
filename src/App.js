@@ -9,7 +9,7 @@ ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 function App() {
   const API_URL = process.env.REACT_APP_API_URL || 'https://mindsprout-backend-new.onrender.com';
 
-  const [token, setToken] = useState(null);
+  const [token, setToken] = useState(localStorage.getItem('token') || null);
   const [role, setRole] = useState(null);
   const [regularSignupForm, setRegularSignupForm] = useState({ name: '', email: '', username: '', password: '' });
   const [regularLoginForm, setRegularLoginForm] = useState({ email: '', password: '' });
@@ -20,9 +20,11 @@ function App() {
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [isChatActive, setIsChatActive] = useState(false);
   const [chat, setChat] = useState([]);
-  const [timeLeft, setTimeLeft] = useState(10 * 60);
+  const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 minutes
+  const [extendCount, setExtendCount] = useState(0); // Track extensions
   const [lastChatTimestamp, setLastChatTimestamp] = useState(null);
   const [chatTokens, setChatTokens] = useState(3);
+  const [tokenRegenTime, setTokenRegenTime] = useState(null); // Countdown for token regen
   const [goals, setGoals] = useState([]);
   const [reports, setReports] = useState([]);
   const [journal, setJournal] = useState([]);
@@ -31,8 +33,7 @@ function App() {
   const [selectedReport, setSelectedReport] = useState(null);
   const [selectedJournalEntry, setSelectedJournalEntry] = useState(null);
   const [showBreathe, setShowBreathe] = useState(false);
-  const [breatheCount, setBreatheCount] = useState(3);
-  const [breatheProgress, setBreatheProgress] = useState(100);
+  const [breatheCount, setBreatheCount] = useState(4); // Start at 4
   const [openNotepadSection, setOpenNotepadSection] = useState(null);
   const [openJournalType, setOpenJournalType] = useState(null);
   const [journalResponses, setJournalResponses] = useState({});
@@ -44,7 +45,7 @@ function App() {
   const [showSignup, setShowSignup] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
-  const [currentAffirmationIndex, setCurrentAffirmationIndex] = useState(0);
+  const [affirmationsList, setAffirmationsList] = useState([]); // Multiple affirmations
 
   const chatBoxRef = useRef(null);
   const reportDetailsRef = useRef(null);
@@ -59,19 +60,52 @@ function App() {
     "You deserve happiness and peace.",
     "You are growing every day.",
     "Your voice matters.",
-    "You are worthy of love and respect."
-    // ... (keep your full list; truncated for brevity)
+    "You are worthy of love and respect.",
+    "You bring light to those around you.",
+    "Your journey is unique and beautiful.",
+    "You have the power to create change.",
+    "Your resilience is unstoppable.",
+    "You are a gift to the world.",
+    "You are deserving of all good things.",
+    "Your dreams are valid and achievable.",
+    "You have the courage to face challenges.",
+    "You inspire others with your kindness.",
+    "You are a powerful creator of your reality.",
+    "You are loved beyond measure.",
+    "Your happiness is a priority.",
+    "You are constantly evolving and improving.",
+    "You are a source of strength for others.",
+    "You have the ability to overcome obstacles.",
+    "Your creativity knows no bounds.",
+    "You are enough, just as you are.",
+    "You have the right to express your feelings.",
+    "Your uniqueness is your superpower.",
+    "You are a magnet for positivity.",
+    "You are surrounded by love and support.",
+    "You are brave and can take risks.",
+    "You deserve to take time for yourself.",
+    "You are a beacon of hope and inspiration."
   ];
 
-  // Cycle through affirmations during loading
+  // Manage multiple affirmations during loading
   useEffect(() => {
     if (isLoading && !showSummaryBuffer) {
       const interval = setInterval(() => {
-        setCurrentAffirmationIndex((prevIndex) => (prevIndex + 1) % affirmations.length);
-      }, 4000); // 3s display + 1s fade (0.5s in, 0.5s out)
+        const newAffirmation = {
+          text: affirmations[Math.floor(Math.random() * affirmations.length)],
+          id: Date.now(),
+          position: ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'center'][Math.floor(Math.random() * 5)],
+        };
+        setAffirmationsList((prev) => [...prev, newAffirmation].slice(-5)); // Keep max 5 affirmations
+        setTimeout(() => {
+          setAffirmationsList((prev) => prev.filter((a) => a.id !== newAffirmation.id));
+        }, 2000); // Remove after 2s (0.5s fade-in + 1s visible + 0.5s fade-out)
+      }, 1000); // New affirmation every 1s
       return () => clearInterval(interval);
+    } else {
+      setAffirmationsList([]);
     }
-  }, [isLoading, showSummaryBuffer, affirmations.length]);
+  }, [isLoading, showSummaryBuffer]);
 
   useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth > 768);
@@ -79,32 +113,47 @@ function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Token regeneration countdown
+  useEffect(() => {
+    if (chatTokens < 3 && tokenRegenTime) {
+      const interval = setInterval(() => {
+        const now = new Date();
+        const timeDiff = (tokenRegenTime - now) / 1000; // Seconds
+        if (timeDiff <= 0) {
+          setChatTokens((prev) => Math.min(prev + 1, 3));
+          setTokenRegenTime(new Date(now.getTime() + 3 * 60 * 60 * 1000)); // Reset to 3 hours
+        }
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [chatTokens, tokenRegenTime]);
+
   const emotionDescriptions = {
     happiness: {
       question: "How happy are you right now?",
-      feedback: value => ["Really Unhappy", "Somewhat Unhappy", "Mildly Happy", "Quite Happy", "Very Happy"][value - 1],
-      emojis: ['😢', '😣', '😊', '😊', '🥰']
+      feedback: (value) => ["Really Unhappy", "Somewhat Unhappy", "Mildly Happy", "Quite Happy", "Very Happy"][value - 1],
+      emojis: ['😢', '😣', '😊', '😊', '🥰'],
     },
     anger: {
       question: "How angry are you right now?",
-      feedback: value => ["Really Calm", "Somewhat Calm", "Mildly Angry", "Quite Angry", "Extremely Angry"][value - 1],
-      emojis: ['😊', '😐', '😣', '😤', '😡']
+      feedback: (value) => ["Really Calm", "Somewhat Calm", "Mildly Angry", "Quite Angry", "Extremely Angry"][value - 1],
+      emojis: ['😊', '😐', '😣', '😤', '😡'],
     },
     stress: {
       question: "How stressed are you right now?",
-      feedback: value => ["Really Relaxed", "Somewhat Relaxed", "Mildly Stressed", "Quite Stressed", "Extremely Stressed"][value - 1],
-      emojis: ['😊', '😐', '😣', '😓', '😰']
+      feedback: (value) => ["Really Relaxed", "Somewhat Relaxed", "Mildly Stressed", "Quite Stressed", "Extremely Stressed"][value - 1],
+      emojis: ['😊', '😐', '😣', '😓', '😰'],
     },
     energy: {
       question: "How energized are you right now?",
-      feedback: value => ["Really Drained", "Somewhat Tired", "Mildly Energized", "Quite Energized", "Very Energized"][value - 1],
-      emojis: ['😴', '😪', '😐', '😊', '⚡']
+      feedback: (value) => ["Really Drained", "Somewhat Tired", "Mildly Energized", "Quite Energized", "Very Energized"][value - 1],
+      emojis: ['😴', '😪', '😐', '😊', '⚡'],
     },
     confidence: {
       question: "How confident are you right now?",
-      feedback: value => ["Really Unsure", "Somewhat Doubtful", "Mildly Confident", "Quite Confident", "Extremely Confident"][value - 1],
-      emojis: ['😟', '😣', '😐', '😊', '💪']
-    }
+      feedback: (value) => ["Really Unsure", "Somewhat Doubtful", "Mildly Confident", "Quite Confident", "Extremely Confident"][value - 1],
+      emojis: ['😟', '😣', '😐', '😊', '💪'],
+    },
   };
 
   const quizQuestions = Object.keys(emotionDescriptions);
@@ -114,35 +163,63 @@ function App() {
       { heading: "Highlights of My Day", subheading: "Reflect on the moments that brought you joy or satisfaction.", key: "highlights" },
       { heading: "What I Learned About Myself", subheading: "Consider any new insights or realizations you had.", key: "learned" },
       { heading: "Challenges I Faced", subheading: "Analyze your reactions and what you can learn from them.", key: "challenges" },
-      { heading: "Emotions I Experienced", subheading: "Explore the feelings you had and their sources.", key: "emotions" }
+      { heading: "Emotions I Experienced", subheading: "Explore the feelings you had and their sources.", key: "emotions" },
     ],
     dream: [
       { heading: "My Dream Last Night", subheading: "Capture the key components of your dream, including characters and settings.", key: "dreamDescription" },
       { heading: "Emotions in the Dream", subheading: "Reflect on how the dream made you feel and what that might signify.", key: "dreamEmotions" },
       { heading: "Recurring Themes or Symbols", subheading: "Identify any patterns that might connect to your waking life.", key: "themes" },
-      { heading: "Which part of the dream stands out the most?", subheading: "Focus on the most vivid or impactful moment and why it resonates.", key: "standout" }
+      { heading: "Which part of the dream stands out the most?", subheading: "Focus on the most vivid or impactful moment and why it resonates.", key: "standout" },
     ],
     freestyle: [
-      { heading: "My Thoughts", subheading: "Write whatever is on your mind, no structure needed.", key: "thoughts" }
-    ]
+      { heading: "My Thoughts", subheading: "Write whatever is on your mind, no structure needed.", key: "thoughts" },
+    ],
   };
 
   const fetchUserData = async (authToken) => {
     setIsLoading(true);
     try {
-      const [goalsRes, reportsRes, lastChatRes, journalRes, insightsRes] = await Promise.all([
+      // Cache critical data
+      const cachedData = JSON.parse(localStorage.getItem('userData') || '{}');
+      if (cachedData.goals) setGoals(cachedData.goals);
+      if (cachedData.reports) setReports(cachedData.reports);
+
+      const [goalsRes, reportsRes, lastChatRes] = await Promise.all([
         axios.get(`${API_URL}/api/regular/goals`, { headers: { Authorization: authToken } }),
         axios.get(`${API_URL}/api/regular/reports`, { headers: { Authorization: authToken } }),
         axios.get(`${API_URL}/api/regular/last-chat`, { headers: { Authorization: authToken } }),
-        axios.get(`${API_URL}/api/regular/journal`, { headers: { Authorization: authToken } }),
-        axios.get(`${API_URL}/api/regular/journal-insights`, { headers: { Authorization: authToken } })
       ]);
+
       setGoals(goalsRes.data || []);
       setReports(reportsRes.data || []);
       setLastChatTimestamp(lastChatRes.data.lastChatTimestamp ? new Date(lastChatRes.data.lastChatTimestamp) : null);
       setChatTokens(lastChatRes.data.chatTokens || 3);
-      setJournal(journalRes.data || []);
-      setJournalInsights(insightsRes.data || []);
+      const regenTime = lastChatRes.data.lastTokenRegen
+        ? new Date(new Date(lastChatRes.data.lastTokenRegen).getTime() + 3 * 60 * 60 * 1000)
+        : null;
+      setTokenRegenTime(regenTime);
+
+      // Cache critical data
+      localStorage.setItem('userData', JSON.stringify({
+        goals: goalsRes.data,
+        reports: reportsRes.data,
+        lastChatTimestamp: lastChatRes.data.lastChatTimestamp,
+        chatTokens: lastChatRes.data.chatTokens,
+      }));
+
+      // Lazy load non-critical data
+      Promise.all([
+        axios.get(`${API_URL}/api/regular/journal`, { headers: { Authorization: authToken } }),
+        axios.get(`${API_URL}/api/regular/journal-insights`, { headers: { Authorization: authToken } }),
+      ]).then(([journalRes, insightsRes]) => {
+        setJournal(journalRes.data || []);
+        setJournalInsights(insightsRes.data || []);
+        localStorage.setItem('userData', JSON.stringify({
+          ...JSON.parse(localStorage.getItem('userData') || '{}'),
+          journal: journalRes.data,
+          journalInsights: insightsRes.data,
+        }));
+      }).catch((err) => console.error('Error fetching non-critical data:', err));
     } catch (err) {
       console.error('Error fetching user data:', err);
       setMessage('Error loading your data');
@@ -153,13 +230,14 @@ function App() {
 
   useEffect(() => {
     if (token && role === 'regular') {
+      localStorage.setItem('token', token);
       fetchUserData(token);
     }
   }, [token, role]);
 
   useEffect(() => {
     if (isChatActive && timeLeft > 0) {
-      const timer = setInterval(() => setTimeLeft(prev => {
+      const timer = setInterval(() => setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
           handleEndChat();
@@ -173,24 +251,24 @@ function App() {
 
   useEffect(() => {
     if (showBreathe) {
-      setBreatheCount(3);
-      setBreatheProgress(100);
-      let count = 3;
+      setBreatheCount(4);
+      let count = 4;
       const interval = setInterval(() => {
         setBreatheCount(count);
-        setBreatheProgress((prev) => prev - (100 / 3));
         count -= 1;
         if (count < 1) {
           clearInterval(interval);
           setTimeout(() => {
             setShowBreathe(false);
-            setIsChatActive(true);
-            setChat([{ sender: 'pal', text: 'Hello, welcome to this safe space, what is on your mind today?', timestamp: new Date() }]);
-            setTimeLeft(10 * 60);
-            setMessage('Let’s chat.');
-          }, 500);
+            setTimeout(() => {
+              setIsChatActive(true);
+              setChat([{ sender: 'pal', text: 'Hello, welcome to this safe space, what is on your mind today?', timestamp: new Date() }]);
+              setTimeLeft(15 * 60);
+              setMessage('Let’s chat.');
+            }, 500); // Delay to allow fade-out
+          }, 1000); // Show 1 for 1s
         }
-      }, 1000);
+      }, 1000); // 1s per number
       return () => clearInterval(interval);
     }
   }, [showBreathe]);
@@ -203,28 +281,28 @@ function App() {
 
   const getBarChartData = useMemo(() => {
     return (quizData) => {
-      const pre = quizData.find(q => !q.isPostChat) || { happiness: 0, anger: 0, stress: 0, energy: 0, confidence: 0 };
+      const pre = quizData.find((q) => !q.isPostChat) || { happiness: 0, anger: 0, stress: 0, energy: 0, confidence: 0 };
       return {
         labels: ['Happiness', 'Anger', 'Stress', 'Energy', 'Confidence'],
         datasets: [{ label: 'Before Chat', data: [pre.happiness, pre.anger, pre.stress, pre.energy, pre.confidence], backgroundColor: '#36A2EB' }],
-        options: { scales: { y: { beginAtZero: true, max: 5 } } }
+        options: { scales: { y: { beginAtZero: true, max: 5 } } },
       };
     };
   }, []);
 
-  const barChartData = useMemo(() => selectedReport ? getBarChartData(selectedReport.quizData) : null, [selectedReport, getBarChartData]);
+  const barChartData = useMemo(() => (selectedReport ? getBarChartData(selectedReport.quizData) : null), [selectedReport, getBarChartData]);
 
   const handleRegularSignup = (e) => {
     e.preventDefault();
     setIsLoading(true);
     axios.post(`${API_URL}/api/regular/signup`, regularSignupForm)
-      .then(res => {
+      .then((res) => {
         setMessage(res.data.message);
         setToken(res.data.token);
         setRole('regular');
         fetchUserData(res.data.token);
       })
-      .catch(err => setMessage(err.response?.data?.error || 'Signup failed'))
+      .catch((err) => setMessage(err.response?.data?.error || 'Signup failed'))
       .finally(() => setIsLoading(false));
   };
 
@@ -233,13 +311,13 @@ function App() {
     setIsLoading(true);
     const loginData = { ...regularLoginForm, email: regularLoginForm.email.toLowerCase() };
     axios.post(`${API_URL}/api/regular/login`, loginData)
-      .then(res => {
+      .then((res) => {
         setToken(res.data.token);
         setRole('regular');
         setMessage(`Welcome, ${res.data.name || 'User'}!`);
         fetchUserData(res.data.token);
       })
-      .catch(err => setMessage(err.response?.data?.error || 'Login failed'))
+      .catch((err) => setMessage(err.response?.data?.error || 'Login failed'))
       .finally(() => setIsLoading(false));
   };
 
@@ -287,6 +365,14 @@ function App() {
     setShowBreathe(true);
   };
 
+  const handleExtendChat = () => {
+    if (extendCount < 3) {
+      setTimeLeft((prev) => prev + 5 * 60);
+      setExtendCount((prev) => prev + 1);
+      setMessage('Chat extended by 5 minutes!');
+    }
+  };
+
   const debounce = (func, wait) => {
     let timeout;
     return (...args) => {
@@ -295,37 +381,54 @@ function App() {
     };
   };
 
-  const handleChat = useCallback(debounce(async (text) => {
-    if (timeLeft <= 0 || text.length > 500) return;
-    const newUserMessage = { sender: 'user', text, timestamp: new Date() };
-    setChat(prev => [...prev, newUserMessage]);
-    setChatInput('');
-    try {
-      const lowerText = text.toLowerCase();
-      if (lowerText.includes('kill myself') || lowerText.includes('killing myself') || lowerText.includes('suicide') || lowerText.includes('end my life')) {
-        const helpline = "If you're in the UK, please call Samaritans at 116 123. In the US, call 988. You're not alone, and help is available.";
-        setChat(prev => [...prev, { sender: 'pal', text: helpline, timestamp: new Date() }]);
-        return;
+  const handleChat = useCallback(
+    debounce(async (text) => {
+      if (timeLeft <= 0 || text.length > 500) return;
+      const newUserMessage = { sender: 'user', text, timestamp: new Date() };
+      setChat((prev) => [...prev, newUserMessage]);
+      setChatInput('');
+      try {
+        const lowerText = text.toLowerCase();
+        if (
+          lowerText.includes('kill myself') ||
+          lowerText.includes('killing myself') ||
+          lowerText.includes('suicide') ||
+          lowerText.includes('end my life')
+        ) {
+          const helpline = "If you're in the UK, please call Samaritans at 116 123. In the US, call 988. You're not alone, and help is available.";
+          setChat((prev) => [...prev, { sender: 'pal', text: helpline, timestamp: new Date() }]);
+          return;
+        }
+        const response = await axios.post(
+          `${API_URL}/api/regular/chat`,
+          { message: text, chatHistory: chat },
+          { headers: { Authorization: token } }
+        );
+        setChat((prev) => [...prev, { sender: 'pal', text: response.data.text, timestamp: new Date(response.data.timestamp) }]);
+      } catch (error) {
+        console.error('Error chatting:', error);
+        setMessage('Error chatting: ' + (error.response?.data?.error || error.message));
       }
-      const response = await axios.post(`${API_URL}/api/regular/chat`, { message: text, chatHistory: chat }, { headers: { Authorization: token } });
-      setChat(prev => [...prev, { sender: 'pal', text: response.data.text, timestamp: new Date(response.data.timestamp) }]);
-    } catch (error) {
-      console.error('Error chatting:', error);
-      setMessage('Error chatting: ' + (error.response?.data?.error || error.message));
-    }
-  }, 300), [chat, timeLeft, token]);
+    }, 300),
+    [chat, timeLeft, token]
+  );
 
   const handleEndChat = async () => {
     setTimeLeft(0);
     setIsLoading(true);
     try {
-      const response = await axios.post(`${API_URL}/api/regular/end-chat`, { chatHistory: chat, quiz }, { headers: { Authorization: token } });
+      const response = await axios.post(
+        `${API_URL}/api/regular/end-chat`,
+        { chatHistory: chat, quiz },
+        { headers: { Authorization: token } }
+      );
       const newReport = response.data;
-      setReports(prev => [...prev, newReport]);
+      setReports((prev) => [...prev, newReport]);
       setLastChatTimestamp(new Date());
-      setChatTokens(prev => Math.max(prev - 1, 0));
+      setChatTokens((prev) => Math.max(prev - 1, 0));
       setChat([]);
       setIsChatActive(false);
+      setExtendCount(0);
       setShowSummaryBuffer(true);
       setTimeout(() => {
         setShowSummaryBuffer(false);
@@ -353,7 +456,7 @@ function App() {
   };
 
   const handleJournalInput = (key, value) => {
-    setJournalResponses(prev => ({ ...prev, [key]: value }));
+    setJournalResponses((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleSaveJournal = async () => {
@@ -365,14 +468,19 @@ function App() {
     const journalData = {
       date: new Date().toISOString(),
       type: openJournalType,
-      responses: { ...journalResponses }
+      responses: { ...journalResponses },
     };
     try {
       const response = await axios.post(`${API_URL}/api/regular/insights`, journalData, {
-        headers: { Authorization: token }
+        headers: { Authorization: token },
       });
-      const newJournalEntry = { _id: response.data._id, date: new Date(journalData.date), type: journalData.type, responses: journalData.responses };
-      setJournal(prev => [...prev, newJournalEntry]);
+      const newJournalEntry = {
+        _id: response.data._id,
+        date: new Date(journalData.date),
+        type: journalData.type,
+        responses: journalData.responses,
+      };
+      setJournal((prev) => [...prev, newJournalEntry]);
       setOpenJournalType(null);
       setJournalResponses({});
       setActiveTab('journal');
@@ -401,13 +509,15 @@ function App() {
     setIsLoading(true);
     try {
       await axios.delete(`${API_URL}/api/regular/journal/${entryId}`, {
-        headers: { Authorization: token }
+        headers: { Authorization: token },
       });
-      setJournal(prev => prev.filter(entry => entry._id !== entryId));
-      setJournalInsights(prev => prev.filter(insight => {
-        const journalDate = journal.find(entry => entry._id === entryId)?.date;
-        return journalDate ? new Date(insight.journalDate).getTime() !== new Date(journalDate).getTime() : true;
-      }));
+      setJournal((prev) => prev.filter((entry) => entry._id !== entryId));
+      setJournalInsights((prev) =>
+        prev.filter((insight) => {
+          const journalDate = journal.find((entry) => entry._id === entryId)?.date;
+          return journalDate ? new Date(insight.journalDate).getTime() !== new Date(journalDate).getTime() : true;
+        })
+      );
       setSelectedJournalEntry(null);
       setOpenNotepadSection(null);
       setMessage('Journal entry deleted successfully.');
@@ -424,9 +534,9 @@ function App() {
     setIsLoading(true);
     try {
       await axios.delete(`${API_URL}/api/regular/reports/${reportId}`, {
-        headers: { Authorization: token }
+        headers: { Authorization: token },
       });
-      setReports(prev => prev.filter(report => report._id !== reportId));
+      setReports((prev) => prev.filter((report) => report._id !== reportId));
       setSelectedReport(null);
       setOpenNotepadSection(null);
       setMessage('Report deleted successfully.');
@@ -442,16 +552,20 @@ function App() {
   const handleGenerateInsight = async (entry) => {
     setIsLoading(true);
     try {
-      const response = await axios.post(`${API_URL}/api/regular/journal-insights`, {
-        journalDate: entry.date,
-        responses: entry.responses
-      }, { headers: { Authorization: token } });
+      const response = await axios.post(
+        `${API_URL}/api/regular/journal-insights`,
+        {
+          journalDate: entry.date,
+          responses: entry.responses,
+        },
+        { headers: { Authorization: token } }
+      );
       const newInsight = {
         journalDate: new Date(entry.date),
         insight: response.data.insight,
-        createdAt: new Date()
+        createdAt: new Date(),
       };
-      setJournalInsights(prev => [...prev, newInsight]);
+      setJournalInsights((prev) => [...prev, newInsight]);
       setMessage('Insight generated! View it in the notepad.');
     } catch (err) {
       console.error('Error generating insight:', err);
@@ -464,14 +578,17 @@ function App() {
   const handleLogout = () => {
     setToken(null);
     localStorage.removeItem('token');
+    localStorage.removeItem('userData');
     setRole(null);
     setIsQuizActive(false);
     setIsChatActive(false);
     setQuiz({ happiness: 0, anger: 0, stress: 0, energy: 0, confidence: 0, isPostChat: false });
     setChat([]);
-    setTimeLeft(10 * 60);
+    setTimeLeft(15 * 60);
+    setExtendCount(0);
     setLastChatTimestamp(null);
     setChatTokens(3);
+    setTokenRegenTime(null);
     setGoals([]);
     setReports([]);
     setJournal([]);
@@ -487,7 +604,7 @@ function App() {
     setChatInput('');
     setShowSignup(false);
     setDeleteConfirm(null);
-    setCurrentAffirmationIndex(0);
+    setAffirmationsList([]);
   };
 
   const handleOpenNotepad = (section) => {
@@ -509,7 +626,7 @@ function App() {
 
   const renderJournalResponses = (entry) => {
     const responses = entry.responses;
-    const insight = journalInsights.find(i => new Date(i.journalDate).getTime() === new Date(entry.date).getTime());
+    const insight = journalInsights.find((i) => new Date(i.journalDate).getTime() === new Date(entry.date).getTime());
     const hasInsight = !!insight;
 
     if (entry.type === 'daily') {
@@ -592,6 +709,13 @@ function App() {
   const reflectEndIndex = reflectStartIndex + entriesPerPage;
   const paginatedReports = sortedReports.slice(reflectStartIndex, reflectEndIndex);
 
+  const formatTime = (seconds) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
     <div className="app">
       {(isLoading || showSummaryBuffer) && (
@@ -600,7 +724,14 @@ function App() {
           {showSummaryBuffer ? (
             <p>Preparing your summary...</p>
           ) : (
-            <p className="affirmation">{affirmations[currentAffirmationIndex]}</p>
+            affirmationsList.map((affirmation) => (
+              <p
+                key={affirmation.id}
+                className={`affirmation ${affirmation.position}`}
+              >
+                {affirmation.text}
+              </p>
+            ))
           )}
         </div>
       )}
@@ -637,10 +768,7 @@ function App() {
               <h2>{isDesktop ? 'Sign Up or Log In' : showSignup ? 'Sign Up' : 'Log In'}</h2>
               {!isDesktop && (
                 <div className="auth-toggle">
-                  <button
-                    className="toggle-btn"
-                    onClick={() => setShowSignup(!showSignup)}
-                  >
+                  <button className="toggle-btn" onClick={() => setShowSignup(!showSignup)}>
                     {showSignup ? 'Switch to Log In' : 'Switch to Sign Up'}
                   </button>
                 </div>
@@ -652,27 +780,27 @@ function App() {
                       <input
                         placeholder="Name"
                         value={regularSignupForm.name}
-                        onChange={e => setRegularSignupForm({ ...regularSignupForm, name: e.target.value })}
+                        onChange={(e) => setRegularSignupForm({ ...regularSignupForm, name: e.target.value })}
                         required
                       />
                       <input
                         placeholder="Email"
                         type="email"
                         value={regularSignupForm.email}
-                        onChange={e => setRegularSignupForm({ ...regularSignupForm, email: e.target.value })}
+                        onChange={(e) => setRegularSignupForm({ ...regularSignupForm, email: e.target.value })}
                         required
                       />
                       <input
                         placeholder="Username"
                         value={regularSignupForm.username}
-                        onChange={e => setRegularSignupForm({ ...regularSignupForm, username: e.target.value })}
+                        onChange={(e) => setRegularSignupForm({ ...regularSignupForm, username: e.target.value })}
                         required
                       />
                       <input
                         placeholder="Password"
                         type="password"
                         value={regularSignupForm.password}
-                        onChange={e => setRegularSignupForm({ ...regularSignupForm, password: e.target.value })}
+                        onChange={(e) => setRegularSignupForm({ ...regularSignupForm, password: e.target.value })}
                         required
                       />
                       <button type="submit" className="signup-btn">Sign Up</button>
@@ -685,14 +813,14 @@ function App() {
                       <input
                         placeholder="Email"
                         value={regularLoginForm.email}
-                        onChange={e => setRegularLoginForm({ ...regularLoginForm, email: e.target.value })}
+                        onChange={(e) => setRegularLoginForm({ ...regularLoginForm, email: e.target.value })}
                         required
                       />
                       <input
                         placeholder="Password"
                         type="password"
                         value={regularLoginForm.password}
-                        onChange={e => setRegularLoginForm({ ...regularLoginForm, password: e.target.value })}
+                        onChange={(e) => setRegularLoginForm({ ...regularLoginForm, password: e.target.value })}
                         required
                       />
                       <button type="submit">Log In</button>
@@ -721,7 +849,7 @@ function App() {
                     <div className="quiz-content">
                       <h3 className="quiz-question">{emotionDescriptions[quizQuestions[currentQuizQuestion]].question}</h3>
                       <div className="quiz-options">
-                        {[1, 2, 3, 4, 5].map(value => (
+                        {[1, 2, 3, 4, 5].map((value) => (
                           <button
                             key={value}
                             className={`quiz-option-box ${selectedAnswer === value ? 'selected' : ''}`}
@@ -739,13 +867,12 @@ function App() {
                         ))}
                       </div>
                       <div className="quiz-nav">
-                        {selectedAnswer !== null && (
-                          currentQuizQuestion < quizQuestions.length - 1 ? (
+                        {selectedAnswer !== null &&
+                          (currentQuizQuestion < quizQuestions.length - 1 ? (
                             <button onClick={handleQuizNext}>Next</button>
                           ) : (
                             <button onClick={handleStartChat}>Start Chat</button>
-                          )
-                        )}
+                          ))}
                       </div>
                     </div>
                   </div>
@@ -753,13 +880,9 @@ function App() {
                   <div className={`breathe-overlay ${showBreathe ? 'active' : ''}`}>
                     <div className="breathe-animation">
                       <h2>Take this moment to breathe...</h2>
-                      <p className={`breathe-count ${breatheCount === 3 ? 'fade-in' : 'fade-out'}`}>{breatheCount}</p>
-                      <div className="breathe-progress-bar">
-                        <div
-                          className="breathe-progress"
-                          style={{ width: `${breatheProgress}%` }}
-                        ></div>
-                      </div>
+                      <p className={`breathe-count ${breatheCount === 4 ? 'fade-in' : 'fade-out'}`}>
+                        {breatheCount}
+                      </p>
                     </div>
                   </div>
                 ) : isChatActive ? (
@@ -767,9 +890,12 @@ function App() {
                     <h2>Chat with Pal</h2>
                     <p>Time left: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</p>
                     <p>Tokens remaining: {chatTokens}</p>
+                    <p>Extensions used: {extendCount}/3</p>
                     <div className="chat-box" ref={chatBoxRef}>
                       {chat.slice().reverse().map((msg, i) => (
-                        <p key={i} className={msg.sender === 'pal' ? 'pal' : 'user'}>{msg.text}</p>
+                        <p key={i} className={msg.sender === 'pal' ? 'pal' : 'user'}>
+                          {msg.text}
+                        </p>
                       ))}
                     </div>
                     {timeLeft > 0 ? (
@@ -777,8 +903,8 @@ function App() {
                         <input
                           placeholder="Talk to Pal... (max 500 characters)"
                           value={chatInput}
-                          onChange={e => setChatInput(e.target.value.slice(0, 500))}
-                          onKeyPress={e => {
+                          onChange={(e) => setChatInput(e.target.value.slice(0, 500))}
+                          onKeyPress={(e) => {
                             if (e.key === 'Enter' && chatInput.trim()) {
                               handleChat(chatInput);
                             }
@@ -800,12 +926,26 @@ function App() {
                         <button onClick={() => setActiveTab('reflect')}>View Reflect</button>
                       </div>
                     )}
-                    {timeLeft > 0 && <button onClick={handleEndChat}>End Chat</button>}
+                    {timeLeft > 0 && (
+                      <>
+                        <button onClick={handleEndChat}>End Chat</button>
+                        {timeLeft < 30 && extendCount < 3 && (
+                          <button onClick={handleExtendChat}>Extend Chat (+5 min)</button>
+                        )}
+                      </>
+                    )}
                   </div>
                 ) : (
                   <div className="quiz">
                     <h2>Chat</h2>
-                    <p>You have {chatTokens} chat tokens left today. Tokens regenerate every 3 hours.</p>
+                    <p>
+                      You have {chatTokens} chat tokens left today.{' '}
+                      {chatTokens < 3 && tokenRegenTime
+                        ? `Next token in ${formatTime(
+                            Math.max(0, Math.floor((tokenRegenTime - new Date()) / 1000))
+                          )}`
+                        : 'Tokens regenerate every 3 hours.'}
+                    </p>
                     {chatTokens > 0 ? (
                       <button onClick={handleStartQuiz}>Start Quiz</button>
                     ) : (
@@ -855,16 +995,24 @@ function App() {
                 {openJournalType && (
                   <div className={`journal-modal ${openJournalType ? 'active' : ''}`}>
                     <div className="journal-content">
-                      <button className="close-btn" onClick={handleCloseJournal}>X</button>
-                      <h3>{openJournalType === 'daily' ? 'Daily Journal' : openJournalType === 'dream' ? 'Dream Journal' : 'Freestyle Journal'}</h3>
-                      {journalPrompts[openJournalType].map(prompt => (
+                      <button className="close-btn" onClick={handleCloseJournal}>
+                        X
+                      </button>
+                      <h3>
+                        {openJournalType === 'daily'
+                          ? 'Daily Journal'
+                          : openJournalType === 'dream'
+                          ? 'Dream Journal'
+                          : 'Freestyle Journal'}
+                      </h3>
+                      {journalPrompts[openJournalType].map((prompt) => (
                         <div key={prompt.key} className="journal-prompt">
                           <h2>{prompt.heading}</h2>
                           <p>{prompt.subheading}</p>
                           <textarea
                             placeholder="Write your response..."
                             value={journalResponses[prompt.key] || ''}
-                            onChange={e => handleJournalInput(prompt.key, e.target.value)}
+                            onChange={(e) => handleJournalInput(prompt.key, e.target.value)}
                           />
                         </div>
                       ))}
@@ -888,7 +1036,13 @@ function App() {
                       <tbody>
                         {paginatedJournal.map((entry, i) => (
                           <tr key={i}>
-                            <td>{entry.type === 'daily' ? 'Daily Journal' : entry.type === 'dream' ? 'Dream Journal' : 'Freestyle Journal'}</td>
+                            <td>
+                              {entry.type === 'daily'
+                                ? 'Daily Journal'
+                                : entry.type === 'dream'
+                                ? 'Dream Journal'
+                                : 'Freestyle Journal'}
+                            </td>
                             <td>{new Date(entry.date).toLocaleDateString()}</td>
                             <td>
                               <button onClick={() => handleOpenJournalEntry(entry)}>Open</button>
@@ -905,14 +1059,16 @@ function App() {
                     </table>
                     <div className="pagination">
                       <button
-                        onClick={() => setJournalPage(prev => Math.max(prev - 1, 1))}
+                        onClick={() => setJournalPage((prev) => Math.max(prev - 1, 1))}
                         disabled={journalPage === 1}
                       >
                         Previous
                       </button>
-                      <span>Page {journalPage} of {journalPageCount}</span>
+                      <span>
+                        Page {journalPage} of {journalPageCount}
+                      </span>
                       <button
-                        onClick={() => setJournalPage(prev => Math.min(prev + 1, journalPageCount))}
+                        onClick={() => setJournalPage((prev) => Math.min(prev + 1, journalPageCount))}
                         disabled={journalPage === journalPageCount}
                       >
                         Next
@@ -921,9 +1077,19 @@ function App() {
                     {selectedJournalEntry && openNotepadSection === 'reflect' && (
                       <div className={`notepad-modal ${openNotepadSection ? 'active' : ''}`}>
                         <div className="notepad-content">
-                          <button className="close-btn" onClick={handleCloseJournalEntry}>X</button>
+                          <button className="close-btn" onClick={handleCloseJournalEntry}>
+                            X
+                          </button>
                           <div className="notepad-text">
-                            <h3>Entry: {new Date(selectedJournalEntry.date).toLocaleDateString()} ({selectedJournalEntry.type === 'daily' ? 'Daily Journal' : selectedJournalEntry.type === 'dream' ? 'Dream Journal' : 'Freestyle Journal'})</h3>
+                            <h3>
+                              Entry: {new Date(selectedJournalEntry.date).toLocaleDateString()} (
+                              {selectedJournalEntry.type === 'daily'
+                                ? 'Daily Journal'
+                                : selectedJournalEntry.type === 'dream'
+                                ? 'Dream Journal'
+                                : 'Freestyle Journal'}
+                              )
+                            </h3>
                             {renderJournalResponses(selectedJournalEntry)}
                           </div>
                         </div>
@@ -971,14 +1137,16 @@ function App() {
                     </table>
                     <div className="pagination">
                       <button
-                        onClick={() => setReflectPage(prev => Math.max(prev - 1, 1))}
+                        onClick={() => setReflectPage((prev) => Math.max(prev - 1, 1))}
                         disabled={reflectPage === 1}
                       >
                         Previous
                       </button>
-                      <span>Page {reflectPage} of {reflectPageCount}</span>
+                      <span>
+                        Page {reflectPage} of {reflectPageCount}
+                      </span>
                       <button
-                        onClick={() => setReflectPage(prev => Math.min(prev + 1, reflectPageCount))}
+                        onClick={() => setReflectPage((prev) => Math.min(prev + 1, reflectPageCount))}
                         disabled={reflectPage === reflectPageCount}
                       >
                         Next
@@ -992,31 +1160,47 @@ function App() {
                         </div>
                         <p className="feedback">Select to read your insights</p>
                         <div className="summary-container">
-                          {['discussed', 'thoughtsFeelings', 'insights', 'moodReflection', 'recommendations'].map(section => (
-                            <div
-                              key={section}
-                              className="summary-card"
-                              onClick={() => handleOpenNotepad(section)}
-                            >
-                              <div className="summary-front">
-                                <h4>{section === 'discussed' ? 'What We Discussed' : 
-                                     section === 'thoughtsFeelings' ? 'Your Thoughts & Feelings' : 
-                                     section === 'insights' ? 'Insights Uncovered' : 
-                                     section === 'moodReflection' ? 'Mood Reflection' : 'Recommendations'}</h4>
+                          {['discussed', 'thoughtsFeelings', 'insights', 'moodReflection', 'recommendations'].map(
+                            (section) => (
+                              <div
+                                key={section}
+                                className="summary-card"
+                                onClick={() => handleOpenNotepad(section)}
+                              >
+                                <div className="summary-front">
+                                  <h4>
+                                    {section === 'discussed'
+                                      ? 'What We Discussed'
+                                      : section === 'thoughtsFeelings'
+                                      ? 'Your Thoughts & Feelings'
+                                      : section === 'insights'
+                                      ? 'Insights Uncovered'
+                                      : section === 'moodReflection'
+                                      ? 'Mood Reflection'
+                                      : 'Recommendations'}
+                                  </h4>
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            )
+                          )}
                         </div>
                         {openNotepadSection && (
                           <div className={`notepad-modal ${openNotepadSection ? 'active' : ''}`}>
                             <div className="notepad-content">
-                              <button className="close-btn" onClick={handleCloseNotepad}>X</button>
+                              <button className="close-btn" onClick={handleCloseNotepad}>
+                                X
+                              </button>
                               <div className="notepad-text">
                                 <h3>
-                                  {openNotepadSection === 'discussed' ? 'What We Discussed' : 
-                                   openNotepadSection === 'thoughtsFeelings' ? 'Your Thoughts & Feelings' : 
-                                   openNotepadSection === 'insights' ? 'Insights Uncovered' : 
-                                   openNotepadSection === 'moodReflection' ? 'Mood Reflection' : 'Recommendations'}
+                                  {openNotepadSection === 'discussed'
+                                    ? 'What We Discussed'
+                                    : openNotepadSection === 'thoughtsFeelings'
+                                    ? 'Your Thoughts & Feelings'
+                                    : openNotepadSection === 'insights'
+                                    ? 'Insights Uncovered'
+                                    : openNotepadSection === 'moodReflection'
+                                    ? 'Mood Reflection'
+                                    : 'Recommendations'}
                                 </h3>
                                 {openNotepadSection === 'reflect' && selectedJournalEntry
                                   ? renderJournalResponses(selectedJournalEntry)
@@ -1050,7 +1234,13 @@ function App() {
                 aria-pressed={activeTab === 'chat'}
               >
                 <img src="/icons/chat.png" alt="Chat" className="icon" />
-                <span>{chatTokens > 0 ? `Chat (${chatTokens}/3)` : 'Chat'}</span>
+                <span>
+                  {chatTokens < 3 && tokenRegenTime
+                    ? `Chat (${chatTokens}/3) ${formatTime(
+                        Math.max(0, Math.floor((tokenRegenTime - new Date()) / 1000))
+                      )}`
+                    : `Chat (${chatTokens}/3)`}
+                </span>
               </button>
               <button
                 onClick={() => setActiveTab('journal')}
