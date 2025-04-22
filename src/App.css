@@ -1,5 +1,5 @@
 /* ========================================================================== */
-/* MindSprout App CSS - Optimized Styles with New Features */
+/* MindSprout App CSS - Updated for Daily Affirmations and Weekly Mood Trends */
 /* ========================================================================== */
 
 /* Import Google Fonts for consistent typography */
@@ -325,7 +325,7 @@ button:disabled, .send-btn:disabled {
 /* Glassmorphism for Modals */
 /* ========================================================================== */
 
-.journal-modal, .notepad-modal, .delete-confirm-modal, .level-up-modal {
+.journal-modal, .notepad-modal, .delete-confirm-modal, .daily-affirmations-modal {
   position: fixed;
   top: 0;
   left: 0;
@@ -341,12 +341,12 @@ button:disabled, .send-btn:disabled {
   transform: scale(0.9);
 }
 
-.journal-modal.active, .notepad-modal.active, .delete-confirm-modal.active, .level-up-modal.active {
+.journal-modal.active, .notepad-modal.active, .delete-confirm-modal.active, .daily-affirmations-modal.active {
   opacity: 1;
   transform: scale(1);
 }
 
-.journal-content, .notepad-content, .delete-confirm-content, .level-up-content {
+.journal-content, .notepad-content, .delete-confirm-content, .daily-affirmations-content {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -363,26 +363,51 @@ button:disabled, .send-btn:disabled {
 .journal-content h2, .journal-content p,
 .notepad-text h3, .notepad-text p,
 .delete-confirm-content h3, .delete-confirm-content p,
-.level-up-content h3, .level-up-content p {
+.daily-affirmations-content h3, .daily-affirmations-content p {
   color: #388E3C;
 }
 
 /* Fallback for browsers without backdrop-filter support */
-.journal-content, .notepad-content, .delete-confirm-content, .level-up-content {
+.journal-content, .notepad-content, .delete-confirm-content, .daily-affirmations-content {
   background: rgba(224, 242, 233, 0.9); /* Fallback */
 }
 
 @media (max-width: 768px) {
-  .journal-content, .notepad-content, .delete-confirm-content, .level-up-content {
+  .journal-content, .notepad-content, .delete-confirm-content, .daily-affirmations-content {
     max-width: 90%;
     padding: 15px;
   }
-  .journal-content h2, .delete-confirm-content h3, .level-up-content h3 {
+  .journal-content h2, .delete-confirm-content h3, .daily-affirmations-content h3 {
     font-size: 16px;
   }
-  .journal-content p, .notepad-text p, .delete-confirm-content p, .level-up-content p {
+  .journal-content p, .notepad-text p, .delete-confirm-content p, .daily-affirmations-content p {
     font-size: 12px;
   }
+}
+
+/* ========================================================================== */
+/* Daily Affirmations Modal */
+/* ========================================================================== */
+
+.daily-affirmations-content {
+  text-align: center;
+}
+
+.affirmation-section {
+  margin: 20px 0;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+}
+
+.affirmation-section h4 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.affirmation-section p {
+  font-size: 14px;
+  line-height: 1.6;
 }
 
 /* ========================================================================== */
@@ -405,20 +430,6 @@ button:disabled, .send-btn:disabled {
 
 .delete-confirm-buttons button:first-child:hover {
   background: #E57373;
-}
-
-/* ========================================================================== */
-/* Level-Up Modal */
-/* ========================================================================== */
-
-.level-up-content {
-  text-align: center;
-  animation: popIn 0.5s ease;
-}
-
-@keyframes popIn {
-  0% { transform: scale(0.8); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
 }
 
 /* ========================================================================== */
@@ -897,99 +908,6 @@ button:disabled, .send-btn:disabled {
   animation: fadeIn 0.3s ease-in;
 }
 
-.streak-section {
-  margin: 20px 0;
-  padding: 15px;
-  background: #e0f2e9;
-  border-radius: 10px;
-  text-align: center;
-}
-
-.streak-section p {
-  font-size: 14px;
-  margin: 5px 0;
-}
-
-.xp-bar {
-  position: relative;
-  width: 100%;
-  max-width: 400px;
-  height: 20px;
-  background: #f9fafb;
-  border-radius: 10px;
-  overflow: hidden;
-  margin: 10px auto;
-  transition: all 0.3s ease;
-}
-
-.xp-fill {
-  height: 100%;
-  background: linear-gradient(to right, #388E3C, #4CAF50);
-  transition: width 0.5s ease;
-}
-
-.xp-tooltip {
-  position: absolute;
-  top: -30px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 5px 10px;
-  border-radius: 5px;
-  font-size: 12px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-}
-
-.xp-bar:hover .xp-tooltip {
-  opacity: 1;
-}
-
-.daily-challenges {
-  margin: 20px 0;
-  padding: 15px;
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.daily-challenges h3 {
-  font-size: 18px;
-  margin-bottom: 10px;
-}
-
-.challenge-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px;
-  margin: 5px 0;
-  background: #f9fafb;
-  border-radius: 8px;
-  transition: transform 0.2s, background 0.2s;
-}
-
-.challenge-card:hover {
-  transform: translateY(-2px);
-  background: #e0f2e9;
-}
-
-.challenge-card p {
-  font-size: 14px;
-  margin: 0;
-}
-
-.challenge-card button {
-  padding: 8px 16px;
-  font-size: 12px;
-}
-
-.challenge-card button:disabled {
-  background: #ccc;
-}
-
 .mood-trend {
   margin: 20px 0;
   padding: 15px;
@@ -1003,7 +921,16 @@ button:disabled, .send-btn:disabled {
   margin-bottom: 10px;
 }
 
-.daily-quote {
+.mood-summary {
+  margin-top: 15px;
+}
+
+.mood-summary p {
+  font-size: 14px;
+  margin: 5px 0;
+}
+
+.daily-inspiration {
   margin: 20px 0;
   padding: 15px;
   background: #e0f2e9;
@@ -1011,48 +938,23 @@ button:disabled, .send-btn:disabled {
   text-align: center;
 }
 
-.daily-quote h3 {
+.daily-inspiration h3 {
   font-size: 18px;
   margin-bottom: 10px;
 }
 
-.daily-quote p {
-  font-size: 14px;
-  font-style: italic;
+.daily-inspiration button {
+  background: #388E3C;
+  color: white;
 }
 
-.profile-settings {
-  margin: 20px 0;
-  padding: 15px;
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.profile-settings h3 {
-  font-size: 18px;
-  margin-bottom: 10px;
-}
-
-.profile-settings input {
-  margin: 10px 0;
-  max-width: 300px;
+.daily-inspiration button:disabled {
+  background: #ccc;
 }
 
 @media (max-width: 768px) {
-  .streak-section, .daily-challenges, .mood-trend, .daily-quote, .profile-settings {
+  .mood-trend, .daily-inspiration {
     padding: 10px;
-  }
-  .xp-bar {
-    max-width: 100%;
-  }
-  .challenge-card {
-    flex-direction: column;
-    gap: 10px;
-    align-items: stretch;
-  }
-  .challenge-card button {
-    width: 100%;
   }
 }
 
@@ -1248,7 +1150,7 @@ button:disabled, .send-btn:disabled {
   bottom: 0;
   left: 0;
   right: 0;
-  background: linear-gradient(to right, #388E3C, #4CAF50);
+  background: #FFFFFF; /* White background */
   display: flex;
   justify-content: space-around;
   padding: 10px 0;
@@ -1257,11 +1159,11 @@ button:disabled, .send-btn:disabled {
 }
 
 .menu-bar button {
-  background: rgba(255, 255, 255, 0.2);
-  border: 2px solid transparent;
+  background: #E8F5E9; /* Very light green */
+  border: 2px solid #2E7D32; /* Darker green border */
   border-radius: 8px;
   padding: 8px;
-  color: white;
+  color: #2E7D32; /* Darker green text */
   font-size: 12px;
   display: flex;
   flex-direction: column;
@@ -1271,13 +1173,14 @@ button:disabled, .send-btn:disabled {
 }
 
 .menu-bar button:hover {
-  background: rgba(255, 255, 255, 0.4);
+  background: #C8E6C9; /* Slightly darker light green */
   transform: scale(1.1);
 }
 
 .menu-bar button.active {
-  background: rgba(255, 255, 255, 0.4);
-  border-color: #2E7D32;
+  background: #A5D6A7; /* Subtle green for active state */
+  border-color: #1B5E20; /* Even darker border for active */
+  color: #1B5E20;
 }
 
 .menu-bar span {
@@ -1289,6 +1192,7 @@ button:disabled, .send-btn:disabled {
     position: static;
     box-shadow: none;
     padding: 20px;
+    background: #F5F7FA; /* Very light green for desktop */
   }
   .menu-bar button {
     font-size: 14px;
@@ -1300,27 +1204,30 @@ button:disabled, .send-btn:disabled {
 /* Custom Scrollbars */
 /* ========================================================================== */
 
-.chat-box, .journal-content, .notepad-content {
+.chat-box, .journal-content, .notepad-content, .daily-affirmations-content {
   scrollbar-width: thin;
   scrollbar-color: #388E3C #f9fafb;
 }
 
 .chat-box::-webkit-scrollbar,
 .journal-content::-webkit-scrollbar,
-.notepad-content::-webkit-scrollbar {
+.notepad-content::-webkit-scrollbar,
+.daily-affirmations-content::-webkit-scrollbar {
   width: 8px;
 }
 
 .chat-box::-webkit-scrollbar-thumb,
 .journal-content::-webkit-scrollbar-thumb,
-.notepad-content::-webkit-scrollbar-thumb {
+.notepad-content::-webkit-scrollbar-thumb,
+.daily-affirmations-content::-webkit-scrollbar-thumb {
   background: #388E3C;
   border-radius: 4px;
 }
 
 .chat-box::-webkit-scrollbar-track,
 .journal-content::-webkit-scrollbar-track,
-.notepad-content::-webkit-scrollbar-track {
+.notepad-content::-webkit-scrollbar-track,
+.daily-affirmations-content::-webkit-scrollbar-track {
   background: #f9fafb;
 }
 
@@ -1369,16 +1276,13 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
     background: #fff;
     color: #000;
   }
-  .xp-fill {
-    background: #000;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .canvas, .journal-modal, .notepad-modal, .delete-confirm-modal, .level-up-modal, .quiz-fullscreen, .breathe-overlay, .affirmation {
+  .canvas, .journal-modal, .notepad-modal, .delete-confirm-modal, .daily-affirmations-modal {
     transition: none;
   }
-  .spinner, .affirmation, .breathe-count, .xp-fill, .challenge-card {
+  .spinner, .affirmation, .breathe-count {
     animation: none;
     opacity: 1;
   }
@@ -1388,11 +1292,11 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
 /* Edge Case Styles */
 /* ========================================================================== */
 
-.journal-modal, .notepad-modal, .delete-confirm-modal, .level-up-modal, .quiz-fullscreen, .breathe-overlay {
+.journal-modal, .notepad-modal, .delete-confirm-modal, .daily-affirmations-modal, .quiz-fullscreen, .breathe-overlay {
   z-index: 1000;
 }
 
-.journal-content, .notepad-content, .delete-confirm-content, .level-up-content {
+.journal-content, .notepad-content, .delete-confirm-content, .daily-affirmations-content {
   word-wrap: break-word;
   white-space: pre-wrap;
 }
@@ -1415,10 +1319,10 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
     background: #E57373;
   }
   .menu-bar {
-    background: linear-gradient(to right, #2E7D32, #4CAF50);
+    background: #FFFFFF; /* Keep white in dark mode for consistency */
   }
   .menu-bar button.active {
-    background: rgba(255, 255, 255, 0.4);
+    background: #A5D6A7;
   }
 }
 
@@ -1430,7 +1334,7 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
   .canvas {
     max-width: 1000px;
   }
-  .journal-content, .notepad-content, .level-up-content {
+  .journal-content, .notepad-content, .daily-affirmations-content {
     max-width: 700px;
   }
   .quiz-option-box {
