@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import axios from 'axios';
 import './App.css';
-import { Bar } from 'react-chartjs-2';
-import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js';
+import { Bar, Line } from 'react-chartjs-2';
+import { Chart as ChartJS, BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js';
 
-ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
+ChartJS.register(BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 function App() {
   const API_URL = process.env.REACT_APP_API_URL || 'https://mindsprout-backend-new.onrender.com';
@@ -20,11 +20,11 @@ function App() {
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [isChatActive, setIsChatActive] = useState(false);
   const [chat, setChat] = useState([]);
-  const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 minutes
-  const [extendCount, setExtendCount] = useState(0); // Track extensions
+  const [timeLeft, setTimeLeft] = useState(15 * 60);
+  const [extendCount, setExtendCount] = useState(0);
   const [lastChatTimestamp, setLastChatTimestamp] = useState(null);
   const [chatTokens, setChatTokens] = useState(3);
-  const [tokenRegenTime, setTokenRegenTime] = useState(null); // Countdown for token regen
+  const [tokenRegenTime, setTokenRegenTime] = useState(null);
   const [goals, setGoals] = useState([]);
   const [reports, setReports] = useState([]);
   const [journal, setJournal] = useState([]);
@@ -33,7 +33,7 @@ function App() {
   const [selectedReport, setSelectedReport] = useState(null);
   const [selectedJournalEntry, setSelectedJournalEntry] = useState(null);
   const [showBreathe, setShowBreathe] = useState(false);
-  const [breatheCount, setBreatheCount] = useState(4); // Start at 4
+  const [breatheCount, setBreatheCount] = useState(4);
   const [openNotepadSection, setOpenNotepadSection] = useState(null);
   const [openJournalType, setOpenJournalType] = useState(null);
   const [journalResponses, setJournalResponses] = useState({});
@@ -45,7 +45,24 @@ function App() {
   const [showSignup, setShowSignup] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
-  const [affirmationsList, setAffirmationsList] = useState([]); // Multiple affirmations
+  const [affirmationsList, setAffirmationsList] = useState([]);
+  // Profile tab states
+  const [dailyQuote, setDailyQuote] = useState('');
+  const [userSettings, setUserSettings] = useState({ email: '', password: '' });
+  const [streakData, setStreakData] = useState({
+    streak: 0,
+    lastCheckIn: null,
+    xp: 0,
+    level: 1,
+    dailyChallenges: {
+      quiz: false,
+      chat: false,
+      journal: false,
+      dailyBonus: false,
+      allChallenges: false,
+    },
+  });
+  const [showLevelUp, setShowLevelUp] = useState(false);
 
   const chatBoxRef = useRef(null);
   const reportDetailsRef = useRef(null);
@@ -87,7 +104,7 @@ function App() {
     "You are a beacon of hope and inspiration."
   ];
 
-  // Manage multiple affirmations during loading
+  // Manage affirmations during loading
   useEffect(() => {
     if (isLoading && !showSummaryBuffer) {
       const interval = setInterval(() => {
@@ -96,37 +113,205 @@ function App() {
           id: Date.now(),
           position: ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'center'][Math.floor(Math.random() * 5)],
         };
-        setAffirmationsList((prev) => [...prev, newAffirmation].slice(-5)); // Keep max 5 affirmations
+        setAffirmationsList((prev) => [...prev, newAffirmation].slice(-5));
         setTimeout(() => {
           setAffirmationsList((prev) => prev.filter((a) => a.id !== newAffirmation.id));
-        }, 2000); // Remove after 2s (0.5s fade-in + 1s visible + 0.5s fade-out)
-      }, 1000); // New affirmation every 1s
+        }, 2000);
+      }, 1000);
       return () => clearInterval(interval);
     } else {
       setAffirmationsList([]);
     }
   }, [isLoading, showSummaryBuffer]);
 
+  // Daily quote
+  useEffect(() => {
+    const quotes = [
+      "The present moment is filled with joy and happiness. – Thich Nhat Hanh",
+      "You can’t stop the waves, but you can learn to surf. – Jon Kabat-Zinn",
+      "The mind is everything. What you think, you become. – Buddha",
+      "Happiness is not something ready-made. It comes from your own actions. – Dalai Lama",
+      "Be where you are; otherwise you will miss your life. – Buddha",
+    ];
+    const today = new Date().toDateString();
+    const quoteIndex = new Date().getDate() % quotes.length;
+    setDailyQuote(quotes[quoteIndex]);
+  }, []);
+
+  // Streak and XP system
+  useEffect(() => {
+    if (token && role === 'regular') {
+      fetchStreakData();
+    }
+  }, [token, role]);
+
+  const fetchStreakData = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/regular/streak`, {
+        headers: { Authorization: token },
+      });
+      setStreakData(response.data);
+    } catch (err) {
+      console.error('Error fetching streak data:', err);
+    }
+  };
+
+  const handleDailyCheckIn = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/regular/check-in`,
+        {},
+        { headers: { Authorization: token } }
+      );
+      const { streak, xp, level, levelUp } = response.data;
+      setStreakData((prev) => ({
+        ...prev,
+        streak,
+        xp,
+        level,
+        lastCheckIn: new Date(),
+        dailyChallenges: { ...prev.dailyChallenges, dailyBonus: true },
+      }));
+      if (levelUp) {
+        setShowLevelUp(true);
+        setTimeout(() => setShowLevelUp(false), 3000);
+      }
+      setMessage(`Check-in successful! +50 XP${streak % 7 === 0 ? ' +500 Bonus XP for 7-day streak!' : ''}`);
+    } catch (err) {
+      setMessage('Error checking in: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleChallengeComplete = async (challenge) => {
+    setIsLoading(true);
+    try {
+      const xpValues = { quiz: 30, chat: 50, journal: 30 };
+      const response = await axios.post(
+        `${API_URL}/api/regular/complete-challenge`,
+        { challenge },
+        { headers: { Authorization: token } }
+      );
+      const { xp, level, levelUp, allChallengesCompleted } = response.data;
+      setStreakData((prev) => ({
+        ...prev,
+        xp,
+        level,
+        dailyChallenges: {
+          ...prev.dailyChallenges,
+          [challenge]: true,
+          ...(allChallengesCompleted && { allChallenges: true }),
+        },
+      }));
+      if (levelUp) {
+        setShowLevelUp(true);
+        setTimeout(() => setShowLevelUp(false), 3000);
+      }
+      setMessage(`Challenge completed! +${xpValues[challenge] || 100} XP`);
+    } catch (err) {
+      setMessage('Error completing challenge: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Settings update
+  const handleUpdateAccount = async () => {
+    setIsLoading(true);
+    try {
+      const { email, password } = userSettings;
+      if (!email && !password) {
+        setMessage('Please provide an email or password to update.');
+        return;
+      }
+      await axios.post(
+        `${API_URL}/api/regular/update-account`,
+        { email, password },
+        { headers: { Authorization: token } }
+      );
+      setMessage('Account updated successfully!');
+      setUserSettings({ email: '', password: '' });
+    } catch (err) {
+      setMessage('Error updating account: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Other existing states and effects (unchanged for brevity)
   useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth > 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Token regeneration countdown
   useEffect(() => {
     if (chatTokens < 3 && tokenRegenTime) {
       const interval = setInterval(() => {
         const now = new Date();
-        const timeDiff = (tokenRegenTime - now) / 1000; // Seconds
+        const timeDiff = (tokenRegenTime - now) / 1000;
         if (timeDiff <= 0) {
           setChatTokens((prev) => Math.min(prev + 1, 3));
-          setTokenRegenTime(new Date(now.getTime() + 3 * 60 * 60 * 1000)); // Reset to 3 hours
+          setTokenRegenTime(new Date(now.getTime() + 3 * 60 * 60 * 1000));
         }
       }, 1000);
       return () => clearInterval(interval);
     }
   }, [chatTokens, tokenRegenTime]);
+
+  useEffect(() => {
+    if (token && role === 'regular') {
+      localStorage.setItem('token', token);
+      fetchUserData(token);
+    }
+  }, [token, role]);
+
+  useEffect(() => {
+    if (isChatActive && timeLeft > 0) {
+      const timer = setInterval(() => setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          handleEndChat();
+          return 0;
+        }
+        return prev - 1;
+      }), 1000);
+      return () => clearInterval(timer);
+    }
+  }, [isChatActive, timeLeft]);
+
+  useEffect(() => {
+    if (showBreathe) {
+      setBreatheCount(4);
+      let count = 4;
+      const interval = setInterval(() => {
+        setBreatheCount(count);
+        count -= 1;
+        if (count < 1) {
+          clearInterval(interval);
+          setTimeout(() => {
+            setShowBreathe(false);
+            setTimeout(() => {
+              setIsChatActive(true);
+              setChat([{ sender: 'pal', text: 'Hello, welcome to this safe space, what is on your mind today?', timestamp: new Date() }]);
+              setTimeLeft(15 * 60);
+              setMessage('Let’s chat.');
+              handleChallengeComplete('chat');
+            }, 500);
+          }, 1000);
+        }
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [showBreathe]);
+
+  useEffect(() => {
+    if (chatBoxRef.current) {
+      chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
+    }
+  }, [chat]);
 
   const emotionDescriptions = {
     happiness: {
@@ -179,7 +364,6 @@ function App() {
   const fetchUserData = async (authToken) => {
     setIsLoading(true);
     try {
-      // Cache critical data
       const cachedData = JSON.parse(localStorage.getItem('userData') || '{}');
       if (cachedData.goals) setGoals(cachedData.goals);
       if (cachedData.reports) setReports(cachedData.reports);
@@ -199,7 +383,6 @@ function App() {
         : null;
       setTokenRegenTime(regenTime);
 
-      // Cache critical data
       localStorage.setItem('userData', JSON.stringify({
         goals: goalsRes.data,
         reports: reportsRes.data,
@@ -207,7 +390,6 @@ function App() {
         chatTokens: lastChatRes.data.chatTokens,
       }));
 
-      // Lazy load non-critical data
       Promise.all([
         axios.get(`${API_URL}/api/regular/journal`, { headers: { Authorization: authToken } }),
         axios.get(`${API_URL}/api/regular/journal-insights`, { headers: { Authorization: authToken } }),
@@ -228,57 +410,6 @@ function App() {
     }
   };
 
-  useEffect(() => {
-    if (token && role === 'regular') {
-      localStorage.setItem('token', token);
-      fetchUserData(token);
-    }
-  }, [token, role]);
-
-  useEffect(() => {
-    if (isChatActive && timeLeft > 0) {
-      const timer = setInterval(() => setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          handleEndChat();
-          return 0;
-        }
-        return prev - 1;
-      }), 1000);
-      return () => clearInterval(timer);
-    }
-  }, [isChatActive, timeLeft]);
-
-  useEffect(() => {
-    if (showBreathe) {
-      setBreatheCount(4);
-      let count = 4;
-      const interval = setInterval(() => {
-        setBreatheCount(count);
-        count -= 1;
-        if (count < 1) {
-          clearInterval(interval);
-          setTimeout(() => {
-            setShowBreathe(false);
-            setTimeout(() => {
-              setIsChatActive(true);
-              setChat([{ sender: 'pal', text: 'Hello, welcome to this safe space, what is on your mind today?', timestamp: new Date() }]);
-              setTimeLeft(15 * 60);
-              setMessage('Let’s chat.');
-            }, 500); // Delay to allow fade-out
-          }, 1000); // Show 1 for 1s
-        }
-      }, 1000); // 1s per number
-      return () => clearInterval(interval);
-    }
-  }, [showBreathe]);
-
-  useEffect(() => {
-    if (chatBoxRef.current) {
-      chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
-    }
-  }, [chat]);
-
   const getBarChartData = useMemo(() => {
     return (quizData) => {
       const pre = quizData.find((q) => !q.isPostChat) || { happiness: 0, anger: 0, stress: 0, energy: 0, confidence: 0 };
@@ -291,6 +422,28 @@ function App() {
   }, []);
 
   const barChartData = useMemo(() => (selectedReport ? getBarChartData(selectedReport.quizData) : null), [selectedReport, getBarChartData]);
+
+  const moodChartData = useMemo(() => ({
+    labels: reports.slice(-5).map((r) => new Date(r.date).toLocaleDateString()),
+    datasets: [
+      {
+        label: 'Happiness',
+        data: reports.slice(-5).map((r) => r.quizData.find((q) => !q.isPostChat)?.happiness || 0),
+        borderColor: '#388E3C',
+        backgroundColor: 'rgba(56, 142, 60, 0.2)',
+        fill: true,
+        tension: 0.4,
+      },
+      {
+        label: 'Stress',
+        data: reports.slice(-5).map((r) => r.quizData.find((q) => !q.isPostChat)?.stress || 0),
+        borderColor: '#EF9A9A',
+        backgroundColor: 'rgba(239, 154, 154, 0.2)',
+        fill: true,
+        tension: 0.4,
+      },
+    ],
+  }), [reports]);
 
   const handleRegularSignup = (e) => {
     e.preventDefault();
@@ -363,6 +516,7 @@ function App() {
     setQuiz({ ...quiz, [key]: selectedAnswer });
     setIsQuizActive(false);
     setShowBreathe(true);
+    handleChallengeComplete('quiz');
   };
 
   const handleExtendChat = () => {
@@ -486,6 +640,7 @@ function App() {
       setActiveTab('journal');
       setSelectedJournalEntry(newJournalEntry);
       setMessage('Journal saved! Check your journal tab.');
+      handleChallengeComplete('journal');
       await fetchUserData(token);
     } catch (err) {
       console.error('Error saving journal:', err);
@@ -605,6 +760,15 @@ function App() {
     setShowSignup(false);
     setDeleteConfirm(null);
     setAffirmationsList([]);
+    setDailyQuote('');
+    setUserSettings({ email: '', password: '' });
+    setStreakData({
+      streak: 0,
+      lastCheckIn: null,
+      xp: 0,
+      level: 1,
+      dailyChallenges: { quiz: false, chat: false, journal: false, dailyBonus: false, allChallenges: false },
+    });
   };
 
   const handleOpenNotepad = (section) => {
@@ -716,6 +880,20 @@ function App() {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const getXPForLevel = (level) => {
+    if (level <= 10) return 150;
+    if (level <= 20) return 230;
+    if (level <= 30) return 300;
+    if (level <= 40) return 400;
+    return 400 + (level - 30) * 100;
+  };
+
+  const getProgressPercentage = () => {
+    const currentLevelXP = getXPForLevel(streakData.level);
+    const xpInLevel = streakData.xp - getXPForLevel(streakData.level - 1) * (streakData.level - 1);
+    return (xpInLevel / currentLevelXP) * 100;
+  };
+
   return (
     <div className="app">
       {(isLoading || showSummaryBuffer) && (
@@ -754,6 +932,15 @@ function App() {
               </button>
               <button onClick={() => setDeleteConfirm(null)}>No</button>
             </div>
+          </div>
+        </div>
+      )}
+      {showLevelUp && (
+        <div className="level-up-modal">
+          <div className="level-up-content">
+            <h3>Congratulations!</h3>
+            <p>You've reached Level {streakData.level}!</p>
+            <div className="level-up-animation"></div>
           </div>
         </div>
       )}
@@ -837,12 +1024,103 @@ function App() {
             {activeTab === 'profile' ? (
               <div className="profile">
                 <h2>Your Profile</h2>
+                <div className="streak-section">
+                  <h3>Your Progress</h3>
+                  <p>Level: {streakData.level}</p>
+                  <p>Current Streak: {streakData.streak} days</p>
+                  <p>XP: {streakData.xp}</p>
+                  <div className="xp-bar">
+                    <div className="xp-fill" style={{ width: `${getProgressPercentage()}%` }}></div>
+                    <span className="xp-tooltip">
+                      {streakData.xp}/{getXPForLevel(streakData.level)} XP to next level
+                    </span>
+                  </div>
+                  <button
+                    onClick={handleDailyCheckIn}
+                    disabled={streakData.dailyChallenges.dailyBonus || new Date(streakData.lastCheckIn).toDateString() === new Date().toDateString()}
+                  >
+                    Daily Check-In (+50 XP)
+                  </button>
+                </div>
+                <div className="daily-challenges">
+                  <h3>Daily Challenges</h3>
+                  <div className="challenge-card">
+                    <p>Complete Quiz (+30 XP)</p>
+                    <button
+                      onClick={() => handleChallengeComplete('quiz')}
+                      disabled={streakData.dailyChallenges.quiz}
+                    >
+                      {streakData.dailyChallenges.quiz ? 'Completed' : 'Claim'}
+                    </button>
+                  </div>
+                  <div className="challenge-card">
+                    <p>Chat with Pal (+50 XP)</p>
+                    <button
+                      onClick={() => handleChallengeComplete('chat')}
+                      disabled={streakData.dailyChallenges.chat}
+                    >
+                      {streakData.dailyChallenges.chat ? 'Completed' : 'Claim'}
+                    </button>
+                  </div>
+                  <div className="challenge-card">
+                    <p>Write a Journal Entry (+30 XP)</p>
+                    <button
+                      onClick={() => handleChallengeComplete('journal')}
+                      disabled={streakData.dailyChallenges.journal}
+                    >
+                      {streakData.dailyChallenges.journal ? 'Completed' : 'Claim'}
+                    </button>
+                  </div>
+                  <div className="challenge-card">
+                    <p>Complete All Challenges (+100 XP)</p>
+                    <button
+                      onClick={() => handleChallengeComplete('allChallenges')}
+                      disabled={streakData.dailyChallenges.allChallenges || !(
+                        streakData.dailyChallenges.quiz &&
+                        streakData.dailyChallenges.chat &&
+                        streakData.dailyChallenges.journal &&
+                        streakData.dailyChallenges.dailyBonus
+                      )}
+                    >
+                      {streakData.dailyChallenges.allChallenges ? 'Completed' : 'Claim'}
+                    </button>
+                  </div>
+                </div>
+                <div className="mood-trend">
+                  <h3>Your Mood Trends</h3>
+                  {reports.length > 0 ? (
+                    <Line data={moodChartData} options={{ scales: { y: { min: 0, max: 5 } } }} />
+                  ) : (
+                    <p>No mood data yet. Start a chat session to track your mood!</p>
+                  )}
+                </div>
+                <div className="daily-quote">
+                  <h3>Daily Inspiration</h3>
+                  <p>{dailyQuote}</p>
+                </div>
+                <div className="profile-settings">
+                  <h3>Account Settings</h3>
+                  <input
+                    type="email"
+                    placeholder="Update Email"
+                    value={userSettings.email}
+                    onChange={(e) => setUserSettings({ ...userSettings, email: e.target.value })}
+                  />
+                  <input
+                    type="password"
+                    placeholder="Update Password"
+                    value={userSettings.password}
+                    onChange={(e) => setUserSettings({ ...userSettings, password: e.target.value })}
+                  />
+                  <button onClick={handleUpdateAccount}>Update Account</button>
+                </div>
                 <button onClick={handleLogout} className="logout-btn">
                   <img src="/icons/logout.png" alt="Logout" className="icon" />
                   Log Out
                 </button>
               </div>
             ) : activeTab === 'chat' ? (
+              // Chat tab JSX (unchanged for brevity)
               <>
                 {isQuizActive ? (
                   <div className={`quiz-fullscreen ${isQuizActive ? 'active' : ''}`}>
