@@ -1,17 +1,16 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import axios from 'axios';
 import './App.css';
-import { Bar, Line } from 'react-chartjs-2';
-import { Chart as ChartJS, BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js';
+import { Bar } from 'react-chartjs-2';
+import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js';
 
-ChartJS.register(BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend);
+ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 function App() {
   const API_URL = process.env.REACT_APP_API_URL || 'https://mindsprout-backend-new.onrender.com';
 
   const [token, setToken] = useState(localStorage.getItem('token') || null);
   const [role, setRole] = useState(null);
-  const [userName, setUserName] = useState(''); // Store user's name
   const [regularSignupForm, setRegularSignupForm] = useState({ name: '', email: '', username: '', password: '' });
   const [regularLoginForm, setRegularLoginForm] = useState({ email: '', password: '' });
   const [message, setMessage] = useState('');
@@ -21,11 +20,11 @@ function App() {
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [isChatActive, setIsChatActive] = useState(false);
   const [chat, setChat] = useState([]);
-  const [timeLeft, setTimeLeft] = useState(15 * 60);
-  const [extendCount, setExtendCount] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 minutes
+  const [extendCount, setExtendCount] = useState(0); // Track extensions
   const [lastChatTimestamp, setLastChatTimestamp] = useState(null);
   const [chatTokens, setChatTokens] = useState(3);
-  const [tokenRegenTime, setTokenRegenTime] = useState(null);
+  const [tokenRegenTime, setTokenRegenTime] = useState(null); // Countdown for token regen
   const [goals, setGoals] = useState([]);
   const [reports, setReports] = useState([]);
   const [journal, setJournal] = useState([]);
@@ -34,7 +33,7 @@ function App() {
   const [selectedReport, setSelectedReport] = useState(null);
   const [selectedJournalEntry, setSelectedJournalEntry] = useState(null);
   const [showBreathe, setShowBreathe] = useState(false);
-  const [breatheCount, setBreatheCount] = useState(4);
+  const [breatheCount, setBreatheCount] = useState(4); // Start at 4
   const [openNotepadSection, setOpenNotepadSection] = useState(null);
   const [openJournalType, setOpenJournalType] = useState(null);
   const [journalResponses, setJournalResponses] = useState({});
@@ -46,13 +45,7 @@ function App() {
   const [showSignup, setShowSignup] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
-  const [affirmationsList, setAffirmationsList] = useState([]);
-  // Profile tab states
-  const [dailyQuote, setDailyQuote] = useState('');
-  const [userSettings, setUserSettings] = useState({ email: '', password: '' });
-  const [lastCheckIn, setLastCheckIn] = useState(null);
-  const [affirmation, setAffirmation] = useState('');
-  const [showAffirmationModal, setShowAffirmationModal] = useState(false);
+  const [affirmationsList, setAffirmationsList] = useState([]); // Multiple affirmations
 
   const chatBoxRef = useRef(null);
   const reportDetailsRef = useRef(null);
@@ -94,7 +87,7 @@ function App() {
     "You are a beacon of hope and inspiration."
   ];
 
-  // Manage affirmations during loading
+  // Manage multiple affirmations during loading
   useEffect(() => {
     if (isLoading && !showSummaryBuffer) {
       const interval = setInterval(() => {
@@ -103,235 +96,37 @@ function App() {
           id: Date.now(),
           position: ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'center'][Math.floor(Math.random() * 5)],
         };
-        setAffirmationsList((prev) => [...prev, newAffirmation].slice(-5));
+        setAffirmationsList((prev) => [...prev, newAffirmation].slice(-5)); // Keep max 5 affirmations
         setTimeout(() => {
           setAffirmationsList((prev) => prev.filter((a) => a.id !== newAffirmation.id));
-        }, 2000);
-      }, 1000);
+        }, 2000); // Remove after 2s (0.5s fade-in + 1s visible + 0.5s fade-out)
+      }, 1000); // New affirmation every 1s
       return () => clearInterval(interval);
     } else {
       setAffirmationsList([]);
     }
   }, [isLoading, showSummaryBuffer]);
 
-  // Daily quote
-  useEffect(() => {
-    const quotes = [
-      "The present moment is filled with joy and happiness. – Thich Nhat Hanh",
-      "You can’t stop the waves, but you can learn to surf. – Jon Kabat-Zinn",
-      "The mind is everything. What you think, you become. – Buddha",
-      "Happiness is not something ready-made. It comes from your own actions. – Dalai Lama",
-      "Be where you are; otherwise you will miss your life. – Buddha",
-    ];
-    const quoteIndex = new Date().getDate() % quotes.length;
-    setDailyQuote(quotes[quoteIndex]);
-  }, []);
-
-  // Fetch user data and last check-in
-  useEffect(() => {
-    if (token && role === 'regular') {
-      fetchUserData(token);
-      fetchCheckInData();
-    }
-  }, [token, role]);
-
-  const fetchCheckInData = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/api/regular/check-in`, {
-        headers: { Authorization: token },
-      });
-      setLastCheckIn(response.data.lastCheckIn ? new Date(response.data.lastCheckIn) : null);
-    } catch (err) {
-      console.error('Error fetching check-in data:', err);
-    }
-  };
-
-  // Generate personalized affirmation based on latest report
-  const generateAffirmation = (report, name) => {
-    if (!report || !report.summary) {
-      return `You're on a beautiful journey, ${name}. Embrace today with confidence and peace, knowing you're growing with every step you take toward mindfulness.`;
-    }
-
-    const { discussed, thoughtsFeelings, moodReflection } = report.summary;
-    const text = `${discussed || ''} ${thoughtsFeelings || ''} ${moodReflection || ''}`.toLowerCase();
-
-    // Analyze text for emotional keywords
-    if (text.includes('stress') || text.includes('anxiety') || text.includes('challenge')) {
-      return `You're navigating tough moments with incredible strength, ${name}. Each challenge you face is shaping you into a more resilient person. Keep shining through the storm!`;
-    } else if (text.includes('happy') || text.includes('joy') || text.includes('positive')) {
-      return `Your positivity is truly inspiring, ${name}! Keep spreading joy and embracing these beautiful moments. You're creating a ripple effect of happiness around you.`;
-    } else if (text.includes('struggle') || text.includes('difficult')) {
-      return `Even in tough times, your courage shines through, ${name}. You're stronger than you know, and every step you take is a testament to your resilience. Keep going!`;
-    } else if (text.includes('growth') || text.includes('learn')) {
-      return `Your journey of growth is remarkable, ${name}. Each lesson you embrace brings you closer to your best self. Keep exploring and shining with confidence!`;
-    } else {
-      return `You're making beautiful progress on your mindfulness journey, ${name}. Stay present, keep reflecting, and know that you're capable of amazing things every day.`;
-    }
-  };
-
-  // Handle daily check-in (triggers affirmation)
-  const handleDailyCheckIn = async () => {
-    setIsLoading(true);
-    try {
-      const response = await axios.post(
-        `${API_URL}/api/regular/check-in`,
-        {},
-        { headers: { Authorization: token } }
-      );
-      setLastCheckIn(new Date());
-      const latestReport = reports.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
-      const newAffirmation = generateAffirmation(latestReport, userName || 'Friend');
-      setAffirmation(newAffirmation);
-      setShowAffirmationModal(true);
-      setMessage('Here’s your personalized affirmation for today!');
-      // Auto-close modal after 5 seconds
-      setTimeout(() => setShowAffirmationModal(false), 5000);
-    } catch (err) {
-      setMessage('Error checking in: ' + (err.response?.data?.error || err.message));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Settings update
-  const handleUpdateAccount = async () => {
-    setIsLoading(true);
-    try {
-      const { email, password } = userSettings;
-      if (!email && !password) {
-        setMessage('Please provide an email or password to update.');
-        return;
-      }
-      await axios.post(
-        `${API_URL}/api/regular/update-account`,
-        { email, password },
-        { headers: { Authorization: token } }
-      );
-      setMessage('Account updated successfully!');
-      setUserSettings({ email: '', password: '' });
-    } catch (err) {
-      setMessage('Error updating account: ' + (err.response?.data?.error || err.message));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Fetch user data including name
-  const fetchUserData = async (authToken) => {
-    setIsLoading(true);
-    try {
-      const cachedData = JSON.parse(localStorage.getItem('userData') || '{}');
-      if (cachedData.goals) setGoals(cachedData.goals);
-      if (cachedData.reports) setReports(cachedData.reports);
-
-      const [goalsRes, reportsRes, lastChatRes, userRes] = await Promise.all([
-        axios.get(`${API_URL}/api/regular/goals`, { headers: { Authorization: authToken } }),
-        axios.get(`${API_URL}/api/regular/reports`, { headers: { Authorization: authToken } }),
-        axios.get(`${API_URL}/api/regular/last-chat`, { headers: { Authorization: authToken } }),
-        axios.get(`${API_URL}/api/regular/profile`, { headers: { Authorization: authToken } }),
-      ]);
-
-      setGoals(goalsRes.data || []);
-      setReports(reportsRes.data || []);
-      setLastChatTimestamp(lastChatRes.data.lastChatTimestamp ? new Date(lastChatRes.data.lastChatTimestamp) : null);
-      setChatTokens(lastChatRes.data.chatTokens || 3);
-      setUserName(userRes.data.name || '');
-      const regenTime = lastChatRes.data.lastTokenRegen
-        ? new Date(new Date(lastChatRes.data.lastTokenRegen).getTime() + 3 * 60 * 60 * 1000)
-        : null;
-      setTokenRegenTime(regenTime);
-
-      localStorage.setItem('userData', JSON.stringify({
-        goals: goalsRes.data,
-        reports: reportsRes.data,
-        lastChatTimestamp: lastChatRes.data.lastChatTimestamp,
-        chatTokens: lastChatRes.data.chatTokens,
-      }));
-
-      Promise.all([
-        axios.get(`${API_URL}/api/regular/journal`, { headers: { Authorization: authToken } }),
-        axios.get(`${API_URL}/api/regular/journal-insights`, { headers: { Authorization: authToken } }),
-      ]).then(([journalRes, insightsRes]) => {
-        setJournal(journalRes.data || []);
-        setJournalInsights(insightsRes.data || []);
-        localStorage.setItem('userData', JSON.stringify({
-          ...JSON.parse(localStorage.getItem('userData') || '{}'),
-          journal: journalRes.data,
-          journalInsights: insightsRes.data,
-        }));
-      }).catch((err) => console.error('Error fetching non-critical data:', err));
-    } catch (err) {
-      console.error('Error fetching user data:', err);
-      setMessage('Error loading your data');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Other existing states and effects (unchanged for brevity)
   useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth > 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Token regeneration countdown
   useEffect(() => {
     if (chatTokens < 3 && tokenRegenTime) {
       const interval = setInterval(() => {
         const now = new Date();
-        const timeDiff = (tokenRegenTime - now) / 1000;
+        const timeDiff = (tokenRegenTime - now) / 1000; // Seconds
         if (timeDiff <= 0) {
           setChatTokens((prev) => Math.min(prev + 1, 3));
-          setTokenRegenTime(new Date(now.getTime() + 3 * 60 * 60 * 1000));
+          setTokenRegenTime(new Date(now.getTime() + 3 * 60 * 60 * 1000)); // Reset to 3 hours
         }
       }, 1000);
       return () => clearInterval(interval);
     }
   }, [chatTokens, tokenRegenTime]);
-
-  useEffect(() => {
-    if (isChatActive && timeLeft > 0) {
-      const timer = setInterval(() => setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          handleEndChat();
-          return 0;
-        }
-        return prev - 1;
-      }), 1000);
-      return () => clearInterval(timer);
-    }
-  }, [isChatActive, timeLeft]);
-
-  useEffect(() => {
-    if (showBreathe) {
-      setBreatheCount(4);
-      let count = 4;
-      const interval = setInterval(() => {
-        setBreatheCount(count);
-        count -= 1;
-        if (count < 1) {
-          clearInterval(interval);
-          setTimeout(() => {
-            setShowBreathe(false);
-            setTimeout(() => {
-              setIsChatActive(true);
-              setChat([{ sender: 'pal', text: 'Hello, welcome to this safe space, what is on your mind today?', timestamp: new Date() }]);
-              setTimeLeft(15 * 60);
-              setMessage('Let’s chat.');
-            }, 500);
-          }, 1000);
-        }
-      }, 1000);
-      return () => clearInterval(interval);
-    }
-  }, [showBreathe]);
-
-  useEffect(() => {
-    if (chatBoxRef.current) {
-      chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
-    }
-  }, [chat]);
 
   const emotionDescriptions = {
     happiness: {
@@ -381,6 +176,109 @@ function App() {
     ],
   };
 
+  const fetchUserData = async (authToken) => {
+    setIsLoading(true);
+    try {
+      // Cache critical data
+      const cachedData = JSON.parse(localStorage.getItem('userData') || '{}');
+      if (cachedData.goals) setGoals(cachedData.goals);
+      if (cachedData.reports) setReports(cachedData.reports);
+
+      const [goalsRes, reportsRes, lastChatRes] = await Promise.all([
+        axios.get(`${API_URL}/api/regular/goals`, { headers: { Authorization: authToken } }),
+        axios.get(`${API_URL}/api/regular/reports`, { headers: { Authorization: authToken } }),
+        axios.get(`${API_URL}/api/regular/last-chat`, { headers: { Authorization: authToken } }),
+      ]);
+
+      setGoals(goalsRes.data || []);
+      setReports(reportsRes.data || []);
+      setLastChatTimestamp(lastChatRes.data.lastChatTimestamp ? new Date(lastChatRes.data.lastChatTimestamp) : null);
+      setChatTokens(lastChatRes.data.chatTokens || 3);
+      const regenTime = lastChatRes.data.lastTokenRegen
+        ? new Date(new Date(lastChatRes.data.lastTokenRegen).getTime() + 3 * 60 * 60 * 1000)
+        : null;
+      setTokenRegenTime(regenTime);
+
+      // Cache critical data
+      localStorage.setItem('userData', JSON.stringify({
+        goals: goalsRes.data,
+        reports: reportsRes.data,
+        lastChatTimestamp: lastChatRes.data.lastChatTimestamp,
+        chatTokens: lastChatRes.data.chatTokens,
+      }));
+
+      // Lazy load non-critical data
+      Promise.all([
+        axios.get(`${API_URL}/api/regular/journal`, { headers: { Authorization: authToken } }),
+        axios.get(`${API_URL}/api/regular/journal-insights`, { headers: { Authorization: authToken } }),
+      ]).then(([journalRes, insightsRes]) => {
+        setJournal(journalRes.data || []);
+        setJournalInsights(insightsRes.data || []);
+        localStorage.setItem('userData', JSON.stringify({
+          ...JSON.parse(localStorage.getItem('userData') || '{}'),
+          journal: journalRes.data,
+          journalInsights: insightsRes.data,
+        }));
+      }).catch((err) => console.error('Error fetching non-critical data:', err));
+    } catch (err) {
+      console.error('Error fetching user data:', err);
+      setMessage('Error loading your data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (token && role === 'regular') {
+      localStorage.setItem('token', token);
+      fetchUserData(token);
+    }
+  }, [token, role]);
+
+  useEffect(() => {
+    if (isChatActive && timeLeft > 0) {
+      const timer = setInterval(() => setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          handleEndChat();
+          return 0;
+        }
+        return prev - 1;
+      }), 1000);
+      return () => clearInterval(timer);
+    }
+  }, [isChatActive, timeLeft]);
+
+  useEffect(() => {
+    if (showBreathe) {
+      setBreatheCount(4);
+      let count = 4;
+      const interval = setInterval(() => {
+        setBreatheCount(count);
+        count -= 1;
+        if (count < 1) {
+          clearInterval(interval);
+          setTimeout(() => {
+            setShowBreathe(false);
+            setTimeout(() => {
+              setIsChatActive(true);
+              setChat([{ sender: 'pal', text: 'Hello, welcome to this safe space, what is on your mind today?', timestamp: new Date() }]);
+              setTimeLeft(15 * 60);
+              setMessage('Let’s chat.');
+            }, 500); // Delay to allow fade-out
+          }, 1000); // Show 1 for 1s
+        }
+      }, 1000); // 1s per number
+      return () => clearInterval(interval);
+    }
+  }, [showBreathe]);
+
+  useEffect(() => {
+    if (chatBoxRef.current) {
+      chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
+    }
+  }, [chat]);
+
   const getBarChartData = useMemo(() => {
     return (quizData) => {
       const pre = quizData.find((q) => !q.isPostChat) || { happiness: 0, anger: 0, stress: 0, energy: 0, confidence: 0 };
@@ -394,28 +292,6 @@ function App() {
 
   const barChartData = useMemo(() => (selectedReport ? getBarChartData(selectedReport.quizData) : null), [selectedReport, getBarChartData]);
 
-  const moodChartData = useMemo(() => ({
-    labels: reports.slice(-5).map((r) => new Date(r.date).toLocaleDateString()),
-    datasets: [
-      {
-        label: 'Happiness',
-        data: reports.slice(-5).map((r) => r.quizData.find((q) => !q.isPostChat)?.happiness || 0),
-        borderColor: '#388E3C',
-        backgroundColor: 'rgba(56, 142, 60, 0.2)',
-        fill: true,
-        tension: 0.4,
-      },
-      {
-        label: 'Stress',
-        data: reports.slice(-5).map((r) => r.quizData.find((q) => !q.isPostChat)?.stress || 0),
-        borderColor: '#EF9A9A',
-        backgroundColor: 'rgba(239, 154, 154, 0.2)',
-        fill: true,
-        tension: 0.4,
-      },
-    ],
-  }), [reports]);
-
   const handleRegularSignup = (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -424,7 +300,6 @@ function App() {
         setMessage(res.data.message);
         setToken(res.data.token);
         setRole('regular');
-        setUserName(regularSignupForm.name);
         fetchUserData(res.data.token);
       })
       .catch((err) => setMessage(err.response?.data?.error || 'Signup failed'))
@@ -439,7 +314,6 @@ function App() {
       .then((res) => {
         setToken(res.data.token);
         setRole('regular');
-        setUserName(res.data.name || '');
         setMessage(`Welcome, ${res.data.name || 'User'}!`);
         fetchUserData(res.data.token);
       })
@@ -706,7 +580,6 @@ function App() {
     localStorage.removeItem('token');
     localStorage.removeItem('userData');
     setRole(null);
-    setUserName('');
     setIsQuizActive(false);
     setIsChatActive(false);
     setQuiz({ happiness: 0, anger: 0, stress: 0, energy: 0, confidence: 0, isPostChat: false });
@@ -732,11 +605,6 @@ function App() {
     setShowSignup(false);
     setDeleteConfirm(null);
     setAffirmationsList([]);
-    setDailyQuote('');
-    setUserSettings({ email: '', password: '' });
-    setLastCheckIn(null);
-    setAffirmation('');
-    setShowAffirmationModal(false);
   };
 
   const handleOpenNotepad = (section) => {
@@ -819,7 +687,7 @@ function App() {
             </>
           ) : (
             <button onClick={() => handleGenerateInsight(entry)} disabled={isLoading}>
-              Gain Profound Insights
+              Gain Profound Insights Vignette
             </button>
           )}
         </div>
@@ -886,15 +754,6 @@ function App() {
               </button>
               <button onClick={() => setDeleteConfirm(null)}>No</button>
             </div>
-          </div>
-        </div>
-      )}
-      {showAffirmationModal && (
-        <div className="affirmation-modal">
-          <div className="affirmation-content">
-            <h3>Your Daily Affirmation</h3>
-            <p>{affirmation}</p>
-            <button onClick={() => setShowAffirmationModal(false)}>Close</button>
           </div>
         </div>
       )}
@@ -978,43 +837,6 @@ function App() {
             {activeTab === 'profile' ? (
               <div className="profile">
                 <h2>Your Profile</h2>
-                <div className="check-in-section">
-                  <h3>Daily Check-In</h3>
-                  <button
-                    onClick={handleDailyCheckIn}
-                    disabled={lastCheckIn && new Date(lastCheckIn).toDateString() === new Date().toDateString()}
-                  >
-                    Check In Today
-                  </button>
-                </div>
-                <div className="mood-trend">
-                  <h3>Your Mood Trends</h3>
-                  {reports.length > 0 ? (
-                    <Line data={moodChartData} options={{ scales: { y: { min: 0, max: 5 } } }} />
-                  ) : (
-                    <p>No mood data yet. Start a chat session to track your mood!</p>
-                  )}
-                </div>
-                <div className="daily-quote">
-                  <h3>Daily Inspiration</h3>
-                  <p>{dailyQuote}</p>
-                </div>
-                <div className="profile-settings">
-                  <h3>Account Settings</h3>
-                  <input
-                    type="email"
-                    placeholder="Update Email"
-                    value={userSettings.email}
-                    onChange={(e) => setUserSettings({ ...userSettings, email: e.target.value })}
-                  />
-                  <input
-                    type="password"
-                    placeholder="Update Password"
-                    value={userSettings.password}
-                    onChange={(e) => setUserSettings({ ...userSettings, password: e.target.value })}
-                  />
-                  <button onClick={handleUpdateAccount}>Update Account</button>
-                </div>
                 <button onClick={handleLogout} className="logout-btn">
                   <img src="/icons/logout.png" alt="Logout" className="icon" />
                   Log Out
