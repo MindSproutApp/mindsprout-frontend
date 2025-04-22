@@ -6,6 +6,9 @@ import { Chart as ChartJS, BarElement, LineElement, PointElement, CategoryScale,
 
 ChartJS.register(BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend);
 
+// Set default axios timeout (10 seconds)
+axios.defaults.timeout = 10000;
+
 function App() {
   const API_URL = process.env.REACT_APP_API_URL || 'https://mindsprout-backend-new.onrender.com';
 
@@ -87,7 +90,7 @@ function App() {
     "You are surrounded by love and support.",
     "You are brave and can take risks.",
     "You deserve to take time for yourself.",
-    "You are a beacon of hope and inspiration."
+    "You are a beacon of hope and inspiration"
   ];
 
   // Available positions for affirmations
@@ -98,9 +101,8 @@ function App() {
     if (isLoading && !showSummaryBuffer) {
       const usedPositions = new Set();
       const interval = setInterval(() => {
-        // Find an unused position
         const availablePositions = affirmationPositions.filter(pos => !usedPositions.has(pos));
-        if (availablePositions.length === 0) return; // Skip if all positions are used
+        if (availablePositions.length === 0) return;
         const position = availablePositions[Math.floor(Math.random() * availablePositions.length)];
         usedPositions.add(position);
 
@@ -125,13 +127,13 @@ function App() {
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     if (storedToken) {
+      console.log('Found stored token, attempting to fetch user data');
       setToken(storedToken);
       setRole('regular');
       fetchUserData(storedToken);
     }
   }, []);
 
-  // Other existing states and effects
   useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth > 768);
     window.addEventListener('resize', handleResize);
@@ -253,70 +255,106 @@ function App() {
 
   const fetchUserData = async (authToken) => {
     setIsLoading(true);
+    console.log('Starting fetchUserData with token:', authToken);
     try {
       const cachedData = JSON.parse(localStorage.getItem('userData') || '{}');
-      if (cachedData.goals) setGoals(cachedData.goals);
-      if (cachedData.reports) setReports(cachedData.reports);
+      if (cachedData.goals) {
+        console.log('Using cached goals');
+        setGoals(cachedData.goals);
+      }
+      if (cachedData.reports) {
+        console.log('Using cached reports');
+        setReports(cachedData.reports);
+      }
+
+      // Individual API calls with error handling
+      const fetchWithErrorHandling = async (url, description) => {
+        try {
+          console.log(`Fetching ${description} from ${url}`);
+          const response = await axios.get(url, { headers: { Authorization: authToken } });
+          console.log(`${description} fetched successfully`);
+          return response;
+        } catch (err) {
+          console.error(`Error fetching ${description}:`, err.message, 'Status:', err.response?.status);
+          if (err.response?.status === 429) {
+            setMessage('Too many requests. Please try again later.');
+          }
+          return { data: null };
+        }
+      };
 
       const [goalsRes, reportsRes, lastChatRes, affirmationsRes] = await Promise.all([
-        axios.get(`${API_URL}/api/regular/goals`, { headers: { Authorization: authToken } }),
-        axios.get(`${API_URL}/api/regular/reports`, { headers: { Authorization: authToken } }),
-        axios.get(`${API_URL}/api/regular/last-chat`, { headers: { Authorization: authToken } }),
-        axios.get(`${API_URL}/api/regular/daily-affirmations`, { headers: { Authorization: authToken } })
+        fetchWithErrorHandling(`${API_URL}/api/regular/goals`, 'goals'),
+        fetchWithErrorHandling(`${API_URL}/api/regular/reports`, 'reports'),
+        fetchWithErrorHandling(`${API_URL}/api/regular/last-chat`, 'last chat'),
+        fetchWithErrorHandling(`${API_URL}/api/regular/daily-affirmations`, 'affirmations')
       ]);
 
+      // Set data even if some calls fail
       setGoals(goalsRes.data || []);
       setReports(reportsRes.data || []);
-      setLastChatTimestamp(lastChatRes.data.lastChatTimestamp ? new Date(lastChatRes.data.lastChatTimestamp) : null);
-      setChatTokens(lastChatRes.data.chatTokens || 3);
-      const regenTime = lastChatRes.data.lastTokenRegen
+      setLastChatTimestamp(lastChatRes.data?.lastChatTimestamp ? new Date(lastChatRes.data.lastChatTimestamp) : null);
+      setChatTokens(lastChatRes.data?.chatTokens || 3);
+      const regenTime = lastChatRes.data?.lastTokenRegen
         ? new Date(new Date(lastChatRes.data.lastTokenRegen).getTime() + 3 * 60 * 60 * 1000)
         : null;
       setTokenRegenTime(regenTime);
       setDailyAffirmations(affirmationsRes.data || null);
 
+      console.log('Storing user data in localStorage');
       localStorage.setItem('userData', JSON.stringify({
         goals: goalsRes.data,
         reports: reportsRes.data,
-        lastChatTimestamp: lastChatRes.data.lastChatTimestamp,
-        chatTokens: lastChatRes.data.chatTokens,
+        lastChatTimestamp: lastChatRes.data?.lastChatTimestamp,
+        chatTokens: lastChatRes.data?.chatTokens,
         dailyAffirmations: affirmationsRes.data
       }));
 
-      Promise.all([
-        axios.get(`${API_URL}/api/regular/journal`, { headers: { Authorization: authToken } }),
-        axios.get(`${API_URL}/api/regular/journal-insights`, { headers: { Authorization: authToken } }),
-      ]).then(([journalRes, insightsRes]) => {
-        setJournal(journalRes.data || []);
-        setJournalInsights(insightsRes.data || []);
-        localStorage.setItem('userData', JSON.stringify({
-          ...JSON.parse(localStorage.getItem('userData') || '{}'),
-          journal: journalRes.data,
-          journalInsights: insightsRes.data,
-        }));
-      }).catch((err) => console.error('Error fetching non-critical data:', err));
+      console.log('Fetching journal and insights');
+      const [journalRes, insightsRes] = await Promise.all([
+        fetchWithErrorHandling(`${API_URL}/api/regular/journal`, 'journal'),
+        fetchWithErrorHandling(`${API_URL}/api/regular/journal-insights`, 'journal insights')
+      ]);
+
+      setJournal(journalRes.data || []);
+      setJournalInsights(insightsRes.data || []);
+      console.log('Updating localStorage with journal and insights');
+      localStorage.setItem('userData', JSON.stringify({
+        ...JSON.parse(localStorage.getItem('userData') || '{}'),
+        journal: journalRes.data,
+        journalInsights: insightsRes.data,
+      }));
     } catch (err) {
-      console.error('Error fetching user data:', err);
-      setMessage('Error loading your data');
+      console.error('Critical error in fetchUserData:', err.message, 'Status:', err.response?.status);
+      setMessage('Error loading your data. Please try logging in again.');
     } finally {
+      console.log('fetchUserData completed, clearing isLoading');
       setIsLoading(false);
     }
   };
 
   const handleGenerateDailyAffirmations = async () => {
     setIsLoading(true);
+    console.log('Generating daily affirmations, checking rate limit');
     try {
       const response = await axios.post(
         `${API_URL}/api/regular/daily-affirmations`,
         {},
         { headers: { Authorization: token } }
       );
+      console.log('Daily affirmations generated:', response.data);
       setDailyAffirmations(response.data);
       setShowDailyAffirmationsModal(true);
       setMessage('New daily affirmations generated!');
     } catch (err) {
-      setMessage('Error generating affirmations: ' + (err.response?.data?.error || err.message));
+      console.error('Error generating affirmations:', err.message, 'Status:', err.response?.status);
+      if (err.response?.status === 429) {
+        setMessage('Too many requests for affirmations. Please try again in a few minutes.');
+      } else {
+        setMessage('Error generating affirmations: ' + (err.response?.data?.error || err.message));
+      }
     } finally {
+      console.log('handleGenerateDailyAffirmations completed');
       setIsLoading(false);
     }
   };
@@ -385,7 +423,22 @@ function App() {
       },
     ];
 
-    return { labels, datasets };
+    return {
+      labels,
+      datasets,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { min: 0, max: 5 },
+          x: { ticks: { maxRotation: 45, minRotation: 45 } }
+        },
+        plugins: {
+          legend: { position: 'top' },
+          tooltip: { enabled: true }
+        }
+      }
+    };
   }, [reports]);
 
   const weeklyMoodSummary = useMemo(() => {
@@ -463,30 +516,52 @@ function App() {
   const handleRegularSignup = (e) => {
     e.preventDefault();
     setIsLoading(true);
+    console.log('Attempting signup with data:', regularSignupForm);
     axios.post(`${API_URL}/api/regular/signup`, regularSignupForm)
       .then((res) => {
+        console.log('Signup successful:', res.data);
         setMessage(res.data.message);
         setToken(res.data.token);
         setRole('regular');
         fetchUserData(res.data.token);
       })
-      .catch((err) => setMessage(err.response?.data?.error || 'Signup failed'))
-      .finally(() => setIsLoading(false));
+      .catch((err) => {
+        console.error('Signup error:', err.response?.data?.error || err.message, 'Status:', err.response?.status);
+        setMessage(err.response?.data?.error || 'Signup failed');
+      })
+      .finally(() => {
+        console.log('handleRegularSignup completed');
+        setIsLoading(false);
+      });
   };
 
   const handleRegularLogin = (e) => {
     e.preventDefault();
     setIsLoading(true);
     const loginData = { ...regularLoginForm, email: regularLoginForm.email.toLowerCase() };
+    console.log('Attempting login with data:', loginData);
     axios.post(`${API_URL}/api/regular/login`, loginData)
       .then((res) => {
+        console.log('Login successful:', res.data);
         setToken(res.data.token);
         setRole('regular');
         setMessage(`Welcome, ${res.data.name || 'User'}!`);
         fetchUserData(res.data.token);
       })
-      .catch((err) => setMessage(err.response?.data?.error || 'Login failed'))
-      .finally(() => setIsLoading(false));
+      .catch((err) => {
+        console.error('Login error:', err.response?.data?.error || err.message, 'Status:', err.response?.status);
+        if (err.response?.status === 401) {
+          setMessage('Invalid email or password. Please try again.');
+        } else if (err.response?.status === 429) {
+          setMessage('Too many login attempts. Please try again in a few minutes.');
+        } else {
+          setMessage(err.response?.data?.error || 'Login failed. Please try again.');
+        }
+      })
+      .finally(() => {
+        console.log('handleRegularLogin completed');
+        setIsLoading(false);
+      });
   };
 
   const canStartChat = () => {
@@ -1033,7 +1108,9 @@ function App() {
                   <h3>Weekly Mood Trends</h3>
                   {reports.length > 0 ? (
                     <>
-                      <Line data={weeklyMoodChartData} options={{ scales: { y: { min: 0, max: 5 } } }} />
+                      <div className="mood-chart-container">
+                        <Line data={weeklyMoodChartData} options={weeklyMoodChartData.options} />
+                      </div>
                       <div className="mood-summary">
                         {weeklyMoodSummary.map((summary, index) => (
                           <p key={index}>{summary}</p>
@@ -1046,9 +1123,31 @@ function App() {
                 </div>
                 <div className="daily-inspiration">
                   <h3>Daily Inspiration</h3>
-                  <button onClick={handleGenerateDailyAffirmations} disabled={dailyAffirmations && dailyAffirmations.validUntil > new Date()}>
+                  <button onClick={handleGenerateDailyAffirmations} disabled={dailyAffirmations && new Date(dailyAffirmations.validUntil) > new Date()}>
                     Generate Daily Affirmations
                   </button>
+                  {dailyAffirmations && new Date(dailyAffirmations.validUntil) > new Date() ? (
+                    <div className="current-affirmations">
+                      <h4>Today's Affirmations</h4>
+                      <div className="affirmation-section">
+                        <h5>I Suggest</h5>
+                        <p>{dailyAffirmations.suggest}</p>
+                      </div>
+                      <div className="affirmation-section">
+                        <h5>I Encourage</h5>
+                        <p>{dailyAffirmations.encourage}</p>
+                      </div>
+                      <div className="affirmation-section">
+                        <h5>I Invite</h5>
+                        <p>{dailyAffirmations.invite}</p>
+                      </div>
+                      <p className="valid-until">
+                        Valid until: {new Date(dailyAffirmations.validUntil).toLocaleString()}
+                      </p>
+                    </div>
+                  ) : (
+                    <p>No affirmations available. Generate new ones!</p>
+                  )}
                 </div>
                 <button onClick={handleLogout} className="logout-btn">
                   <img src="/icons/logout.png" alt="Logout" className="icon" />
@@ -1116,362 +1215,267 @@ function App() {
                         <input
                           placeholder="Talk to Pal... (max 500 characters)"
                           value={chatInput}
-                          onChange={(e) => setChatInput(e.target.value.slice(0, 500))}
+                          onChange={(e) => setChatInput(e.target.value)}
                           onKeyPress={(e) => {
                             if (e.key === 'Enter' && chatInput.trim()) {
-                              handleChat(chatInput);
+                              handleChat(chatInput.trim());
                             }
                           }}
+                          maxLength={500}
                         />
+                        <p className="char-counter">{chatInput.length}/500</p>
                         <button
                           className="send-btn"
-                          onClick={() => chatInput.trim() && handleChat(chatInput)}
+                          onClick={() => {
+                            if (chatInput.trim()) {
+                              handleChat(chatInput.trim());
+                            }
+                          }}
                           disabled={!chatInput.trim()}
                         >
                           Send
                         </button>
-                        <p className="char-counter">{chatInput.length}/500</p>
+                        {extendCount < 3 && (
+                          <button onClick={handleExtendChat}>Extend Chat</button>
+                        )}
+                        <button onClick={handleEndChat}>End Chat</button>
                       </div>
                     ) : (
-                      <div>
-                        <h2>Session Complete</h2>
-                        <p>Check your Reflect tab for your summary!</p>
-                        <button onClick={() => setActiveTab('reflect')}>View Reflect</button>
-                      </div>
-                    )}
-                    {timeLeft > 0 && (
-                      <>
-                        <button onClick={handleEndChat}>End Chat</button>
-                        {timeLeft < 30 && extendCount < 3 && (
-                          <button onClick={handleExtendChat}>Extend Chat (+5 min)</button>
-                        )}
-                      </>
+                      <p>Chat session has ended.</p>
                     )}
                   </div>
                 ) : (
-                  <div className="quiz">
-                    <h2>Chat</h2>
-                    <p>
-                      You have {chatTokens} chat tokens left today.{' '}
-                      {chatTokens < 3 && tokenRegenTime
-                        ? `Next token in ${formatTime(
-                            Math.max(0, Math.floor((tokenRegenTime - new Date()) / 1000))
-                          )}`
-                        : 'Tokens regenerate every 3 hours.'}
-                    </p>
-                    {chatTokens > 0 ? (
-                      <button onClick={handleStartQuiz}>Start Quiz</button>
-                    ) : (
-                      <p>Come back later for a new token!</p>
+                  <div className="chat">
+                    <h2>Chat with Pal</h2>
+                    <p>Tokens remaining: {chatTokens}/3</p>
+                    {tokenRegenTime && chatTokens < 3 && (
+                      <p>Next token in: {formatTime(Math.max(0, Math.floor((tokenRegenTime - new Date()) / 1000)))}</p>
                     )}
+                    <button onClick={handleStartQuiz} disabled={!canStartChat()}>
+                      Start Chat
+                    </button>
                   </div>
                 )}
               </>
             ) : activeTab === 'journal' ? (
               <div className="journal">
-                <h2>Journal</h2>
-                <div className="journal-options">
-                  <button
-                    className="journal-button"
-                    onClick={() => handleOpenJournal('daily')}
-                    role="button"
-                    tabIndex={0}
-                    onKeyPress={(e) => e.key === 'Enter' && handleOpenJournal('daily')}
-                    aria-label="Open Daily Journal"
-                  >
-                    <img src="/personal.png" alt="Daily Journal" />
-                    <span>Daily Journal</span>
-                  </button>
-                  <button
-                    className="journal-button"
-                    onClick={() => handleOpenJournal('dream')}
-                    role="button"
-                    tabIndex={0}
-                    onKeyPress={(e) => e.key === 'Enter' && handleOpenJournal('dream')}
-                    aria-label="Open Dream Journal"
-                  >
-                    <img src="/dream1.png" alt="Dream Journal" />
-                    <span>Dream Journal</span>
-                  </button>
-                  <button
-                    className="journal-button"
-                    onClick={() => handleOpenJournal('freestyle')}
-                    role="button"
-                    tabIndex={0}
-                    onKeyPress={(e) => e.key === 'Enter' && handleOpenJournal('freestyle')}
-                    aria-label="Open Freestyle Journal"
-                  >
-                    <img src="/freestyle.png" alt="Freestyle Journal" />
-                    <span>Freestyle Journal</span>
-                  </button>
-                </div>
-                {openJournalType && (
-                  <div className={`journal-modal ${openJournalType ? 'active' : ''}`}>
+                <h2>Your Journal</h2>
+                {openJournalType ? (
+                  <div className="journal-modal active">
                     <div className="journal-content">
                       <button className="close-btn" onClick={handleCloseJournal}>
                         X
                       </button>
-                      <h3>
-                        {openJournalType === 'daily'
-                          ? 'Daily Journal'
-                          : openJournalType === 'dream'
-                          ? 'Dream Journal'
-                          : 'Freestyle Journal'}
-                      </h3>
+                      <h2>{openJournalType.charAt(0).toUpperCase() + openJournalType.slice(1)} Journal</h2>
                       {journalPrompts[openJournalType].map((prompt) => (
                         <div key={prompt.key} className="journal-prompt">
-                          <h2>{prompt.heading}</h2>
+                          <h3>{prompt.heading}</h3>
                           <p>{prompt.subheading}</p>
                           <textarea
-                            placeholder="Write your response..."
                             value={journalResponses[prompt.key] || ''}
                             onChange={(e) => handleJournalInput(prompt.key, e.target.value)}
+                            placeholder="Write here..."
                           />
                         </div>
                       ))}
-                      <div className="journal-actions">
-                        <button onClick={handleSaveJournal}>Save Journal</button>
-                      </div>
+                      <button onClick={handleSaveJournal} disabled={isLoading}>
+                        Save Journal
+                      </button>
                     </div>
                   </div>
-                )}
-                <h3>Past Journal Entries</h3>
-                {journal.length > 0 ? (
-                  <div className="journal-tables">
-                    <table className="gradient-table">
-                      <thead>
-                        <tr>
-                          <th>Journal Type</th>
-                          <th>Date</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {paginatedJournal.map((entry, i) => (
-                          <tr key={i}>
-                            <td>
-                              {entry.type === 'daily'
-                                ? 'Daily Journal'
-                                : entry.type === 'dream'
-                                ? 'Dream Journal'
-                                : 'Freestyle Journal'}
-                            </td>
-                            <td>{new Date(entry.date).toLocaleDateString()}</td>
-                            <td>
-                              <button onClick={() => handleOpenJournalEntry(entry)}>Open</button>
-                              <button
-                                className="delete-btn"
-                                onClick={() => setDeleteConfirm({ type: 'journal', id: entry._id })}
-                              >
-                                Delete
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    <div className="pagination">
-                      <button
-                        onClick={() => setJournalPage((prev) => Math.max(prev - 1, 1))}
-                        disabled={journalPage === 1}
-                      >
-                        Previous
+                ) : selectedJournalEntry ? (
+                  <div className="notepad-modal active">
+                    <div className="notepad-content">
+                      <button className="close-btn" onClick={handleCloseJournalEntry}>
+                        X
                       </button>
-                      <span>
-                        Page {journalPage} of {journalPageCount}
-                      </span>
-                      <button
-                        onClick={() => setJournalPage((prev) => Math.min(prev + 1, journalPageCount))}
-                        disabled={journalPage === journalPageCount}
-                      >
-                        Next
-                      </button>
-                    </div>
-                    {selectedJournalEntry && openNotepadSection === 'reflect' && (
-                      <div className={`notepad-modal ${openNotepadSection ? 'active' : ''}`}>
-                        <div className="notepad-content">
-                          <button className="close-btn" onClick={handleCloseJournalEntry}>
-                            X
-                          </button>
-                          <div className="notepad-text">
-                            <h3>
-                              Entry: {new Date(selectedJournalEntry.date).toLocaleDateString()} (
-                              {selectedJournalEntry.type === 'daily'
-                                ? 'Daily Journal'
-                                : selectedJournalEntry.type === 'dream'
-                                ? 'Dream Journal'
-                                : 'Freestyle Journal'}
-                              )
-                            </h3>
-                            {renderJournalResponses(selectedJournalEntry)}
-                          </div>
-                        </div>
+                      <div className="notepad-text">
+                        <h3>
+                          {selectedJournalEntry.type.charAt(0).toUpperCase() +
+                            selectedJournalEntry.type.slice(1)}{' '}
+                          Journal - {new Date(selectedJournalEntry.date).toLocaleDateString()}
+                        </h3>
+                        {renderJournalResponses(selectedJournalEntry)}
+                        <button
+                          className="delete-btn"
+                          onClick={() => setDeleteConfirm({ type: 'journal', id: selectedJournalEntry._id })}
+                        >
+                          Delete Entry
+                        </button>
                       </div>
-                    )}
+                    </div>
                   </div>
                 ) : (
-                  <p>No journal entries yet. Start writing to save one!</p>
+                  <>
+                    <div className="journal-options">
+                      <button className="journal-button" onClick={() => handleOpenJournal('daily')}>
+                        <img src="/daily.png" alt="Daily Journal" />
+                        <span>Daily Journal</span>
+                      </button>
+                      <button className="journal-button" onClick={() => handleOpenJournal('dream')}>
+                        <img src="/dream.png" alt="Dream Journal" />
+                        <span>Dream Journal</span>
+                      </button>
+                      <button className="journal-button" onClick={() => handleOpenJournal('freestyle')}>
+                        <img src="/freestyle.png" alt="Freestyle Journal" />
+                        <span>Freestyle Journal</span>
+                      </button>
+                    </div>
+                    {paginatedJournal.length > 0 ? (
+                      <>
+                        <table className="gradient-table">
+                          <thead>
+                            <tr>
+                              <th>Date</th>
+                              <th>Type</th>
+                              <th>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {paginatedJournal.map((entry) => (
+                              <tr key={entry._id}>
+                                <td>{new Date(entry.date).toLocaleDateString()}</td>
+                                <td>{entry.type.charAt(0).toUpperCase() + entry.type.slice(1)}</td>
+                                <td>
+                                  <button onClick={() => handleOpenJournalEntry(entry)}>View</button>
+                                  <button
+                                    className="delete-btn"
+                                    onClick={() => setDeleteConfirm({ type: 'journal', id: entry._id })}
+                                  >
+                                    Delete
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                        <div className="pagination">
+                          <button
+                            onClick={() => setJournalPage((prev) => Math.max(prev - 1, 1))}
+                            disabled={journalPage === 1}
+                          >
+                            Previous
+                          </button>
+                          <span>
+                            Page {journalPage} of {journalPageCount}
+                          </span>
+                          <button
+                            onClick={() => setJournalPage((prev) => Math.min(prev + 1, journalPageCount))}
+                            disabled={journalPage === journalPageCount}
+                          >
+                            Next
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <p>No journal entries yet. Start writing!</p>
+                    )}
+                  </>
                 )}
               </div>
             ) : activeTab === 'reflect' ? (
               <div className="reflect">
-                <h2>Reflect</h2>
-                <h3>Past Chat Sessions</h3>
-                {reports.length > 0 ? (
-                  <>
-                    <table className="gradient-table">
-                      <thead>
-                        <tr>
-                          <th>Date</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {paginatedReports.map((report, i) => (
-                          <tr key={i}>
-                            <td>{new Date(report.date).toLocaleDateString()}</td>
-                            <td>
-                              <button
-                                onClick={() => handleViewReport(report)}
-                                className={selectedReport?._id === report._id ? 'active' : ''}
-                              >
-                                View
-                              </button>
-                              <button
-                                className="delete-btn"
-                                onClick={() => setDeleteConfirm({ type: 'report', id: report._id })}
-                              >
-                                Delete
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    <div className="pagination">
-                      <button
-                        onClick={() => setReflectPage((prev) => Math.max(prev - 1, 1))}
-                        disabled={reflectPage === 1}
-                      >
-                        Previous
+                <h2>Your Reflections</h2>
+                {selectedReport ? (
+                  <div className="notepad-modal active">
+                    <div className="notepad-content">
+                      <button className="close-btn" onClick={() => setSelectedReport(null)}>
+                        X
                       </button>
-                      <span>
-                        Page {reflectPage} of {reflectPageCount}
-                      </span>
-                      <button
-                        onClick={() => setReflectPage((prev) => Math.min(prev + 1, reflectPageCount))}
-                        disabled={reflectPage === reflectPageCount}
-                      >
-                        Next
-                      </button>
-                    </div>
-                    {selectedReport && (
-                      <div className="report-details" ref={reportDetailsRef}>
-                        <h3>Session: {new Date(selectedReport.date).toLocaleDateString()}</h3>
+                      <div className="notepad-text">
+                        <h3>Session - {new Date(selectedReport.date).toLocaleDateString()}</h3>
+                        <h4>What We Discussed</h4>
+                        <p>{selectedReport.summary.discussed}</p>
+                        <h4>Your Thoughts & Feelings</h4>
+                        <p>{selectedReport.summary.thoughtsFeelings}</p>
+                        <h4>Insights Uncovered</h4>
+                        <p>{selectedReport.summary.insights}</p>
+                        <h4>Mood Reflection</h4>
+                        <p>{selectedReport.summary.moodReflection}</p>
+                        <h4>Recommendations</h4>
+                        <p>{selectedReport.summary.recommendations}</p>
                         <div className="bar-chart-container">
-                          {barChartData && <Bar data={barChartData} options={barChartData.options} />}
+                          <Bar data={barChartData} options={barChartData.options} />
                         </div>
-                        <p className="feedback">Select to read your insights</p>
+                        <button
+                          className="delete-btn"
+                          onClick={() => setDeleteConfirm({ type: 'report', id: selectedReport._id })}
+                        >
+                          Delete Report
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {paginatedReports.length > 0 ? (
+                      <>
                         <div className="summary-container">
-                          {['discussed', 'thoughtsFeelings', 'insights', 'moodReflection', 'recommendations'].map(
-                            (section) => (
-                              <div
-                                key={section}
-                                className="summary-card"
-                                onClick={() => handleOpenNotepad(section)}
-                              >
-                                <div className="summary-front">
-                                  <h4>
-                                    {section === 'discussed'
-                                      ? 'What We Discussed'
-                                      : section === 'thoughtsFeelings'
-                                      ? 'Your Thoughts & Feelings'
-                                      : section === 'insights'
-                                      ? 'Insights Uncovered'
-                                      : section === 'moodReflection'
-                                      ? 'Mood Reflection'
-                                      : 'Recommendations'}
-                                  </h4>
-                                </div>
-                              </div>
-                            )
-                          )}
-                        </div>
-                        {openNotepadSection && (
-                          <div className={`notepad-modal ${openNotepadSection ? 'active' : ''}`}>
-                            <div className="notepad-content">
-                              <button className="close-btn" onClick={handleCloseNotepad}>
-                                X
-                              </button>
-                              <div className="notepad-text">
-                                <h3>
-                                  {openNotepadSection === 'discussed'
-                                    ? 'What We Discussed'
-                                    : openNotepadSection === 'thoughtsFeelings'
-                                    ? 'Your Thoughts & Feelings'
-                                    : openNotepadSection === 'insights'
-                                    ? 'Insights Uncovered'
-                                    : openNotepadSection === 'moodReflection'
-                                    ? 'Mood Reflection'
-                                    : 'Recommendations'}
-                                </h3>
-                                {openNotepadSection === 'reflect' && selectedJournalEntry
-                                  ? renderJournalResponses(selectedJournalEntry)
-                                  : selectedReport.summary?.[openNotepadSection] || 'Not available'}
+                          {paginatedReports.map((report) => (
+                            <div
+                              key={report._id}
+                              className="summary-card"
+                              onClick={() => handleViewReport(report)}
+                            >
+                              <div className="summary-front">
+                                <h4>Session - {new Date(report.date).toLocaleDateString()}</h4>
                               </div>
                             </div>
-                          </div>
-                        )}
-                      </div>
+                          ))}
+                        </div>
+                        <div className="pagination">
+                          <button
+                            onClick={() => setReflectPage((prev) => Math.max(prev - 1, 1))}
+                            disabled={reflectPage === 1}
+                          >
+                            Previous
+                          </button>
+                          <span>
+                            Page {reflectPage} of {reflectPageCount}
+                          </span>
+                          <button
+                            onClick={() => setReflectPage((prev) => Math.min(prev + 1, reflectPageCount))}
+                            disabled={reflectPage === reflectPageCount}
+                          >
+                            Next
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <p>No reflections yet. Complete a chat session to generate one!</p>
                     )}
                   </>
-                ) : (
-                  <p>No chat sessions yet. Start chatting to save insights!</p>
                 )}
               </div>
             ) : null}
             <div className="menu-bar">
               <button
-                onClick={() => setActiveTab('profile')}
-                className={activeTab === 'profile' ? 'active' : ''}
-                aria-label="View Profile"
-                aria-pressed={activeTab === 'profile'}
-              >
-                <img src="/icons/user.png" alt="Profile" className="icon" />
-                <span>Profile</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('chat')}
                 className={activeTab === 'chat' ? 'active' : ''}
-                aria-label="Start Chat"
-                aria-pressed={activeTab === 'chat'}
+                onClick={() => setActiveTab('chat')}
               >
                 <img src="/icons/chat.png" alt="Chat" className="icon" />
-                <span>
-                  {chatTokens < 3 && tokenRegenTime
-                    ? `Chat (${chatTokens}/3) ${formatTime(
-                        Math.max(0, Math.floor((tokenRegenTime - new Date()) / 1000))
-                      )}`
-                    : `Chat (${chatTokens}/3)`}
-                </span>
+                <span>Chat</span>
               </button>
               <button
-                onClick={() => setActiveTab('journal')}
                 className={activeTab === 'journal' ? 'active' : ''}
-                aria-label="View Journal"
-                aria-pressed={activeTab === 'journal'}
+                onClick={() => setActiveTab('journal')}
               >
                 <img src="/icons/journal.png" alt="Journal" className="icon" />
                 <span>Journal</span>
               </button>
               <button
-                onClick={() => setActiveTab('reflect')}
                 className={activeTab === 'reflect' ? 'active' : ''}
-                aria-label="View Reflect"
-                aria-pressed={activeTab === 'reflect'}
+                onClick={() => setActiveTab('reflect')}
               >
-                <img src="/icons/meditation.png" alt="Reflect" className="icon" />
+                <img src="/icons/reflect.png" alt="Reflect" className="icon" />
                 <span>Reflect</span>
+              </button>
+              <button
+                className={activeTab === 'profile' ? 'active' : ''}
+                onClick={() => setActiveTab('profile')}
+              >
+                <img src="/icons/profile.png" alt="Profile" className="icon" />
+                <span>Profile</span>
               </button>
             </div>
           </div>
