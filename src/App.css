@@ -394,20 +394,47 @@ button:disabled, .send-btn:disabled {
 }
 
 .affirmation-section {
-  margin: 20px 0;
-  padding: 15px;
+  margin: 15px 0;
+  padding: 10px;
   background: rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .affirmation-section h4 {
-  font-size: 18px;
-  margin-bottom: 10px;
+  font-size: 16px;
+  margin-bottom: 8px;
 }
 
 .affirmation-section p {
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* ========================================================================== */
+/* Daily Affirmations Display on Profile */
+/* ========================================================================== */
+
+.affirmation-display {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  cursor: pointer;
+}
+
+.affirmation-display p {
+  font-size: 12px;
+  margin: 8px 0;
+}
+
+.affirmation-display strong {
+  color: #2E7D32;
+}
+
+@media (max-width: 768px) {
+  .affirmation-display p {
+    font-size: 11px;
+  }
 }
 
 /* ========================================================================== */
@@ -918,7 +945,20 @@ button:disabled, .send-btn:disabled {
 
 .mood-trend h3 {
   font-size: 18px;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
+}
+
+.mood-chart-container {
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 10px;
+}
+
+.mood-chart-container canvas {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 300px;
 }
 
 .mood-summary {
@@ -955,6 +995,22 @@ button:disabled, .send-btn:disabled {
 @media (max-width: 768px) {
   .mood-trend, .daily-inspiration {
     padding: 10px;
+  }
+  .mood-chart-container {
+    max-width: 100%;
+    padding: 5px;
+  }
+  .mood-chart-container canvas {
+    min-height: 250px;
+  }
+  .mood-trend h3 {
+    font-size: 16px;
+  }
+  .mood-summary p {
+    font-size: 12px;
+  }
+  .daily-inspiration h3 {
+    font-size: 16px;
   }
 }
 
@@ -1347,6 +1403,7 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
     width: 130px;
     height: 70px;
   }
+  .mood-chart-container canvas {
+    min-height: 200px;
+  }
 }
-
-/* End of CSS */
