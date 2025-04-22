@@ -1,5 +1,5 @@
 /* ========================================================================== */
-/* MindSprout App CSS - Optimized Styles for the Application */
+/* MindSprout App CSS - Updated Styles with Reverted Menu Bar and Affirmation Modal */
 /* ========================================================================== */
 
 /* Import Google Fonts for consistent typography */
@@ -29,7 +29,7 @@ body {
 }
 
 .canvas {
-  background: #fff;
+  background: radial-gradient(circle at center, #FFFFFF 0%, #E8F5E9 100%);
   border-radius: 15px;
   padding: 20px;
   max-width: 900px;
@@ -101,22 +101,22 @@ h2 {
 
 h3 {
   color: #388E3C;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 500;
-  margin-bottom: 5px;
+  margin-bottom: 10px;
 }
 
 h4 {
   color: #388E3C;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
 }
 
 p {
   font-size: 14px;
   color: #388E3C;
-  line-height: 1.5;
+  line-height: 1.7;
 }
 
 .message {
@@ -139,8 +139,8 @@ p {
 @media (max-width: 768px) {
   h1 { font-size: 24px; }
   h2 { font-size: 20px; }
-  h3 { font-size: 14px; }
-  h4 { font-size: 16px; }
+  h3 { font-size: 16px; }
+  h4 { font-size: 14px; }
   p { font-size: 12px; }
   .message { font-size: 14px; }
   .tagline { font-size: 14px; }
@@ -255,6 +255,8 @@ button:hover, .send-btn:hover {
 button:disabled, .send-btn:disabled {
   background: #ccc;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .delete-btn {
@@ -301,10 +303,29 @@ button:disabled, .send-btn:disabled {
 }
 
 /* ========================================================================== */
-/* Delete Confirmation Modal */
+/* Micro-Animations for Transitions */
 /* ========================================================================== */
 
-.delete-confirm-modal {
+.quiz, .chat, .journal, .reflect, .profile {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.journal-button:hover {
+  opacity: 0.9;
+  transform: scale(1.02);
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+/* ========================================================================== */
+/* Glassmorphism for Modals */
+/* ========================================================================== */
+
+.journal-modal, .notepad-modal, .delete-confirm-modal, .affirmation-modal {
   position: fixed;
   top: 0;
   left: 0;
@@ -316,34 +337,75 @@ button:disabled, .send-btn:disabled {
   align-items: center;
   z-index: 2000;
   opacity: 0;
-  transition: opacity 0.3s, transform 0.3s;
+  transition: opacity 0.3s ease, transform 0.3s ease;
   transform: scale(0.9);
 }
 
-.delete-confirm-modal.active {
+.journal-modal.active, .notepad-modal.active, .delete-confirm-modal.active, .affirmation-modal.active {
   opacity: 1;
   transform: scale(1);
 }
 
-.delete-confirm-content {
-  background: #E0F2E9;
-  border-radius: 10px;
+.journal-content, .notepad-content, .delete-confirm-content, .affirmation-content {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 15px;
   padding: 20px;
-  max-width: 400px;
-  width: 100%;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  color: #388E3C;
+  position: relative;
   text-align: center;
-  color: #000;
 }
 
-.delete-confirm-content h3 {
-  font-size: 18px;
-  margin-bottom: 10px;
+.journal-content h2, .journal-content p,
+.notepad-text h3, .notepad-text p,
+.delete-confirm-content h3, .delete-confirm-content p,
+.affirmation-content h3, .affirmation-content p {
+  color: #388E3C;
 }
 
-.delete-confirm-content p {
-  font-size: 14px;
-  margin-bottom: 20px;
+/* Fallback for browsers without backdrop-filter support */
+.journal-content, .notepad-content, .delete-confirm-content, .affirmation-content {
+  background: rgba(224, 242, 233, 0.9); /* Fallback */
+}
+
+@media (max-width: 768px) {
+  .journal-content, .notepad-content, .delete-confirm-content, .affirmation-content {
+    max-width: 90%;
+    padding: 15px;
+  }
+  .journal-content h2, .delete-confirm-content h3, .affirmation-content h3 {
+    font-size: 16px;
+  }
+  .journal-content p, .notepad-text p, .delete-confirm-content p, .affirmation-content p {
+    font-size: 12px;
+  }
+}
+
+/* ========================================================================== */
+/* Affirmation Modal */
+/* ========================================================================== */
+
+.affirmation-content {
+  animation: popIn 0.5s ease;
+  background: linear-gradient(135deg, rgba(224, 247, 233, 0.9), rgba(179, 224, 198, 0.9));
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ========================================================================== */
+/* Delete Confirmation Modal */
+/* ========================================================================== */
+
+.delete-confirm-content {
+  text-align: center;
 }
 
 .delete-confirm-buttons {
@@ -358,19 +420,6 @@ button:disabled, .send-btn:disabled {
 
 .delete-confirm-buttons button:first-child:hover {
   background: #E57373;
-}
-
-@media (max-width: 768px) {
-  .delete-confirm-content {
-    max-width: 90%;
-    padding: 15px;
-  }
-  .delete-confirm-content h3 {
-    font-size: 16px;
-  }
-  .delete-confirm-content p {
-    font-size: 12px;
-  }
 }
 
 /* ========================================================================== */
@@ -449,9 +498,9 @@ button:disabled, .send-btn:disabled {
 
 @keyframes affirmationFade {
   0% { opacity: 0; transform: scale(0.95); }
-  25% { opacity: 1; transform: scale(1); } /* Fade in over 0.5s */
-  75% { opacity: 1; transform: scale(1); } /* Visible for 1s */
-  100% { opacity: 0; transform: scale(0.95); } /* Fade out over 0.5s */
+  25% { opacity: 1; transform: scale(1); }
+  75% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.95); }
 }
 
 @media (max-width: 768px) {
@@ -482,7 +531,7 @@ button:disabled, .send-btn:disabled {
   align-items: center;
   z-index: 2000;
   opacity: 0;
-  transition: opacity 0.5s ease-out; /* Smooth fade-out */
+  transition: opacity 0.5s ease-out;
 }
 
 .breathe-overlay.active {
@@ -755,12 +804,12 @@ button:disabled, .send-btn:disabled {
   border-radius: 0;
   cursor: pointer;
   overflow: hidden;
-  background: transparent; /* No button background, only image */
+  background: transparent;
   padding: 0;
 }
 
 .journal-button:hover {
-  opacity: 0.9; /* Slight opacity change on hover for feedback */
+  opacity: 0.9;
 }
 
 .journal-button img {
@@ -806,57 +855,22 @@ button:disabled, .send-btn:disabled {
   }
 }
 
-.journal-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 80px;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  opacity: 0;
-  transition: opacity 0.3s, transform 0.3s;
-  transform: scale(0.9);
-}
-
-.journal-modal.active {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.journal-content {
-  background: #E0F2E9;
-  border-radius: 10px;
-  padding: 20px;
-  max-width: 600px;
-  max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  color: #000;
-}
-
 .journal-prompt {
   margin-bottom: 20px;
 }
 
 .journal-prompt h2 {
   font-size: 18px;
-  color: #000;
 }
 
 .journal-prompt p {
   font-size: 14px;
-  color: #000;
 }
 
 .journal-prompt textarea {
   width: 100%;
   height: 100px;
   background: #fff;
-  color: #000;
 }
 
 .close-btn {
@@ -876,78 +890,79 @@ button:disabled, .send-btn:disabled {
   background: #E57373;
 }
 
-@media (max-width: 768px) {
-  .journal-content {
-    max-width: 90%;
-    padding: 15px;
-  }
-  .journal-prompt h2 {
-    font-size: 16px;
-  }
-  .journal-prompt p {
-    font-size: 12px;
-  }
-  .journal-prompt textarea {
-    height: 80px;
-  }
-}
-
 /* ========================================================================== */
-/* Notepad Modal */
+/* Profile Section */
 /* ========================================================================== */
 
-.notepad-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 80px;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  opacity: 0;
-  transition: opacity 0.3s, transform 0.3s;
-  transform: scale(0.9);
+.profile {
+  animation: fadeIn 0.3s ease-in;
 }
 
-.notepad-modal.active {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.notepad-content {
-  background: #E0F2E9;
+.check-in-section {
+  margin: 20px 0;
+  padding: 15px;
+  background: #e0f2e9;
   border-radius: 10px;
-  padding: 20px;
-  max-width: 600px;
-  max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  color: #000;
+  text-align: center;
 }
 
-.notepad-text h3 {
+.check-in-section p {
+  font-size: 14px;
+  margin: 5px 0;
+}
+
+.mood-trend {
+  margin: 20px 0;
+  padding: 15px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.mood-trend h3 {
   font-size: 18px;
   margin-bottom: 10px;
 }
 
-.notepad-text p {
+.daily-quote {
+  margin: 20px 0;
+  padding: 15px;
+  background: #e0f2e9;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.daily-quote h3 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.daily-quote p {
   font-size: 14px;
-  line-height: 1.6;
+  font-style: italic;
+}
+
+.profile-settings {
+  margin: 20px 0;
+  padding: 15px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.profile-settings h3 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.profile-settings input {
+  margin: 10px 0;
+  max-width: 300px;
 }
 
 @media (max-width: 768px) {
-  .notepad-content {
-    max-width: 90%;
-    padding: 15px;
-  }
-  .notepad-text h3 {
-    font-size: 16px;
-  }
-  .notepad-text p {
-    font-size: 12px;
+  .check-in-section, .mood-trend, .daily-quote, .profile-settings {
+    padding: 10px;
   }
 }
 
@@ -1135,7 +1150,7 @@ button:disabled, .send-btn:disabled {
 }
 
 /* ========================================================================== */
-/* Menu Bar */
+/* Menu Bar (Reverted to Original Color Scheme) */
 /* ========================================================================== */
 
 .menu-bar {
@@ -1152,51 +1167,25 @@ button:disabled, .send-btn:disabled {
 }
 
 .menu-bar button {
-  background: none;
-  border: 2px solid transparent;
+  background: #388E3C;
+  border: none;
   border-radius: 8px;
   padding: 8px;
-  color: #388E3C;
+  color: white;
   font-size: 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
   cursor: pointer;
-  transition: background 0.3s, border-color 0.3s, transform 0.2s;
-}
-
-.menu-bar button:nth-child(1) {
-  background: rgba(56, 142, 60, 0.1);
-  border-color: #388E3C;
-}
-
-.menu-bar button:nth-child(2) {
-  background: rgba(224, 242, 233, 0.2);
-  border-color: #2E7D32;
-}
-
-.menu-bar button:nth-child(3) {
-  background: rgba(179, 224, 198, 0.2);
-  border-color: #4CAF50;
-}
-
-.menu-bar button:nth-child(4) {
-  background: rgba(200, 230, 201, 0.2);
-  border-color: #81C784;
+  transition: background 0.3s, transform 0.2s;
 }
 
 .menu-bar button:hover {
-  background: #e0f2e9;
+  background: #2E7D32;
   transform: scale(1.1);
 }
 
 .menu-bar button.active {
-  background: #388E3C;
-  color: white;
-  border-color: #2E7D32;
-}
-
-.menu-bar button.active:hover {
   background: #2E7D32;
 }
 
@@ -1214,6 +1203,34 @@ button:disabled, .send-btn:disabled {
     font-size: 14px;
     padding: 10px;
   }
+}
+
+/* ========================================================================== */
+/* Custom Scrollbars */
+/* ========================================================================== */
+
+.chat-box, .journal-content, .notepad-content {
+  scrollbar-width: thin;
+  scrollbar-color: #388E3C #f9fafb;
+}
+
+.chat-box::-webkit-scrollbar,
+.journal-content::-webkit-scrollbar,
+.notepad-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chat-box::-webkit-scrollbar-thumb,
+.journal-content::-webkit-scrollbar-thumb,
+.notepad-content::-webkit-scrollbar-thumb {
+  background: #388E3C;
+  border-radius: 4px;
+}
+
+.chat-box::-webkit-scrollbar-track,
+.journal-content::-webkit-scrollbar-track,
+.notepad-content::-webkit-scrollbar-track {
+  background: #f9fafb;
 }
 
 /* ========================================================================== */
@@ -1250,18 +1267,21 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
   .gradient-table td {
     color: #000;
   }
-  .menu-bar button {
-    border-color: #000;
-    color: #000;
+  .menu-bar {
+    background: #fff;
   }
-  .menu-bar button.active {
+  .menu-bar button {
     background: #000;
     color: #fff;
+  }
+  .menu-bar button.active {
+    background: #fff;
+    color: #000;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .canvas, .journal-modal, .notepad-modal, .delete-confirm-modal, .quiz-fullscreen, .breathe-overlay, .affirmation {
+  .canvas, .journal-modal, .notepad-modal, .delete-confirm-modal, .affirmation-modal, .quiz-fullscreen, .breathe-overlay, .affirmation {
     transition: none;
   }
   .spinner, .affirmation, .breathe-count {
@@ -1274,11 +1294,11 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
 /* Edge Case Styles */
 /* ========================================================================== */
 
-.journal-modal, .notepad-modal, .delete-confirm-modal, .quiz-fullscreen, .breathe-overlay {
+.journal-modal, .notepad-modal, .delete-confirm-modal, .affirmation-modal, .quiz-fullscreen, .breathe-overlay {
   z-index: 1000;
 }
 
-.journal-content, .notepad-content, .delete-confirm-content {
+.journal-content, .notepad-content, .delete-confirm-content, .affirmation-content {
   word-wrap: break-word;
   white-space: pre-wrap;
 }
@@ -1286,19 +1306,6 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
 .journal-prompt textarea {
   min-height: 80px;
   max-height: 300px;
-}
-
-.chat-box::-webkit-scrollbar {
-  width: 8px;
-}
-
-.chat-box::-webkit-scrollbar-thumb {
-  background: #388E3C;
-  border-radius: 4px;
-}
-
-.chat-box::-webkit-scrollbar-track {
-  background: #f9fafb;
 }
 
 .gradient-table td, .gradient-table th {
@@ -1313,6 +1320,12 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
   .delete-btn, .close-btn, .logout-btn {
     background: #E57373;
   }
+  .menu-bar {
+    background: #fff;
+  }
+  .menu-bar button {
+    background: #2E7D32;
+  }
   .menu-bar button.active {
     background: #2E7D32;
   }
@@ -1326,7 +1339,7 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
   .canvas {
     max-width: 1000px;
   }
-  .journal-content, .notepad-content {
+  .journal-content, .notepad-content, .affirmation-content {
     max-width: 700px;
   }
   .quiz-option-box {
