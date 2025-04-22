@@ -416,14 +416,6 @@ button:disabled, .send-btn:disabled {
   animation: popIn 0.5s ease;
 }
 
-.level-up-animation {
-  width: 100px;
-  height: 100px;
-  margin: 20px auto;
-  background: url('../public/confetti.gif') no-repeat center center;
-  background-size: contain;
-}
-
 @keyframes popIn {
   0% { transform: scale(0.8); opacity: 0; }
   100% { transform: scale(1); opacity: 1; }
