@@ -851,7 +851,7 @@ function App() {
             </>
           ) : (
             <button onClick={() => handleGenerateInsight(entry)} disabled={isLoading}>
-              Gain Profound Insights Vignette
+              Gain Profound Insights
             </button>
           )}
         </div>
