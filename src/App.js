@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import axios from 'axios';
-import sanitizeHtml from 'sanitize-html';
+import sanitizeHtml from 'sanitize-html'; // Added for client-side input sanitization
 import './App.css';
 import { Bar, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js';
-import { CircularProgressbar } from 'react-circular-progressbar'; // Added for progress dashboard
-import 'react-circular-progressbar/dist/styles.css'; // Added for progress dashboard
 
 ChartJS.register(BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend);
 
@@ -296,6 +294,7 @@ function App() {
       console.error('Error fetching user data:', err);
       setMessage('Error loading your data');
       if (err.response?.status === 403) {
+        // Handle expired token
         handleLogout();
         setMessage('Session expired. Please log in again.');
       }
@@ -464,11 +463,12 @@ function App() {
   const handleRegularSignup = (e) => {
     e.preventDefault();
     setIsLoading(true);
+    // Sanitize signup form inputs to prevent XSS
     const sanitizedSignupForm = {
       name: sanitizeHtml(regularSignupForm.name, { allowedTags: [], allowedAttributes: {} }),
       email: sanitizeHtml(regularSignupForm.email, { allowedTags: [], allowedAttributes: {} }),
       username: sanitizeHtml(regularSignupForm.username, { allowedTags: [], allowedAttributes: {} }),
-      password: regularSignupForm.password
+      password: regularSignupForm.password // Password doesn't need sanitization as it's hashed server-side
     };
     axios.post(`${API_URL}/api/regular/signup`, sanitizedSignupForm)
       .then((res) => {
@@ -484,9 +484,10 @@ function App() {
   const handleRegularLogin = (e) => {
     e.preventDefault();
     setIsLoading(true);
+    // Sanitize login form inputs to prevent XSS
     const sanitizedLoginForm = {
       email: sanitizeHtml(regularLoginForm.email.toLowerCase(), { allowedTags: [], allowedAttributes: {} }),
-      password: regularLoginForm.password
+      password: regularLoginForm.password // Password doesn't need sanitization
     };
     axios.post(`${API_URL}/api/regular/login`, sanitizedLoginForm)
       .then((res) => {
@@ -562,6 +563,7 @@ function App() {
   const handleChat = useCallback(
     debounce(async (text) => {
       if (timeLeft <= 0 || text.length > 500) return;
+      // Sanitize chat input to prevent XSS
       const sanitizedText = sanitizeHtml(text, { allowedTags: [], allowedAttributes: {} });
       const newUserMessage = { sender: 'user', text: sanitizedText, timestamp: new Date() };
       setChat((prev) => [...prev, newUserMessage]);
@@ -635,6 +637,7 @@ function App() {
   };
 
   const handleJournalInput = (key, value) => {
+    // Sanitize journal input to prevent XSS
     const sanitizedValue = sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} });
     setJournalResponses((prev) => ({ ...prev, [key]: sanitizedValue }));
   };
@@ -645,6 +648,7 @@ function App() {
       return;
     }
     setIsLoading(true);
+    // Sanitize journal responses before sending to server
     const sanitizedJournalResponses = Object.fromEntries(
       Object.entries(journalResponses).map(([key, value]) => [key, sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} })])
     );
@@ -901,14 +905,11 @@ function App() {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Check if daily affirmations are still valid
-  const isAffirmationsValid = dailyAffirmations && new Date(dailyAffirmations.validUntil) > new Date();
-
   return (
     <div className="app">
       {(isLoading || showSummaryBuffer) && (
         <div className="loading-overlay">
-          <div className="sprout-animation"></div> {/* Replaced spinner with sprout-animation */}
+          <div className="spinner"></div>
           {showSummaryBuffer ? (
             <p>Preparing your summary...</p>
           ) : (
@@ -1047,17 +1048,6 @@ function App() {
             {activeTab === 'profile' ? (
               <div className="profile">
                 <h2>Your Profile</h2>
-                <div className="progress-dashboard">
-                  <h3>Your Mindfulness Journey</h3>
-                  <div className="progress-item">
-                    <CircularProgressbar value={journal.length} maxValue={50} text={`${journal.length}`} />
-                    <p>Journal Entries</p>
-                  </div>
-                  <div className="progress-item">
-                    <CircularProgressbar value={reports.length} maxValue={50} text={`${reports.length}`} />
-                    <p>Chat Sessions</p>
-                  </div>
-                </div>
                 <div className="mood-trend">
                   <h3>Weekly Mood Trends</h3>
                   {reports.length > 0 ? (
@@ -1075,21 +1065,9 @@ function App() {
                 </div>
                 <div className="daily-inspiration">
                   <h3>Daily Inspiration</h3>
-                  {isAffirmationsValid ? (
-                    <div className="affirmation-section">
-                      <h4>I Suggest</h4>
-                      <p>{dailyAffirmations.suggest}</p>
-                      <h4>I Encourage</h4>
-                      <p>{dailyAffirmations.encourage}</p>
-                      <h4>I Invite</h4>
-                      <p>{dailyAffirmations.invite}</p>
-                      <button onClick={() => setShowDailyAffirmationsModal(true)}>View in Modal</button>
-                    </div>
-                  ) : (
-                    <button onClick={handleGenerateDailyAffirmations}>
-                      Generate Daily Affirmations
-                    </button>
-                  )}
+                  <button onClick={handleGenerateDailyAffirmations} disabled={dailyAffirmations && new Date(dailyAffirmations.validUntil) > new Date()}>
+                    Generate Daily Affirmations
+                  </button>
                 </div>
                 <button onClick={handleLogout} className="logout-btn">
                   <img src="/icons/logout.png" alt="Logout" className="icon" />
@@ -1142,10 +1120,10 @@ function App() {
                 ) : isChatActive ? (
                   <div className="chat">
                     <h2>Chat with Pal</h2>
-                    <p>Time left: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().jimmy('0')}</p>
+                    <p>Time left: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</p>
                     <div className="chat-box" ref={chatBoxRef}>
-                      {chat.slice().reverse().map((msg, index) => (
-                        <p key={index} className={`${msg.sender} ${index === 0 ? 'new-message' : ''}`}>
+                      {chat.slice().reverse().map((msg, i) => (
+                        <p key={i} className={msg.sender}>
                           {msg.text}
                         </p>
                       ))}
@@ -1253,8 +1231,8 @@ function App() {
                             </tr>
                           </thead>
                           <tbody>
-                            {paginatedJournal.map((entry, index) => (
-                              <tr key={entry._id} className={`journal-entry ${index === 0 ? 'new-entry' : ''}`}>
+                            {paginatedJournal.map((entry) => (
+                              <tr key={entry._id}>
                                 <td>{new Date(entry.date).toLocaleDateString()}</td>
                                 <td>{entry.type.charAt(0).toUpperCase() + entry.type.slice(1)}</td>
                                 <td>
