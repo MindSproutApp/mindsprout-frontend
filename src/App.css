@@ -1349,4 +1349,103 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
   }
 }
 
+/* ========================================================================== */
+/* Mood Chart Modal for Mobile */
+/* ========================================================================== */
+
+.mood-chart-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 80px;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  transform: scale(0.9);
+}
+
+.mood-chart-modal.active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.mood-chart-content {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 15px;
+  padding: 20px;
+  max-width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  color: #388E3C;
+  position: relative;
+}
+
+.mood-chart-content h3,
+.mood-chart-content p {
+  color: #388E3C;
+}
+
+/* Fallback for browsers without backdrop-filter support */
+.mood-chart-content {
+  background: rgba(224, 242, 233, 0.9); /* Fallback */
+}
+
+.mood-chart-container {
+  max-width: 100%;
+  height: 300px;
+  margin: 20px auto;
+  padding: 15px;
+  background: #f9fafb;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.view-chart-btn {
+  background: #388E3C;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin: 8px 5px;
+  transition: background 0.3s, transform 0.2s, box-shadow 0.2s;
+}
+
+.view-chart-btn:hover {
+  background: #2E7D32;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.view-chart-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+@media (max-width: 768px) {
+  .mood-chart-content {
+    padding: 15px;
+  }
+  .mood-chart-container {
+    height: 250px;
+    padding: 10px;
+  }
+  .view-chart-btn {
+    padding: 8px 16px;
+    font-size: 12px;
+  }
+}
+
 /* End of CSS */
