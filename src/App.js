@@ -251,7 +251,23 @@ function App() {
     ],
   };
 
+  // Helper function to check if JWT is expired
+  const isTokenExpired = (token) => {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const expiry = payload.exp * 1000; // Convert seconds to milliseconds
+      return Date.now() > expiry;
+    } catch (error) {
+      return true; // Assume expired if token is invalid
+    }
+  };
+
   const fetchUserData = async (authToken) => {
+    if (isTokenExpired(authToken)) {
+      setMessage('Your session has expired. Please log in again.');
+      handleLogout();
+      return;
+    }
     setIsLoading(true);
     try {
       const cachedData = JSON.parse(localStorage.getItem('userData') || '{}');
@@ -297,7 +313,12 @@ function App() {
       }).catch((err) => console.error('Error fetching non-critical data:', err));
     } catch (err) {
       console.error('Error fetching user data:', err);
-      setMessage('Error loading your data');
+      if (err.response?.data?.error.includes('Invalid or expired token')) {
+        setMessage('Your session has expired. Please log in again.');
+        handleLogout();
+      } else {
+        setMessage('Error loading your data');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -1033,17 +1054,7 @@ function App() {
                   <h3>Weekly Mood Trends</h3>
                   {reports.length > 0 ? (
                     <>
-                      <div className={`bar-chart-container ${!isDesktop ? 'mobile-chart' : ''}`}>
-                        <Line
-                          data={weeklyMoodChartData}
-                          options={{
-                            scales: { y: { min: 0, max: 5 } },
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: { legend: { position: 'top' } }
-                          }}
-                        />
-                      </div>
+                      <Line data={weeklyMoodChartData} options={{ scales: { y: { min: 0, max: 5 } } }} />
                       <div className="mood-summary">
                         {weeklyMoodSummary.map((summary, index) => (
                           <p key={index}>{summary}</p>
@@ -1460,7 +1471,7 @@ function App() {
                 <span>
                   {chatTokens < 3 && tokenRegenTime
                     ? `Chat (${chatTokens}/3) ${formatTime(
-                        Math.max(0, Math.floor((tokenRegenTime - new Date()) / 1000))
+                        Math.max(0, Math.floor((tokenRegenTime - New()) / 1000))
                       )}`
                     : `Chat (${chatTokens}/3)`}
                 </span>
