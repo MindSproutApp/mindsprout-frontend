@@ -87,7 +87,7 @@ function App() {
     "You are surrounded by love and support.",
     "You are brave and can take risks.",
     "You deserve to take time for yourself.",
-    "You are a beacon of hope and inspiration"
+    "You are a beacon of hope and inspiration."
   ];
 
   // Available positions for affirmations
@@ -251,23 +251,7 @@ function App() {
     ],
   };
 
-  // Helper function to check if JWT is expired
-  const isTokenExpired = (token) => {
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const expiry = payload.exp * 1000; // Convert seconds to milliseconds
-      return Date.now() > expiry;
-    } catch (error) {
-      return true; // Assume expired if token is invalid
-    }
-  };
-
   const fetchUserData = async (authToken) => {
-    if (isTokenExpired(authToken)) {
-      setMessage('Your session has expired. Please log in again.');
-      handleLogout();
-      return;
-    }
     setIsLoading(true);
     try {
       const cachedData = JSON.parse(localStorage.getItem('userData') || '{}');
@@ -313,12 +297,7 @@ function App() {
       }).catch((err) => console.error('Error fetching non-critical data:', err));
     } catch (err) {
       console.error('Error fetching user data:', err);
-      if (err.response?.data?.error.includes('Invalid or expired token')) {
-        setMessage('Your session has expired. Please log in again.');
-        handleLogout();
-      } else {
-        setMessage('Error loading your data');
-      }
+      setMessage('Error loading your data');
     } finally {
       setIsLoading(false);
     }
@@ -1471,7 +1450,7 @@ function App() {
                 <span>
                   {chatTokens < 3 && tokenRegenTime
                     ? `Chat (${chatTokens}/3) ${formatTime(
-                        Math.max(0, Math.floor((tokenRegenTime - New Date()) / 1000))
+                        Math.max(0, Math.floor((tokenRegenTime - new Date()) / 1000))
                       )}`
                     : `Chat (${chatTokens}/3)`}
                 </span>
