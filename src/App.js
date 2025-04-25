@@ -87,7 +87,7 @@ function App() {
     "You are surrounded by love and support.",
     "You are brave and can take risks.",
     "You deserve to take time for yourself.",
-    "You are a beacon of hope and inspiration."
+    "You are a beacon of hope and inspiration"
   ];
 
   // Available positions for affirmations
@@ -1033,7 +1033,17 @@ function App() {
                   <h3>Weekly Mood Trends</h3>
                   {reports.length > 0 ? (
                     <>
-                      <Line data={weeklyMoodChartData} options={{ scales: { y: { min: 0, max: 5 } } }} />
+                      <div className={`bar-chart-container ${!isDesktop ? 'mobile-chart' : ''}`}>
+                        <Line
+                          data={weeklyMoodChartData}
+                          options={{
+                            scales: { y: { min: 0, max: 5 } },
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { position: 'top' } }
+                          }}
+                        />
+                      </div>
                       <div className="mood-summary">
                         {weeklyMoodSummary.map((summary, index) => (
                           <p key={index}>{summary}</p>
