@@ -49,7 +49,6 @@ function App() {
   const [affirmationsList, setAffirmationsList] = useState([]);
   const [dailyAffirmations, setDailyAffirmations] = useState(null);
   const [showDailyAffirmationsModal, setShowDailyAffirmationsModal] = useState(false);
-  const [showMoodChartModal, setShowMoodChartModal] = useState(false); // New state for chart modal
 
   const chatBoxRef = useRef(null);
   const reportDetailsRef = useRef(null);
@@ -91,14 +90,17 @@ function App() {
     "You are a beacon of hope and inspiration."
   ];
 
+  // Available positions for affirmations
   const affirmationPositions = ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'center'];
 
+  // Manage affirmations during loading
   useEffect(() => {
     if (isLoading && !showSummaryBuffer) {
       const usedPositions = new Set();
       const interval = setInterval(() => {
+        // Find an unused position
         const availablePositions = affirmationPositions.filter(pos => !usedPositions.has(pos));
-        if (availablePositions.length === 0) return;
+        if (availablePositions.length === 0) return; // Skip if all positions are used
         const position = availablePositions[Math.floor(Math.random() * availablePositions.length)];
         usedPositions.add(position);
 
@@ -119,6 +121,7 @@ function App() {
     }
   }, [isLoading, showSummaryBuffer]);
 
+  // Check for token on mount to maintain session on page refresh
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     if (storedToken) {
@@ -128,6 +131,7 @@ function App() {
     }
   }, []);
 
+  // Other existing states and effects
   useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth > 768);
     window.addEventListener('resize', handleResize);
@@ -381,22 +385,7 @@ function App() {
       },
     ];
 
-    return {
-      labels,
-      datasets,
-      options: {
-        maintainAspectRatio: false, // Allow chart to scale freely
-        responsive: true,
-        scales: {
-          y: { min: 0, max: 5 },
-          x: { ticks: { autoSkip: true, maxRotation: 45, minRotation: 45 } },
-        },
-        plugins: {
-          legend: { position: 'top' },
-          tooltip: { enabled: true },
-        },
-      },
-    };
+    return { labels, datasets };
   }, [reports]);
 
   const weeklyMoodSummary = useMemo(() => {
@@ -786,7 +775,6 @@ function App() {
     setAffirmationsList([]);
     setDailyAffirmations(null);
     setShowDailyAffirmationsModal(false);
-    setShowMoodChartModal(false); // Reset chart modal
   };
 
   const handleOpenNotepad = (section) => {
@@ -804,14 +792,6 @@ function App() {
         reportDetailsRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
       }
     }, 100);
-  };
-
-  const handleOpenMoodChart = () => {
-    setShowMoodChartModal(true);
-  };
-
-  const handleCloseMoodChart = () => {
-    setShowMoodChartModal(false);
   };
 
   const renderJournalResponses = (entry) => {
@@ -969,19 +949,6 @@ function App() {
           </div>
         </div>
       )}
-      {showMoodChartModal && (
-        <div className="mood-chart-modal active">
-          <div className="mood-chart-content">
-            <button className="close-btn" onClick={handleCloseMoodChart}>
-              X
-            </button>
-            <h3>Weekly Mood Trends</h3>
-            <div className="mood-chart-container">
-              <Line data={weeklyMoodChartData} options={weeklyMoodChartData.options} />
-            </div>
-          </div>
-        </div>
-      )}
       <div className="canvas">
         {!token ? (
           <div className="auth">
@@ -1066,16 +1033,7 @@ function App() {
                   <h3>Weekly Mood Trends</h3>
                   {reports.length > 0 ? (
                     <>
-                      {!isDesktop && (
-                        <button onClick={handleOpenMoodChart} className="view-chart-btn">
-                          View Chart
-                        </button>
-                      )}
-                      {isDesktop && (
-                        <div className="mood-chart-container">
-                          <Line data={weeklyMoodChartData} options={weeklyMoodChartData.options} />
-                        </div>
-                      )}
+                      <Line data={weeklyMoodChartData} options={{ scales: { y: { min: 0, max: 5 } } }} />
                       <div className="mood-summary">
                         {weeklyMoodSummary.map((summary, index) => (
                           <p key={index}>{summary}</p>
