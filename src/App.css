@@ -1350,3 +1350,24 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
 }
 
 /* End of CSS */
+/* Mobile chart adjustments */
+.bar-chart-container {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.bar-chart-container.mobile-chart {
+  max-width: 100%;
+  height: 250px;
+  overflow-x: auto;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .bar-chart-container.mobile-chart canvas {
+    max-width: 100%;
+    height: auto !important;
+  }
+}
