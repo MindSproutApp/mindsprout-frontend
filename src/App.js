@@ -1471,7 +1471,7 @@ function App() {
                 <span>
                   {chatTokens < 3 && tokenRegenTime
                     ? `Chat (${chatTokens}/3) ${formatTime(
-                        Math.max(0, Math.floor((tokenRegenTime - New()) / 1000))
+                        Math.max(0, Math.floor((tokenRegenTime - New Date()) / 1000))
                       )}`
                     : `Chat (${chatTokens}/3)`}
                 </span>
