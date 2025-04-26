@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Delete Your MindSprout Account</title>
+  <!-- Link to your existing App.css -->
+  <link rel="stylesheet" href="/path/to/App.css">
+  <style>
+    /* Minimal inline CSS to ensure page layout, not overriding App.css */
+    .delete-account-container {
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+      background: radial-gradient(circle at center, #FFFFFF 0%, #E8F5E9 100%);
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+    .delete-account-container h1 {
+      font-size: 28px;
+      margin-bottom: 20px;
+    }
+    .delete-account-container p {
+      font-size: 14px;
+      line-height: 1.7;
+      margin: 15px 0;
+    }
+    @media (max-width: 768px) {
+      .delete-account-container {
+        margin: 20px;
+        padding: 15px;
+      }
+      .delete-account-container h1 {
+        font-size: 24px;
+      }
+      .delete-account-container p {
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="delete-account-container">
+    <h1>Deleting Your MindSprout Account</h1>
+    <p>
+      At MindSprout, we respect your choice to manage your data. If you wish to delete your account, you can do so directly within the MindSprout app or using the button below.
+    </p>
+    <p>
+      <strong>In the App:</strong> Navigate to the <strong>Profile</strong> section in the MindSprout app. There, you’ll find a "Delete Account" button. Clicking it will prompt a confirmation to ensure you want to proceed. This permanently removes your account and all associated data.
+    </p>
+    <p>
+      <strong>On This Page:</strong> You can also delete your account by clicking the button below. This will open a confirmation dialog, similar to the app, to confirm your decision. Once confirmed, your account and data will be permanently deleted.
+    </p>
+    <p>
+      <strong>Important:</strong> Account deletion is irreversible. All your journal entries, mood trends, and other data will be permanently removed. Please ensure you want to proceed before confirming.
+    </p>
+
+    <p>
+      <strong>Important:</strong> You can also email us at help@mindsproutapp.com to request account deletion.
+    </p>
+    <button class="delete-account-btn" onclick="openDeleteModal()">Delete Account</button>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="delete-confirm-modal" id="deleteConfirmModal">
+    <div class="delete-confirm-content">
+      <button class="close-btn" onclick="closeDeleteModal()">×</button>
+      <h3>Confirm Account Deletion</h3>
+      <p>Are you sure you want to delete your MindSprout account? This action is permanent and cannot be undone.</p>
+      <div class="delete-confirm-buttons">
+        <button class="delete-btn" onclick="confirmDelete()">Delete</button>
+        <button class="toggle-btn" onclick="closeDeleteModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // JavaScript for modal toggle, matching your app's modal behavior
+    function openDeleteModal() {
+      document.getElementById('deleteConfirmModal').classList.add('active');
+    }
+
+    function closeDeleteModal() {
+      document.getElementById('deleteConfirmModal').classList.remove('active');
+    }
+
+    function confirmDelete() {
+      // Placeholder for actual deletion logic
+      alert('Account deletion would be processed here. Connect to your backend API for actual deletion.');
+      closeDeleteModal();
+    }
+  </script>
+</body>
+</html>
