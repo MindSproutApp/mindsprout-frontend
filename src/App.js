@@ -49,11 +49,11 @@ function App() {
   const [affirmationsList, setAffirmationsList] = useState([]);
   const [dailyAffirmations, setDailyAffirmations] = useState(null);
   const [showDailyAffirmationsModal, setShowDailyAffirmationsModal] = useState(false);
-  // New state for mood chart modal
   const [isMoodChartModalOpen, setIsMoodChartModalOpen] = useState(false);
 
   const chatBoxRef = useRef(null);
   const reportDetailsRef = useRef(null);
+  const moodChartModalRef = useRef(null); // Ref for mood chart modal canvas
 
   const affirmations = [
     "You are enough just as you are.",
@@ -92,17 +92,29 @@ function App() {
     "You are a beacon of hope and inspiration"
   ];
 
-  // Available positions for affirmations
   const affirmationPositions = ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'center'];
+
+  // Force chart resize when modal opens
+  useEffect(() => {
+    if (isMoodChartModalOpen && moodChartModalRef.current) {
+      // Delay to ensure modal is fully visible
+      const timer = setTimeout(() => {
+        const canvas = moodChartModalRef.current.querySelector('canvas');
+        if (canvas && canvas.chart) {
+          canvas.chart.resize();
+        }
+      }, 300); // Match modal transition duration
+      return () => clearTimeout(timer);
+    }
+  }, [isMoodChartModalOpen]);
 
   // Manage affirmations during loading
   useEffect(() => {
     if (isLoading && !showSummaryBuffer) {
       const usedPositions = new Set();
       const interval = setInterval(() => {
-        // Find an unused position
         const availablePositions = affirmationPositions.filter(pos => !usedPositions.has(pos));
-        if (availablePositions.length === 0) return; // Skip if all positions are used
+        if (availablePositions.length === 0) return;
         const position = availablePositions[Math.floor(Math.random() * availablePositions.length)];
         usedPositions.add(position);
 
@@ -133,7 +145,6 @@ function App() {
     }
   }, []);
 
-  // Other existing states and effects
   useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth > 768);
     window.addEventListener('resize', handleResize);
@@ -794,7 +805,7 @@ function App() {
     setAffirmationsList([]);
     setDailyAffirmations(null);
     setShowDailyAffirmationsModal(false);
-    setIsMoodChartModalOpen(false); // Reset new state
+    setIsMoodChartModalOpen(false);
   };
 
   const handleOpenNotepad = (section) => {
@@ -1116,7 +1127,7 @@ function App() {
                   Delete Account
                 </button>
                 {isMoodChartModalOpen && reports.length > 0 && (
-                  <div className={`mood-chart-modal ${isMoodChartModalOpen ? 'active' : ''}`}>
+                  <div className={`mood-chart-modal ${isMoodChartModalOpen ? 'active' : ''}`} ref={moodChartModalRef}>
                     <div className="mood-chart-content">
                       <button
                         className="close-btn"
