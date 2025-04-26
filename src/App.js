@@ -49,6 +49,8 @@ function App() {
   const [affirmationsList, setAffirmationsList] = useState([]);
   const [dailyAffirmations, setDailyAffirmations] = useState(null);
   const [showDailyAffirmationsModal, setShowDailyAffirmationsModal] = useState(false);
+  // New state for mood chart modal
+  const [isMoodChartModalOpen, setIsMoodChartModalOpen] = useState(false);
 
   const chatBoxRef = useRef(null);
   const reportDetailsRef = useRef(null);
@@ -792,6 +794,7 @@ function App() {
     setAffirmationsList([]);
     setDailyAffirmations(null);
     setShowDailyAffirmationsModal(false);
+    setIsMoodChartModalOpen(false); // Reset new state
   };
 
   const handleOpenNotepad = (section) => {
@@ -1074,7 +1077,16 @@ function App() {
                   <h3>Weekly Mood Trends</h3>
                   {reports.length > 0 ? (
                     <>
-                      <Line data={weeklyMoodChartData} options={{ scales: { y: { min: 0, max: 5 } } }} />
+                      <div className="mood-chart">
+                        <Line data={weeklyMoodChartData} options={{ scales: { y: { min: 0, max: 5 } } }} />
+                      </div>
+                      <button
+                        className="view-mood-chart-btn"
+                        onClick={() => setIsMoodChartModalOpen(true)}
+                        aria-label="View mood chart"
+                      >
+                        View Mood Chart
+                      </button>
                       <div className="mood-summary">
                         {weeklyMoodSummary.map((summary, index) => (
                           <p key={index}>{summary}</p>
@@ -1103,6 +1115,23 @@ function App() {
                   <img src="/icons/delete.png" alt="Delete Account" className="icon" />
                   Delete Account
                 </button>
+                {isMoodChartModalOpen && reports.length > 0 && (
+                  <div className={`mood-chart-modal ${isMoodChartModalOpen ? 'active' : ''}`}>
+                    <div className="mood-chart-content">
+                      <button
+                        className="close-btn"
+                        onClick={() => setIsMoodChartModalOpen(false)}
+                        aria-label="Close mood chart modal"
+                      >
+                        ×
+                      </button>
+                      <h3>Your Mood Trends</h3>
+                      <div className="mood-chart">
+                        <Line data={weeklyMoodChartData} options={{ scales: { y: { min: 0, max: 5 } } }} />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : activeTab === 'chat' ? (
               <>
