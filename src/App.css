@@ -35,6 +35,7 @@ body {
   max-width: 900px;
   width: 100%;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
 }
 
 @media (max-width: 768px) {
@@ -358,6 +359,7 @@ button:disabled, .send-btn:disabled {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   color: #388E3C;
   position: relative;
+  box-sizing: border-box;
 }
 
 .journal-content h2, .journal-content p,
@@ -619,6 +621,7 @@ button:disabled, .send-btn:disabled {
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
 }
 
 @media (max-width: 768px) {
@@ -641,6 +644,7 @@ button:disabled, .send-btn:disabled {
   margin-bottom: 15px;
   display: flex;
   flex-direction: column-reverse;
+  box-sizing: border-box;
 }
 
 .chat-box p {
@@ -692,6 +696,7 @@ button:disabled, .send-btn:disabled {
   transition: opacity 0.3s;
   overflow-y: auto;
   padding: 20px;
+  box-sizing: border-box;
 }
 
 .quiz-fullscreen.active {
@@ -914,8 +919,10 @@ button:disabled, .send-btn:disabled {
   background: #fff;
   border-radius: 10px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  /* MODIFICATION: Ensure enough space for taller chart on mobile */
-  min-height: 400px; /* Increased to accommodate taller chart */
+  /* MODIFICATION: Constrain container height to prevent overflow */
+  max-height: 500px; /* Cap container height */
+  overflow: hidden; /* Prevent overflow breaking layout */
+  box-sizing: border-box;
 }
 
 .mood-trend h3 {
@@ -957,8 +964,8 @@ button:disabled, .send-btn:disabled {
 @media (max-width: 768px) {
   .mood-trend, .daily-inspiration {
     padding: 10px;
-    /* MODIFICATION: Ensure mood-trend has enough height on mobile */
-    min-height: 450px; /* Increased for mobile visibility */
+    /* MODIFICATION: Adjust max-height for mobile */
+    max-height: 450px; /* Slightly smaller for mobile */
   }
 }
 
@@ -1084,6 +1091,7 @@ button:disabled, .send-btn:disabled {
   padding: 20px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   margin-top: 20px;
+  box-sizing: border-box;
 }
 
 .bar-chart-container {
@@ -1399,20 +1407,24 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
   max-width: 600px;
   margin: 0 auto;
   padding: 10px;
-  /* MODIFICATION: Set minimum height for chart to make it longer */
-  min-height: 350px; /* Default height for larger screens */
+  /* MODIFICATION: Set fixed height and cap to prevent infinite expansion */
+  height: 300px; /* Default height for larger screens */
+  max-height: 350px; /* Cap to prevent overflow */
+  box-sizing: border-box;
+}
+
+.mood-chart canvas {
+  width: 100% !important;
+  height: 100% !important;
 }
 
 @media (max-width: 768px) {
   .mood-chart {
     max-width: 100%;
     padding: 5px;
-    /* MODIFICATION: Increase height for mobile to ensure visibility */
-    min-height: 400px; /* Taller chart on mobile */
-  }
-  .mood-chart canvas {
-    width: 100% !important;
-    height: auto !important;
+    /* MODIFICATION: Slightly taller for mobile visibility */
+    height: 350px; /* Taller but controlled height */
+    max-height: 400px; /* Prevent excessive expansion */
   }
 }
 
