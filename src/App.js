@@ -1,11 +1,11 @@
+
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import axios from 'axios';
 import './App.css';
 import { Bar, Line } from 'react-chartjs-2';
-import { Chart as ChartJS, BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend, Filler } from 'chart.js';
+import { Chart as ChartJS, BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js';
 
-// Register the Filler plugin along with other components
-ChartJS.register(BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend, Filler);
+ChartJS.register(BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 function App() {
   const API_URL = process.env.REACT_APP_API_URL || 'https://mindsprout-backend-new.onrender.com';
@@ -50,11 +50,9 @@ function App() {
   const [affirmationsList, setAffirmationsList] = useState([]);
   const [dailyAffirmations, setDailyAffirmations] = useState(null);
   const [showDailyAffirmationsModal, setShowDailyAffirmationsModal] = useState(false);
-  const [isMoodChartModalOpen, setIsMoodChartModalOpen] = useState(false);
 
   const chatBoxRef = useRef(null);
   const reportDetailsRef = useRef(null);
-  const moodChartModalRef = useRef(null); // Ref for mood chart modal canvas
 
   const affirmations = [
     "You are enough just as you are.",
@@ -90,32 +88,20 @@ function App() {
     "You are surrounded by love and support.",
     "You are brave and can take risks.",
     "You deserve to take time for yourself.",
-    "You are a beacon of hope and inspiration"
+    "You are a beacon of hope and inspiration."
   ];
 
+  // Available positions for affirmations
   const affirmationPositions = ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'center'];
-
-  // Force chart resize when modal opens
-  useEffect(() => {
-    if (isMoodChartModalOpen && moodChartModalRef.current) {
-      // Delay to ensure modal is fully visible
-      const timer = setTimeout(() => {
-        const canvas = moodChartModalRef.current.querySelector('canvas');
-        if (canvas && canvas.chart) {
-          canvas.chart.resize();
-        }
-      }, 300); // Match modal transition duration
-      return () => clearTimeout(timer);
-    }
-  }, [isMoodChartModalOpen]);
 
   // Manage affirmations during loading
   useEffect(() => {
     if (isLoading && !showSummaryBuffer) {
       const usedPositions = new Set();
       const interval = setInterval(() => {
+        // Find an unused position
         const availablePositions = affirmationPositions.filter(pos => !usedPositions.has(pos));
-        if (availablePositions.length === 0) return;
+        if (availablePositions.length === 0) return; // Skip if all positions are used
         const position = availablePositions[Math.floor(Math.random() * availablePositions.length)];
         usedPositions.add(position);
 
@@ -146,6 +132,7 @@ function App() {
     }
   }, []);
 
+  // Other existing states and effects
   useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth > 768);
     window.addEventListener('resize', handleResize);
@@ -332,23 +319,6 @@ function App() {
       setMessage('Error generating affirmations: ' + (err.response?.data?.error || err.message));
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleDeleteAccount = async () => {
-    setIsLoading(true);
-    try {
-      await axios.delete(`${API_URL}/api/regular/account`, {
-        headers: { Authorization: token },
-      });
-      setMessage('Account deleted successfully');
-      handleLogout();
-    } catch (err) {
-      console.error('Error deleting account:', err);
-      setMessage('Error deleting account: ' + (err.response?.data?.error || err.message));
-    } finally {
-      setIsLoading(false);
-      setDeleteConfirm(null);
     }
   };
 
@@ -806,7 +776,6 @@ function App() {
     setAffirmationsList([]);
     setDailyAffirmations(null);
     setShowDailyAffirmationsModal(false);
-    setIsMoodChartModalOpen(false);
   };
 
   const handleOpenNotepad = (section) => {
@@ -940,46 +909,22 @@ function App() {
       {deleteConfirm && (
         <div className={`delete-confirm-modal ${deleteConfirm ? 'active' : ''}`}>
           <div className="delete-confirm-content">
-            {deleteConfirm.type === 'account' ? (
-              <>
-                <h3>Are you sure you wish to delete your account?</h3>
-                <p>All data involving your account will be deleted, this data is irretrievable</p>
-                <div className="delete-confirm-buttons">
-                  <button
-                    onClick={handleDeleteAccount}
-                    className="delete-account-btn"
-                    aria-label="Confirm account deletion"
-                  >
-                    Yes
-                  </button>
-                  <button
-                    onClick={() => setDeleteConfirm(null)}
-                    aria-label="Cancel account deletion"
-                  >
-                    No
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <h3>Are you sure you want to delete this entry?</h3>
-                <p>This action cannot be undone.</p>
-                <div className="delete-confirm-buttons">
-                  <button
-                    onClick={() => {
-                      if (deleteConfirm.type === 'journal') {
-                        handleDeleteJournal(deleteConfirm.id);
-                      } else {
-                        handleDeleteReport(deleteConfirm.id);
-                      }
-                    }}
-                  >
-                    Yes
-                  </button>
-                  <button onClick={() => setDeleteConfirm(null)}>No</button>
-                </div>
-              </>
-            )}
+            <h3>Are you sure you want to delete this entry?</h3>
+            <p>This action cannot be undone.</p>
+            <div className="delete-confirm-buttons">
+              <button
+                onClick={() => {
+                  if (deleteConfirm.type === 'journal') {
+                    handleDeleteJournal(deleteConfirm.id);
+                  } else {
+                    handleDeleteReport(deleteConfirm.id);
+                  }
+                }}
+              >
+                Yes
+              </button>
+              <button onClick={() => setDeleteConfirm(null)}>No</button>
+            </div>
           </div>
         </div>
       )}
@@ -1089,16 +1034,7 @@ function App() {
                   <h3>Weekly Mood Trends</h3>
                   {reports.length > 0 ? (
                     <>
-                      <div className="mood-chart">
-                        <Line data={weeklyMoodChartData} options={{ scales: { y: { min: 0, max: 5 } } }} />
-                      </div>
-                      <button
-                        className="view-mood-chart-btn"
-                        onClick={() => setIsMoodChartModalOpen(true)}
-                        aria-label="View mood chart"
-                      >
-                        View Mood Chart
-                      </button>
+                      <Line data={weeklyMoodChartData} options={{ scales: { y: { min: 0, max: 5 } } }} />
                       <div className="mood-summary">
                         {weeklyMoodSummary.map((summary, index) => (
                           <p key={index}>{summary}</p>
@@ -1119,35 +1055,6 @@ function App() {
                   <img src="/icons/logout.png" alt="Logout" className="icon" />
                   Log Out
                 </button>
-                <button
-                  onClick={() => setDeleteConfirm({ type: 'account' })}
-                  className="delete-account-btn"
-                  aria-label="Delete account"
-                >
-                  <img src="/icons/delete.png" alt="Delete Account" className="icon" />
-                  Delete Account
-                </button>
-                {isMoodChartModalOpen && reports.length > 0 && (
-                  <div className={`mood-chart-modal ${isMoodChartModalOpen ? 'active' : ''}`} ref={moodChartModalRef}>
-                    <div className="mood-chart-content">
-                      <button
-                        className="close-btn"
-                        onClick={() => setIsMoodChartModalOpen(false)}
-                        aria-label="Close mood chart modal"
-                      >
-                        ×
-                      </button>
-                      <h3>Your Mood Trends</h3>
-                      <div className="mood-chart">
-                        <Line
-                          key={`mood-chart-${isMoodChartModalOpen ? Date.now() : ''}`}
-                          data={weeklyMoodChartData}
-                          options={{ scales: { y: { min: 0, max: 5 } } }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             ) : activeTab === 'chat' ? (
               <>
