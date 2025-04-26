@@ -87,7 +87,7 @@ function App() {
     "You are surrounded by love and support.",
     "You are brave and can take risks.",
     "You deserve to take time for yourself.",
-    "You are a beacon of hope and inspiration."
+    "You are a beacon of hope and inspiration"
   ];
 
   // Available positions for affirmations
@@ -318,6 +318,23 @@ function App() {
       setMessage('Error generating affirmations: ' + (err.response?.data?.error || err.message));
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsLoading(true);
+    try {
+      await axios.delete(`${API_URL}/api/regular/account`, {
+        headers: { Authorization: token },
+      });
+      setMessage('Account deleted successfully');
+      handleLogout();
+    } catch (err) {
+      console.error('Error deleting account:', err);
+      setMessage('Error deleting account: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setIsLoading(false);
+      setDeleteConfirm(null);
     }
   };
 
@@ -908,22 +925,46 @@ function App() {
       {deleteConfirm && (
         <div className={`delete-confirm-modal ${deleteConfirm ? 'active' : ''}`}>
           <div className="delete-confirm-content">
-            <h3>Are you sure you want to delete this entry?</h3>
-            <p>This action cannot be undone.</p>
-            <div className="delete-confirm-buttons">
-              <button
-                onClick={() => {
-                  if (deleteConfirm.type === 'journal') {
-                    handleDeleteJournal(deleteConfirm.id);
-                  } else {
-                    handleDeleteReport(deleteConfirm.id);
-                  }
-                }}
-              >
-                Yes
-              </button>
-              <button onClick={() => setDeleteConfirm(null)}>No</button>
-            </div>
+            {deleteConfirm.type === 'account' ? (
+              <>
+                <h3>Are you sure you wish to delete your account?</h3>
+                <p>All data involving your account will be deleted, this data is irretrievable</p>
+                <div className="delete-confirm-buttons">
+                  <button
+                    onClick={handleDeleteAccount}
+                    className="delete-account-btn"
+                    aria-label="Confirm account deletion"
+                  >
+                    Yes
+                  </button>
+                  <button
+                    onClick={() => setDeleteConfirm(null)}
+                    aria-label="Cancel account deletion"
+                  >
+                    No
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3>Are you sure you want to delete this entry?</h3>
+                <p>This action cannot be undone.</p>
+                <div className="delete-confirm-buttons">
+                  <button
+                    onClick={() => {
+                      if (deleteConfirm.type === 'journal') {
+                        handleDeleteJournal(deleteConfirm.id);
+                      } else {
+                        handleDeleteReport(deleteConfirm.id);
+                      }
+                    }}
+                  >
+                    Yes
+                  </button>
+                  <button onClick={() => setDeleteConfirm(null)}>No</button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -1053,6 +1094,14 @@ function App() {
                 <button onClick={handleLogout} className="logout-btn">
                   <img src="/icons/logout.png" alt="Logout" className="icon" />
                   Log Out
+                </button>
+                <button
+                  onClick={() => setDeleteConfirm({ type: 'account' })}
+                  className="delete-account-btn"
+                  aria-label="Delete account"
+                >
+                  <img src="/icons/delete.png" alt="Delete Account" className="icon" />
+                  Delete Account
                 </button>
               </div>
             ) : activeTab === 'chat' ? (
