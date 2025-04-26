@@ -402,7 +402,6 @@ function App() {
       },
     ];
 
-    /* MODIFICATION: Add chart options to set y-axis max to 6, hide 6 label, and adjust aspect ratio */
     return {
       labels,
       datasets,
@@ -410,19 +409,34 @@ function App() {
         scales: {
           y: {
             min: 0,
-            max: 6,
+            max: 5,
             ticks: {
               stepSize: 1,
-              callback: function (value) {
-                return value <= 5 ? value : ''; // Hide 6 on y-axis
+            },
+          },
+          x: {
+            title: {
+              display: true,
+              text: 'Date',
+            },
+          },
+        },
+        plugins: {
+          tooltip: {
+            callbacks: {
+              // MODIFICATION: Customize tooltip to show dataset label, value, and date
+              label: function (context) {
+                const datasetLabel = context.dataset.label || '';
+                const value = context.parsed.y;
+                const date = context.chart.data.labels[context.dataIndex];
+                return `${datasetLabel}: ${value} (Date: ${date})`;
               },
             },
           },
         },
-        maintainAspectRatio: false, // Allow custom height
+        maintainAspectRatio: false, // Ensure chart respects CSS height
       },
     };
-    /* END MODIFICATION */
   }, [reports]);
 
   const weeklyMoodSummary = useMemo(() => {
