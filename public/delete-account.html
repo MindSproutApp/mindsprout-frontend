@@ -61,35 +61,5 @@
     </p>
     <button class="delete-account-btn" onclick="openDeleteModal()">Delete Account</button>
   </div>
-
-  <!-- Delete Confirmation Modal -->
-  <div class="delete-confirm-modal" id="deleteConfirmModal">
-    <div class="delete-confirm-content">
-      <button class="close-btn" onclick="closeDeleteModal()">×</button>
-      <h3>Confirm Account Deletion</h3>
-      <p>Are you sure you want to delete your MindSprout account? This action is permanent and cannot be undone.</p>
-      <div class="delete-confirm-buttons">
-        <button class="delete-btn" onclick="confirmDelete()">Delete</button>
-        <button class="toggle-btn" onclick="closeDeleteModal()">Cancel</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // JavaScript for modal toggle, matching your app's modal behavior
-    function openDeleteModal() {
-      document.getElementById('deleteConfirmModal').classList.add('active');
-    }
-
-    function closeDeleteModal() {
-      document.getElementById('deleteConfirmModal').classList.remove('active');
-    }
-
-    function confirmDelete() {
-      // Placeholder for actual deletion logic
-      alert('Account deletion would be processed here. Connect to your backend API for actual deletion.');
-      closeDeleteModal();
-    }
-  </script>
 </body>
 </html>
