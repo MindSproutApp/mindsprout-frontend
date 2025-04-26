@@ -2,9 +2,10 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import axios from 'axios';
 import './App.css';
 import { Bar, Line } from 'react-chartjs-2';
-import { Chart as ChartJS, BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js';
+import { Chart as ChartJS, BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend, Filler } from 'chart.js';
 
-ChartJS.register(BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend);
+// Register the Filler plugin along with other components
+ChartJS.register(BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend, Filler);
 
 function App() {
   const API_URL = process.env.REACT_APP_API_URL || 'https://mindsprout-backend-new.onrender.com';
