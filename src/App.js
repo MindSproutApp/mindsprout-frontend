@@ -402,7 +402,27 @@ function App() {
       },
     ];
 
-    return { labels, datasets };
+    /* MODIFICATION: Add chart options to set y-axis max to 6, hide 6 label, and adjust aspect ratio */
+    return {
+      labels,
+      datasets,
+      options: {
+        scales: {
+          y: {
+            min: 0,
+            max: 6,
+            ticks: {
+              stepSize: 1,
+              callback: function (value) {
+                return value <= 5 ? value : ''; // Hide 6 on y-axis
+              },
+            },
+          },
+        },
+        maintainAspectRatio: false, // Allow custom height
+      },
+    };
+    /* END MODIFICATION */
   }, [reports]);
 
   const weeklyMoodSummary = useMemo(() => {
@@ -1074,7 +1094,7 @@ function App() {
                   <h3>Weekly Mood Trends</h3>
                   {reports.length > 0 ? (
                     <>
-                      <Line data={weeklyMoodChartData} options={{ scales: { y: { min: 0, max: 5 } } }} />
+                      <Line data={weeklyMoodChartData} options={weeklyMoodChartData.options} />
                       <div className="mood-summary">
                         {weeklyMoodSummary.map((summary, index) => (
                           <p key={index}>{summary}</p>
