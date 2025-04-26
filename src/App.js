@@ -1138,7 +1138,11 @@ function App() {
                       </button>
                       <h3>Your Mood Trends</h3>
                       <div className="mood-chart">
-                        <Line data={weeklyMoodChartData} options={{ scales: { y: { min: 0, max: 5 } } }} />
+                        <Line
+                          key={`mood-chart-${isMoodChartModalOpen ? Date.now() : ''}`}
+                          data={weeklyMoodChartData}
+                          options={{ scales: { y: { min: 0, max: 5 } } }}
+                        />
                       </div>
                     </div>
                   </div>
