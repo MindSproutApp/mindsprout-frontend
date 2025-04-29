@@ -50,7 +50,8 @@ function App() {
   const [dailyAffirmations, setDailyAffirmations] = useState(null);
   const [showDailyAffirmationsModal, setShowDailyAffirmationsModal] = useState(false);
   const [tokenConfirm, setTokenConfirm] = useState(null);
-  const [isFetchingUserData, setIsFetchingUserData] = useState(false); // New state to prevent redundant fetches
+  const [isFetchingUserData, setIsFetchingUserData] = useState(false);
+  const [showInsightBuffer, setShowInsightBuffer] = useState(false); // New state for insight buffering
 
   const chatBoxRef = useRef(null);
   const reportDetailsRef = useRef(null);
@@ -106,7 +107,7 @@ function App() {
   // Debounced fetchUserData
   const debouncedFetchUserData = useCallback(
     debounce(async (authToken) => {
-      if (isFetchingUserData) return; // Skip if already fetching
+      if (isFetchingUserData) return;
       setIsFetchingUserData(true);
       setIsLoading(true);
       try {
@@ -209,7 +210,7 @@ function App() {
 
   // Manage affirmations during loading
   useEffect(() => {
-    if (isLoading && !showSummaryBuffer) {
+    if (isLoading && !showSummaryBuffer && !showInsightBuffer) {
       const usedPositions = new Set();
       const interval = setInterval(() => {
         const availablePositions = affirmationPositions.filter(pos => !usedPositions.has(pos));
@@ -232,7 +233,7 @@ function App() {
     } else {
       setAffirmationsList([]);
     }
-  }, [isLoading, showSummaryBuffer]);
+  }, [isLoading, showSummaryBuffer, showInsightBuffer]);
 
   // Check for token on mount to maintain session
   useEffect(() => {
@@ -433,40 +434,50 @@ function App() {
     }});
   };
 
-  // Modified handleGenerateInsight to require token confirmation
+  // Modified handleGenerateInsight with buffering
   const handleGenerateInsight = async (entry) => {
     if (tranquilTokens < 1) {
       setMessage('No Tranquil Tokens available. Purchase more or wait for regeneration (every 24 hours).');
       return;
     }
-    setTokenConfirm({ action: 'generateInsight', callback: async () => {
-      setIsLoading(true);
-      try {
-        const response = await axios.post(
-          `${API_URL}/api/regular/journal-insights`,
-          {
-            journalDate: entry.date,
-            responses: entry.responses,
-          },
-          { headers: { Authorization: token } }
-        );
-        const newInsight = {
-          journalDate: new Date(entry.date),
-          insight: response.data.insight,
-          createdAt: new Date(),
-        };
-        setJournalInsights((prev) => [...prev, newInsight]);
-        setMessage('Insight generated! View it in the notepad.');
-      } catch (err) {
-        console.error('Error generating insight:', err);
-        setMessage('Error generating insight: ' + (err.response?.data?.error || err.message));
-      } finally {
-        setIsLoading(false);
+    setTokenConfirm({
+      action: 'generateInsight',
+      callback: async () => {
+        setShowInsightBuffer(true);
+        setIsLoading(true);
+        try {
+          // Simulate 8-second buffering
+          await new Promise((resolve) => setTimeout(resolve, 8000));
+          const response = await axios.post(
+            `${API_URL}/api/regular/journal-insights`,
+            {
+              journalDate: entry.date,
+              responses: entry.responses,
+            },
+            { headers: { Authorization: token } }
+          );
+          const newInsight = {
+            journalDate: new Date(entry.date),
+            insight: response.data.insight,
+            createdAt: new Date(),
+          };
+          setJournalInsights((prev) => [...prev, newInsight]);
+          setMessage('Insight generated! View it in the notepad.');
+          // Ensure journal entry remains open
+          setOpenNotepadSection('reflect');
+          setSelectedJournalEntry(entry);
+        } catch (err) {
+          console.error('Error generating insight:', err);
+          setMessage('Error generating insight: ' + (err.response?.data?.error || err.message));
+        } finally {
+          setShowInsightBuffer(false);
+          setIsLoading(false);
+        }
       }
-    }});
+    });
   };
 
-  // Updated shop purchase handler
+  // Shop purchase handler
   const handlePurchaseTokens = async (quantity, price) => {
     setIsLoading(true);
     try {
@@ -477,7 +488,6 @@ function App() {
       );
       setTranquilTokens(response.data.tranquilTokens);
       setMessage(`Successfully purchased ${quantity} Tranquil Tokens!`);
-      // Refresh user data to ensure consistency
       debouncedFetchUserData(token);
     } catch (err) {
       console.error('Error purchasing tokens:', err);
@@ -789,6 +799,7 @@ function App() {
     setDailyAffirmations(null);
     setShowDailyAffirmationsModal(false);
     setTokenConfirm(null);
+    setShowInsightBuffer(false);
   };
 
   const handleOpenNotepad = (section) => {
@@ -888,6 +899,12 @@ function App() {
             title: {
               display: true,
               text: 'Date',
+              padding: { top: 10 }, // Add padding to prevent cutoff
+            },
+            ticks: {
+              padding: 10, // Ensure labels have space
+              maxRotation: 45, // Rotate labels if needed
+              minRotation: 45,
             },
           },
         },
@@ -901,6 +918,11 @@ function App() {
                 return `${datasetLabel}: ${value} (Date: ${date})`;
               },
             },
+          },
+        },
+        layout: {
+          padding: {
+            bottom: 20, // Extra padding to ensure dates are visible
           },
         },
         maintainAspectRatio: false,
@@ -1074,10 +1096,12 @@ function App() {
 
   return (
     <div className="app">
-      {(isLoading || showSummaryBuffer) && (
-        <div className="loading-overlay">
+      {(isLoading || showSummaryBuffer || showInsightBuffer) && (
+        <div className={showInsightBuffer ? "insight-buffer-overlay" : "loading-overlay"}>
           <div className="spinner"></div>
-          {showSummaryBuffer ? (
+          {showInsightBuffer ? (
+            <p>Please wait whilst we gather your insights...</p>
+          ) : showSummaryBuffer ? (
             <p>Preparing your summary...</p>
           ) : (
             affirmationsList.map((affirmation) => (
@@ -1181,7 +1205,22 @@ function App() {
       <div className="canvas">
         {token && (
           <div className="top-bar">
-            <p>Tranquil Tokens: {tranquilTokens} {tokenRegenTime && tranquilTokens < 1 ? `(Next in ${formatTime(Math.max(0, Math.floor((tokenRegenTime - new Date()) / 1000)))})` : ''}</p>
+            <div className="token-section">
+              <span>Tranquil Tokens: {tranquilTokens}</span>
+              {tokenRegenTime && tranquilTokens < 1 && (
+                <span className="regen-time">
+                  (Next in {formatTime(Math.max(0, Math.floor((tokenRegenTime - new Date()) / 1000)))}
+                  )
+                </span>
+              )}
+              <button
+                className="shop-nav-btn"
+                onClick={() => setActiveTab('shop')}
+                aria-label="Go to shop to purchase tokens"
+              >
+                +
+              </button>
+            </div>
           </div>
         )}
         {!token ? (
