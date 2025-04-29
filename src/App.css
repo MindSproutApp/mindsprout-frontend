@@ -1,5 +1,5 @@
 /* ========================================================================== */
-/* MindSprout App CSS - Updated for Daily Affirmations and Weekly Mood Trends */
+/* MindSprout App CSS - Updated for Daily Affirmations, Weekly Mood Trends, and New Features */
 /* ========================================================================== */
 
 /* Import Google Fonts for consistent typography */
@@ -36,12 +36,14 @@ body {
   width: 100%;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   box-sizing: border-box;
+  padding-top: 60px; /* Space for top bar */
 }
 
 @media (max-width: 768px) {
   .canvas {
     padding: 15px;
     border-radius: 10px;
+    padding-top: 50px;
   }
 }
 
@@ -326,13 +328,13 @@ button:disabled, .send-btn:disabled {
 /* Glassmorphism for Modals */
 /* ========================================================================== */
 
-.journal-modal, .notepad-modal, .delete-confirm-modal, .daily-affirmations-modal {
+.journal-modal, .notepad-modal, .daily-affirmations-modal {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 80px;
-  background: rgba(0, 0, 0, 0.5);
+  background: #E0F2E9; /* Green background for consistency */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -342,15 +344,14 @@ button:disabled, .send-btn:disabled {
   transform: scale(0.9);
 }
 
-.journal-modal.active, .notepad-modal.active, .delete-confirm-modal.active, .daily-affirmations-modal.active {
+.journal-modal.active, .notepad-modal.active, .daily-affirmations-modal.active {
   opacity: 1;
   transform: scale(1);
 }
 
-.journal-content, .notepad-content, .delete-confirm-content, .daily-affirmations-content {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+.journal-content, .notepad-content, .daily-affirmations-content {
+  background: rgba(224, 242, 233, 0.9); /* Consistent green background */
+  border: 1px solid #388E3C;
   border-radius: 15px;
   padding: 20px;
   max-width: 600px;
@@ -364,25 +365,19 @@ button:disabled, .send-btn:disabled {
 
 .journal-content h2, .journal-content p,
 .notepad-text h3, .notepad-text p,
-.delete-confirm-content h3, .delete-confirm-content p,
 .daily-affirmations-content h3, .daily-affirmations-content p {
   color: #388E3C;
 }
 
-/* Fallback for browsers without backdrop-filter support */
-.journal-content, .notepad-content, .delete-confirm-content, .daily-affirmations-content {
-  background: rgba(224, 242, 233, 0.9); /* Fallback */
-}
-
 @media (max-width: 768px) {
-  .journal-content, .notepad-content, .delete-confirm-content, .daily-affirmations-content {
+  .journal-content, .notepad-content, .daily-affirmations-content {
     max-width: 90%;
     padding: 15px;
   }
-  .journal-content h2, .delete-confirm-content h3, .daily-affirmations-content h3 {
+  .journal-content h2, .daily-affirmations-content h3 {
     font-size: 16px;
   }
-  .journal-content p, .notepad-text p, .delete-confirm-content p, .daily-affirmations-content p {
+  .journal-content p, .notepad-text p, .daily-affirmations-content p {
     font-size: 12px;
   }
 }
@@ -416,8 +411,46 @@ button:disabled, .send-btn:disabled {
 /* Delete Confirmation Modal */
 /* ========================================================================== */
 
+.delete-confirm-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 80px;
+  background: #E0F2E9; /* Green background for consistency */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  transform: scale(0.9);
+}
+
+.delete-confirm-modal.active {
+  opacity: 1;
+  transform: scale(1);
+}
+
 .delete-confirm-content {
+  background: rgba(224, 242, 233, 0.9); /* Consistent green background */
+  border: 1px solid #388E3C;
+  border-radius: 15px;
+  padding: 20px;
+  max-width: 400px;
   text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  color: #388E3C;
+}
+
+.delete-confirm-content h3 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.delete-confirm-content p {
+  font-size: 14px;
+  margin-bottom: 20px;
 }
 
 .delete-confirm-buttons {
@@ -432,6 +465,32 @@ button:disabled, .send-btn:disabled {
 
 .delete-confirm-buttons button:first-child:hover {
   background: #E57373;
+}
+
+/* ========================================================================== */
+/* Insight Buffer Overlay */
+/* ========================================================================== */
+
+.insight-buffer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #E0F2E9; /* Green background */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  color: #388E3C;
+}
+
+.insight-buffer-overlay p {
+  font-size: 18px;
+  font-weight: 500;
+  text-align: center;
+  margin-top: 20px;
 }
 
 /* ========================================================================== */
@@ -919,9 +978,8 @@ button:disabled, .send-btn:disabled {
   background: #fff;
   border-radius: 10px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  /* MODIFICATION: Constrain container height to prevent overflow */
-  max-height: 800px; /* Cap container height */
-  overflow: hidden; /* Prevent overflow breaking layout */
+  max-height: 800px;
+  overflow: hidden;
   box-sizing: border-box;
 }
 
@@ -964,8 +1022,7 @@ button:disabled, .send-btn:disabled {
 @media (max-width: 768px) {
   .mood-trend, .daily-inspiration {
     padding: 10px;
-    /* MODIFICATION: Adjust max-height for mobile */
-    max-height: 450px; /* Slightly smaller for mobile */
+    max-height: 450px;
   }
 }
 
@@ -1162,7 +1219,7 @@ button:disabled, .send-btn:disabled {
   bottom: 0;
   left: 0;
   right: 0;
-  background: #FFFFFF; /* White background */
+  background: #FFFFFF;
   display: flex;
   justify-content: space-around;
   padding: 10px 0;
@@ -1171,11 +1228,11 @@ button:disabled, .send-btn:disabled {
 }
 
 .menu-bar button {
-  background: #E8F5E9; /* Very light green */
-  border: 2px solid #2E7D32; /* Darker green border */
+  background: #E8F5E9;
+  border: 2px solid #2E7D32;
   border-radius: 8px;
   padding: 8px;
-  color: #2E7D32; /* Darker green text */
+  color: #2E7D32;
   font-size: 12px;
   display: flex;
   flex-direction: column;
@@ -1185,13 +1242,13 @@ button:disabled, .send-btn:disabled {
 }
 
 .menu-bar button:hover {
-  background: #C8E6C9; /* Slightly darker light green */
+  background: #C8E6C9;
   transform: scale(1.1);
 }
 
 .menu-bar button.active {
-  background: #A5D6A7; /* Subtle green for active state */
-  border-color: #1B5E20; /* Even darker border for active */
+  background: #A5D6A7;
+  border-color: #1B5E20;
   color: #1B5E20;
 }
 
@@ -1204,7 +1261,7 @@ button:disabled, .send-btn:disabled {
     position: static;
     box-shadow: none;
     padding: 20px;
-    background: #F5F7FA; /* Very light green for desktop */
+    background: #F5F7FA;
   }
   .menu-bar button {
     font-size: 14px;
@@ -1331,7 +1388,7 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
     background: #E57373;
   }
   .menu-bar {
-    background: #FFFFFF; /* Keep white in dark mode for consistency */
+    background: #FFFFFF;
   }
   .menu-bar button.active {
     background: #A5D6A7;
@@ -1362,7 +1419,7 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
 }
 
 /* ========================================================================== */
-/* Delete Account Button and Modal */
+/* Delete Account Button */
 /* ========================================================================== */
 
 .delete-account-btn {
@@ -1407,10 +1464,10 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
   max-width: 600px;
   margin: 0 auto;
   padding: 10px;
-  /* MODIFICATION: Set fixed height and cap to prevent infinite expansion */
-  height: 300px; /* Default height for larger screens */
-  max-height: 350px; /* Cap to prevent overflow */
+  height: 300px;
+  max-height: 350px;
   box-sizing: border-box;
+  padding-bottom: 30px; /* Extra padding to ensure dates are visible */
 }
 
 .mood-chart canvas {
@@ -1422,14 +1479,16 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
   .mood-chart {
     max-width: 100%;
     padding: 5px;
-    /* MODIFICATION: Slightly taller for mobile visibility */
-    height: 350px; /* Taller but controlled height */
-    max-height: 400px; /* Prevent excessive expansion */
+    height: 350px;
+    max-height: 400px;
+    padding-bottom: 40px; /* More padding for mobile */
   }
 }
-/* Existing styles preserved, only new styles added or modified below */
 
+/* ========================================================================== */
 /* Paywall Overlay for Summaries and Insights */
+/* ========================================================================== */
+
 .paywall-overlay {
   position: relative;
   background: rgba(255, 255, 255, 0.1);
@@ -1480,28 +1539,72 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
   top: 0;
   left: 0;
   right: 0;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95); /* Slightly opaque white */
+  backdrop-filter: blur(12px);
   padding: 10px 20px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   z-index: 1000;
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  border-radius: 0 0 10px 10px; /* Rounded bottom corners */
 }
 
-.top-bar p {
+.token-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #e0f2e9; /* Light green badge */
+  padding: 8px 12px;
+  border-radius: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.token-section span {
   font-size: 14px;
   color: #388E3C;
   font-weight: 500;
+}
+
+.token-section .regen-time {
+  font-size: 12px;
+  color: #2E7D32;
+}
+
+.shop-nav-btn {
+  background: #388E3C;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.3s;
+}
+
+.shop-nav-btn:hover {
+  background: #2E7D32;
+  transform: scale(1.1);
 }
 
 @media (max-width: 768px) {
   .top-bar {
     padding: 8px 15px;
   }
-  .top-bar p {
+  .token-section span {
     font-size: 12px;
+  }
+  .token-section .regen-time {
+    font-size: 10px;
+  }
+  .shop-nav-btn {
+    width: 20px;
+    height: 20px;
+    font-size: 14px;
   }
 }
 
@@ -1515,7 +1618,7 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
   left: 0;
   right: 0;
   bottom: 80px;
-  background: rgba(0, 0, 0, 0.5);
+  background: #E0F2E9; /* Green background for consistency */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1531,9 +1634,8 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
 }
 
 .token-confirm-content {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(224, 242, 233, 0.9); /* Consistent green background */
+  border: 1px solid #388E3C;
   border-radius: 15px;
   padding: 20px;
   max-width: 400px;
@@ -1659,16 +1761,252 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
   .token-card p {
     font-size: 14px;
   }
-}
+  .token-card button {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
 
-/* Adjust canvas to account for top bar */
-.canvas {
-  padding-top: 60px; /* Space for top bar */
-}
+  /* Responsive styles for insight buffer overlay */
+  .insight-buffer-overlay p {
+    font-size: 16px;
+    max-width: 90%;
+  }
+  .insight-buffer-overlay .spinner {
+    width: 30px;
+    height: 30px;
+  }
 
-@media (max-width: 768px) {
-  .canvas {
-    padding-top: 50px;
+  /* Responsive styles for delete and token confirmation modals */
+  .delete-confirm-content, .token-confirm-content {
+    max-width: 90%;
+    padding: 15px;
+  }
+  .delete-confirm-content h3, .token-confirm-content h3 {
+    font-size: 16px;
+  }
+  .delete-confirm-content p, .token-confirm-content p {
+    font-size: 12px;
+  }
+  .delete-confirm-buttons button, .token-confirm-buttons button {
+    padding: 8px 16px;
+    font-size: 12px;
+  }
+
+  /* Responsive styles for mood chart to ensure date visibility */
+  .mood-chart {
+    padding-bottom: 40px; /* Extra padding for mobile */
+    height: 350px;
+    max-height: 400px;
+  }
+
+  /* Responsive styles for top bar and token section */
+  .top-bar {
+    padding: 8px 15px;
+  }
+  .token-section {
+    padding: 6px 10px;
+  }
+  .token-section span {
+    font-size: 12px;
+  }
+  .token-section .regen-time {
+    font-size: 10px;
+  }
+  .shop-nav-btn {
+    width: 20px;
+    height: 20px;
+    font-size: 14px;
+  }
+
+  /* Adjust affirmation section in daily affirmations modal */
+  .affirmation-section h4 {
+    font-size: 16px;
+  }
+  .affirmation-section p {
+    font-size: 12px;
+  }
+
+  /* Ensure report details and bar chart are responsive */
+  .report-details {
+    padding: 15px;
+  }
+  .bar-chart-container {
+    max-width: 100%;
+  }
+
+  /* Adjust summary cards for smaller screens */
+  .summary-card {
+    width: 130px;
+    height: 70px;
+  }
+  .summary-front h4 {
+    font-size: 14px;
+  }
+
+  /* Adjust pagination for smaller screens */
+  .pagination button {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  .pagination span {
+    font-size: 12px;
   }
 }
+
+/* ========================================================================== */
+/* Additional Responsive Breakpoints */
+/* ========================================================================== */
+
+@media (max-width: 480px) {
+  .shop {
+    padding: 10px;
+  }
+  .token-card {
+    width: 120px;
+  }
+  .token-card h3 {
+    font-size: 14px;
+  }
+  .token-card p {
+    font-size: 12px;
+  }
+  .token-card button {
+    padding: 5px 10px;
+    font-size: 10px;
+  }
+
+  /* Further adjustments for insight buffer overlay */
+  .insight-buffer-overlay p {
+    font-size: 14px;
+  }
+  .insight-buffer-overlay .spinner {
+    width: 25px;
+    height: 25px;
+  }
+
+  /* Further adjustments for modals */
+  .delete-confirm-content, .token-confirm-content {
+    padding: 10px;
+  }
+  .delete-confirm-content h3, .token-confirm-content h3 {
+    font-size: 14px;
+  }
+  .delete-confirm-content p, .token-confirm-content p {
+    font-size: 10px;
+  }
+  .delete-confirm-buttons button, .token-confirm-buttons button {
+    padding: 6px 12px;
+    font-size: 10px;
+  }
+
+  /* Further adjustments for mood chart */
+  .mood-chart {
+    height: 300px;
+    padding-bottom: 50px; /* More padding for very small screens */
+  }
+
+  /* Further adjustments for top bar */
+  .token-section {
+    gap: 5px;
+    padding: 5px 8px;
+  }
+  .token-section span {
+    font-size: 10px;
+  }
+  .token-section .regen-time {
+    font-size: 8px;
+  }
+  .shop-nav-btn {
+    width: 18px;
+    height: 18px;
+    font-size: 12px;
+  }
+
+  /* Adjust affirmation section for very small screens */
+  .affirmation-section h4 {
+    font-size: 14px;
+  }
+  .affirmation-section p {
+    font-size: 10px;
+  }
+
+  /* Adjust summary cards for very small screens */
+  .summary-card {
+    width: 100px;
+    height: 60px;
+  }
+  .summary-front h4 {
+    font-size: 12px;
+  }
+}
+
+/* ========================================================================== */
+/* High-Resolution Displays */
+/* ========================================================================== */
+
+@media (min-resolution: 2dppx) {
+  .logo {
+    image-rendering: -webkit-optimize-contrast;
+  }
+  .journal-button img {
+    image-rendering: -webkit-optimize-contrast;
+  }
+  .spinner {
+    border-width: 3px;
+  }
+}
+
+/* ========================================================================== */
+/* Print Styles */
+/* ========================================================================== */
+
+@media print {
+  body {
+    background: #fff;
+    color: #000;
+  }
+  .canvas, .journal-content, .notepad-content, .delete-confirm-content, .token-confirm-content, .daily-affirmations-content {
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+  .top-bar, .menu-bar, .loading-overlay, .insight-buffer-overlay, .breathe-overlay {
+    display: none;
+  }
+  .journal-modal, .notepad-modal, .delete-confirm-modal, .token-confirm-modal, .daily-affirmations-modal {
+    position: static;
+    background: none;
+  }
+  .journal-content, .notepad-content, .delete-confirm-content, .token-confirm-content, .daily-affirmations-content {
+    background: #fff;
+    border: 1px solid #000;
+  }
+  button, .send-btn, .signup-btn, .toggle-btn, .delete-btn, .close-btn, .logout-btn, .delete-account-btn {
+    display: none;
+  }
+  .gradient-table {
+    background: #fff;
+    border: 1px solid #000;
+  }
+  .gradient-table th, .gradient-table td {
+    color: #000;
+    border: 1px solid #000;
+  }
+}
+
+/* ========================================================================== */
+/* Touch Device Optimizations */
+/* ========================================================================== */
+
+@media (hover: none) {
+  .journal-button:hover, .quiz-option-box:hover, .summary-card:hover, .token-card:hover, button:hover, .send-btn:hover, .toggle-btn:hover, .delete-btn:hover, .close-btn:hover, .logout-btn:hover, .delete-account-btn:hover, .shop-nav-btn:hover {
+    transform: none;
+    box-shadow: none;
+  }
+  .journal-button:active, .quiz-option-box:active, .summary-card:active, .token-card:active, button:active, .send-btn:active, .toggle-btn:active, .delete-btn:active, .close-btn:active, .logout-btn:active, .delete-account-btn:active, .shop-nav-btn:active {
+    transform: scale(0.98);
+  }
+}
+
+/* ========================================================================== */
 /* End of CSS */
+/* ========================================================================== */
