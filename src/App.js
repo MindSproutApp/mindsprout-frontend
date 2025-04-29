@@ -24,7 +24,7 @@ function App() {
   const [timeLeft, setTimeLeft] = useState(15 * 60);
   const [extendCount, setExtendCount] = useState(0);
   const [lastChatTimestamp, setLastChatTimestamp] = useState(null);
-  const [chatTokens, setChatTokens] = useState(3);
+  const [tranquilTokens, setTranquilTokens] = useState(1);
   const [tokenRegenTime, setTokenRegenTime] = useState(null);
   const [goals, setGoals] = useState([]);
   const [reports, setReports] = useState([]);
@@ -49,6 +49,8 @@ function App() {
   const [affirmationsList, setAffirmationsList] = useState([]);
   const [dailyAffirmations, setDailyAffirmations] = useState(null);
   const [showDailyAffirmationsModal, setShowDailyAffirmationsModal] = useState(false);
+  const [tokenConfirm, setTokenConfirm] = useState(null);
+  const [isFetchingUserData, setIsFetchingUserData] = useState(false); // New state to prevent redundant fetches
 
   const chatBoxRef = useRef(null);
   const reportDetailsRef = useRef(null);
@@ -90,17 +92,130 @@ function App() {
     "You are a beacon of hope and inspiration"
   ];
 
-  // Available positions for affirmations
   const affirmationPositions = ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'center'];
+
+  // Debounce utility
+  const debounce = (func, wait) => {
+    let timeout;
+    return (...args) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func(...args), wait);
+    };
+  };
+
+  // Debounced fetchUserData
+  const debouncedFetchUserData = useCallback(
+    debounce(async (authToken) => {
+      if (isFetchingUserData) return; // Skip if already fetching
+      setIsFetchingUserData(true);
+      setIsLoading(true);
+      try {
+        const cachedData = JSON.parse(localStorage.getItem('userData') || '{}');
+        if (cachedData.goals) setGoals(cachedData.goals);
+        if (cachedData.reports) setReports(cachedData.reports);
+
+        const results = await Promise.allSettled([
+          axios.get(`${API_URL}/api/regular/goals`, { headers: { Authorization: authToken } }),
+          axios.get(`${API_URL}/api/regular/reports`, { headers: { Authorization: authToken } }),
+          axios.get(`${API_URL}/api/regular/last-chat`, { headers: { Authorization: authToken } }),
+          axios.get(`${API_URL}/api/regular/daily-affirmations`, { headers: { Authorization: authToken } }),
+          axios.get(`${API_URL}/api/regular/tranquil-tokens`, { headers: { Authorization: authToken } })
+        ]);
+
+        const [goalsRes, reportsRes, lastChatRes, affirmationsRes, tokensRes] = results;
+
+        if (goalsRes.status === 'fulfilled') {
+          setGoals(goalsRes.value.data || []);
+        } else {
+          console.error('Failed to fetch goals:', goalsRes.reason);
+          setGoals(cachedData.goals || []);
+        }
+
+        if (reportsRes.status === 'fulfilled') {
+          setReports(reportsRes.value.data || []);
+        } else {
+          console.error('Failed to fetch reports:', reportsRes.reason);
+          setReports(cachedData.reports || []);
+        }
+
+        if (lastChatRes.status === 'fulfilled') {
+          setLastChatTimestamp(lastChatRes.value.data.lastChatTimestamp ? new Date(lastChatRes.value.data.lastChatTimestamp) : null);
+        } else {
+          console.error('Failed to fetch last chat:', lastChatRes.reason);
+          setLastChatTimestamp(cachedData.lastChatTimestamp ? new Date(cachedData.lastChatTimestamp) : null);
+        }
+
+        if (affirmationsRes.status === 'fulfilled') {
+          setDailyAffirmations(affirmationsRes.value.data || null);
+        } else {
+          console.error('Failed to fetch daily affirmations:', affirmationsRes.reason);
+          setDailyAffirmations(cachedData.dailyAffirmations || null);
+        }
+
+        if (tokensRes.status === 'fulfilled') {
+          setTranquilTokens(tokensRes.value.data.tranquilTokens || 1);
+          const regenTime = tokensRes.value.data.lastTokenRegen
+            ? new Date(new Date(tokensRes.value.data.lastTokenRegen).getTime() + 24 * 60 * 60 * 1000)
+            : null;
+          setTokenRegenTime(regenTime);
+        } else {
+          console.error('Failed to fetch tranquil tokens:', tokensRes.reason);
+          setTranquilTokens(cachedData.tranquilTokens || 1);
+          setTokenRegenTime(cachedData.lastTokenRegen ? new Date(cachedData.lastTokenRegen) : null);
+          setMessage('Unable to fetch Tranquil Tokens. Using cached or default values.');
+        }
+
+        localStorage.setItem('userData', JSON.stringify({
+          goals: goalsRes.status === 'fulfilled' ? goalsRes.value.data : cachedData.goals,
+          reports: reportsRes.status === 'fulfilled' ? reportsRes.value.data : cachedData.reports,
+          lastChatTimestamp: lastChatRes.status === 'fulfilled' ? lastChatRes.value.data.lastChatTimestamp : cachedData.lastChatTimestamp,
+          tranquilTokens: tokensRes.status === 'fulfilled' ? tokensRes.value.data.tranquilTokens : cachedData.tranquilTokens,
+          lastTokenRegen: tokensRes.status === 'fulfilled' ? tokensRes.value.data.lastTokenRegen : cachedData.lastTokenRegen,
+          dailyAffirmations: affirmationsRes.status === 'fulfilled' ? affirmationsRes.value.data : cachedData.dailyAffirmations
+        }));
+
+        const [journalRes, insightsRes] = await Promise.all([
+          axios.get(`${API_URL}/api/regular/journal`, { headers: { Authorization: authToken } }).catch(err => ({ error: err })),
+          axios.get(`${API_URL}/api/regular/journal-insights`, { headers: { Authorization: authToken } }).catch(err => ({ error: err }))
+        ]);
+
+        if (!journalRes.error) {
+          setJournal(journalRes.data || []);
+        } else {
+          console.error('Failed to fetch journal:', journalRes.error);
+          setJournal(cachedData.journal || []);
+        }
+
+        if (!insightsRes.error) {
+          setJournalInsights(insightsRes.data || []);
+        } else {
+          console.error('Failed to fetch journal insights:', insightsRes.error);
+          setJournalInsights(cachedData.journalInsights || []);
+        }
+
+        localStorage.setItem('userData', JSON.stringify({
+          ...JSON.parse(localStorage.getItem('userData') || '{}'),
+          journal: !journalRes.error ? journalRes.data : cachedData.journal,
+          journalInsights: !insightsRes.error ? insightsRes.data : cachedData.journalInsights,
+        }));
+      } catch (err) {
+        console.error('Error fetching user data:', err);
+        setMessage('Some data could not be loaded. Using cached data where available.');
+      } finally {
+        setIsLoading(false);
+        setIsFetchingUserData(false);
+      }
+    }, 300),
+    []
+  );
 
   // Manage affirmations during loading
   useEffect(() => {
     if (isLoading && !showSummaryBuffer) {
       const usedPositions = new Set();
       const interval = setInterval(() => {
-        // Find an unused position
         const availablePositions = affirmationPositions.filter(pos => !usedPositions.has(pos));
-        if (availablePositions.length === 0) return; // Skip if all positions are used
+        if (availablePositions.length === 0) return;
         const position = availablePositions[Math.floor(Math.random() * availablePositions.length)];
         usedPositions.add(position);
 
@@ -121,44 +236,69 @@ function App() {
     }
   }, [isLoading, showSummaryBuffer]);
 
-  // Check for token on mount to maintain session on page refresh
+  // Check for token on mount to maintain session
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
-    if (storedToken) {
+    if (storedToken && !token) {
       setToken(storedToken);
       setRole('regular');
-      fetchUserData(storedToken);
+      debouncedFetchUserData(storedToken);
     }
   }, []);
 
-  // Other existing states and effects
+  // Handle window resize
   useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth > 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Token regeneration (every 24 hours)
   useEffect(() => {
-    if (chatTokens < 3 && tokenRegenTime) {
+    if (tranquilTokens < 1 && tokenRegenTime) {
       const interval = setInterval(() => {
         const now = new Date();
         const timeDiff = (tokenRegenTime - now) / 1000;
         if (timeDiff <= 0) {
-          setChatTokens((prev) => Math.min(prev + 1, 3));
-          setTokenRegenTime(new Date(now.getTime() + 3 * 60 * 60 * 1000));
+          setTranquilTokens((prev) => prev + 1);
+          setTokenRegenTime(new Date(now.getTime() + 24 * 60 * 60 * 1000));
         }
       }, 1000);
       return () => clearInterval(interval);
     }
-  }, [chatTokens, tokenRegenTime]);
+  }, [tranquilTokens, tokenRegenTime]);
 
+  // Token consumption
+  const consumeToken = async (action, callback) => {
+    if (tranquilTokens < 1) {
+      setMessage('No Tranquil Tokens available. Purchase more or wait for regeneration (every 24 hours).');
+      return;
+    }
+    setIsLoading(true);
+    try {
+      await axios.post(
+        `${API_URL}/api/regular/consume-token`,
+        { action },
+        { headers: { Authorization: token } }
+      );
+      setTranquilTokens((prev) => prev - 1);
+      callback();
+    } catch (err) {
+      setMessage('Error consuming token: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Update user data when token or role changes
   useEffect(() => {
     if (token && role === 'regular') {
       localStorage.setItem('token', token);
-      fetchUserData(token);
+      debouncedFetchUserData(token);
     }
   }, [token, role]);
 
+  // Existing useEffects
   useEffect(() => {
     if (isChatActive && timeLeft > 0) {
       const timer = setInterval(() => setTimeLeft((prev) => {
@@ -205,101 +345,378 @@ function App() {
 
   const emotionDescriptions = {
     happiness: {
-      question: "How happy are you right now?",
-      feedback: (value) => ["Really Unhappy", "Somewhat Unhappy", "Mildly Happy", "Quite Happy", "Very Happy"][value - 1],
-      emojis: ['😢', '😣', '😊', '😊', '🥰'],
+      question: "How happy are you feeling right now?",
+      feedback: (value) => [
+        "Feeling quite down",
+        "Somewhat unhappy",
+        "Moderately happy",
+        "Quite happy",
+        "Very happy"
+      ][value - 1],
+      emojis: ["😢", "🙁", "😐", "🙂", "😊"]
     },
     anger: {
-      question: "How angry are you right now?",
-      feedback: (value) => ["Really Calm", "Somewhat Calm", "Mildly Angry", "Quite Angry", "Extremely Angry"][value - 1],
-      emojis: ['😊', '😐', '😣', '😤', '😡'],
+      question: "How angry are you feeling right now?",
+      feedback: (value) => [
+        "Very calm",
+        "Somewhat calm",
+        "Moderately angry",
+        "Quite angry",
+        "Very angry"
+      ][value - 1],
+      emojis: ["😊", "🙂", "😐", "😣", "😣"]
     },
     stress: {
-      question: "How stressed are you right now?",
-      feedback: (value) => ["Really Relaxed", "Somewhat Relaxed", "Mildly Stressed", "Quite Stressed", "Extremely Stressed"][value - 1],
-      emojis: ['😊', '😐', '😣', '😓', '😰'],
+      question: "How stressed are you feeling right now?",
+      feedback: (value) => [
+        "Very relaxed",
+        "Somewhat relaxed",
+        "Moderately stressed",
+        "Quite stressed",
+        "Very stressed"
+      ][value - 1],
+      emojis: ["😊", "🙂", "😐", "😣", "😣"]
     },
     energy: {
-      question: "How energized are you right now?",
-      feedback: (value) => ["Really Drained", "Somewhat Tired", "Mildly Energized", "Quite Energized", "Very Energized"][value - 1],
-      emojis: ['😴', '😪', '😐', '😊', '⚡'],
+      question: "How energized are you feeling right now?",
+      feedback: (value) => [
+        "Very drained",
+        "Somewhat tired",
+        "Moderately energized",
+        "Quite energized",
+        "Very energized"
+      ][value - 1],
+      emojis: ["😴", "😪", "😐", "💪", "⚡"]
     },
     confidence: {
-      question: "How confident are you right now?",
-      feedback: (value) => ["Really Unsure", "Somewhat Doubtful", "Mildly Confident", "Quite Confident", "Extremely Confident"][value - 1],
-      emojis: ['😟', '😣', '😐', '😊', '💪'],
-    },
+      question: "How confident are you feeling right now?",
+      feedback: (value) => [
+        "Very unsure",
+        "Somewhat doubtful",
+        "Moderately confident",
+        "Quite confident",
+        "Very confident"
+      ][value - 1],
+      emojis: ["😓", "😕", "😐", "😊", "😊"]
+    }
   };
 
   const quizQuestions = Object.keys(emotionDescriptions);
 
   const journalPrompts = {
     daily: [
-      { heading: "Highlights of My Day", subheading: "Reflect on the moments that brought you joy or satisfaction.", key: "highlights" },
-      { heading: "What I Learned About Myself", subheading: "Consider any new insights or realizations you had.", key: "learned" },
-      { heading: "Challenges I Faced", subheading: "Analyze your reactions and what you can learn from them.", key: "challenges" },
-      { heading: "Emotions I Experienced", subheading: "Explore the feelings you had and their sources.", key: "emotions" },
+      { key: 'highlights', heading: 'Highlights', subheading: 'What were the best parts of your day?' },
+      { key: 'learned', heading: 'Learned', subheading: 'What did you learn today?' },
+      { key: 'challenges', heading: 'Challenges', subheading: 'What challenges did you face?' },
+      { key: 'emotions', heading: 'Emotions', subheading: 'How did you feel today?' }
     ],
     dream: [
-      { heading: "My Dream Last Night", subheading: "Capture the key components of your dream, including characters and settings.", key: "dreamDescription" },
-      { heading: "Emotions in the Dream", subheading: "Reflect on how the dream made you feel and what that might signify.", key: "dreamEmotions" },
-      { heading: "Recurring Themes or Symbols", subheading: "Identify any patterns that might connect to your waking life.", key: "themes" },
-      { heading: "Which part of the dream stands out the most?", subheading: "Focus on the most vivid or impactful moment and why it resonates.", key: "standout" },
+      { key: 'dreamDescription', heading: 'Dream Description', subheading: 'Describe your dream in detail.' },
+      { key: 'dreamEmotions', heading: 'Dream Emotions', subheading: 'What emotions did you feel in the dream?' },
+      { key: 'themes', heading: 'Themes', subheading: 'What themes or symbols stood out?' },
+      { key: 'standout', heading: 'Standout Moment', subheading: 'What was the most memorable part?' }
     ],
     freestyle: [
-      { heading: "My Thoughts", subheading: "Write whatever is on your mind, no structure needed.", key: "thoughts" },
-    ],
+      { key: 'thoughts', heading: 'My Thoughts', subheading: 'Write whatever is on your mind.' }
+    ]
   };
 
-  const fetchUserData = async (authToken) => {
+  // Modified handleStartQuiz to require token confirmation
+  const handleStartQuiz = () => {
+    if (tranquilTokens < 1) {
+      setMessage('No Tranquil Tokens available. Purchase more or wait for regeneration (every 24 hours).');
+      return;
+    }
+    setTokenConfirm({ action: 'startChat', callback: () => {
+      setIsQuizActive(true);
+      setCurrentQuizQuestion(0);
+      setQuiz({ happiness: 0, anger: 0, stress: 0, energy: 0, confidence: 0, isPostChat: false });
+      setSelectedAnswer(null);
+    }});
+  };
+
+  // Modified handleGenerateInsight to require token confirmation
+  const handleGenerateInsight = async (entry) => {
+    if (tranquilTokens < 1) {
+      setMessage('No Tranquil Tokens available. Purchase more or wait for regeneration (every 24 hours).');
+      return;
+    }
+    setTokenConfirm({ action: 'generateInsight', callback: async () => {
+      setIsLoading(true);
+      try {
+        const response = await axios.post(
+          `${API_URL}/api/regular/journal-insights`,
+          {
+            journalDate: entry.date,
+            responses: entry.responses,
+          },
+          { headers: { Authorization: token } }
+        );
+        const newInsight = {
+          journalDate: new Date(entry.date),
+          insight: response.data.insight,
+          createdAt: new Date(),
+        };
+        setJournalInsights((prev) => [...prev, newInsight]);
+        setMessage('Insight generated! View it in the notepad.');
+      } catch (err) {
+        console.error('Error generating insight:', err);
+        setMessage('Error generating insight: ' + (err.response?.data?.error || err.message));
+      } finally {
+        setIsLoading(false);
+      }
+    }});
+  };
+
+  // Shop purchase handler
+  const handlePurchaseTokens = async (quantity, price) => {
     setIsLoading(true);
     try {
-      const cachedData = JSON.parse(localStorage.getItem('userData') || '{}');
-      if (cachedData.goals) setGoals(cachedData.goals);
-      if (cachedData.reports) setReports(cachedData.reports);
-
-      const [goalsRes, reportsRes, lastChatRes, affirmationsRes] = await Promise.all([
-        axios.get(`${API_URL}/api/regular/goals`, { headers: { Authorization: authToken } }),
-        axios.get(`${API_URL}/api/regular/reports`, { headers: { Authorization: authToken } }),
-        axios.get(`${API_URL}/api/regular/last-chat`, { headers: { Authorization: authToken } }),
-        axios.get(`${API_URL}/api/regular/daily-affirmations`, { headers: { Authorization: authToken } })
-      ]);
-
-      setGoals(goalsRes.data || []);
-      setReports(reportsRes.data || []);
-      setLastChatTimestamp(lastChatRes.data.lastChatTimestamp ? new Date(lastChatRes.data.lastChatTimestamp) : null);
-      setChatTokens(lastChatRes.data.chatTokens || 3);
-      const regenTime = lastChatRes.data.lastTokenRegen
-        ? new Date(new Date(lastChatRes.data.lastTokenRegen).getTime() + 3 * 60 * 60 * 1000)
-        : null;
-      setTokenRegenTime(regenTime);
-      setDailyAffirmations(affirmationsRes.data || null);
-
-      localStorage.setItem('userData', JSON.stringify({
-        goals: goalsRes.data,
-        reports: reportsRes.data,
-        lastChatTimestamp: lastChatRes.data.lastChatTimestamp,
-        chatTokens: lastChatRes.data.chatTokens,
-        dailyAffirmations: affirmationsRes.data
-      }));
-
-      Promise.all([
-        axios.get(`${API_URL}/api/regular/journal`, { headers: { Authorization: authToken } }),
-        axios.get(`${API_URL}/api/regular/journal-insights`, { headers: { Authorization: authToken } }),
-      ]).then(([journalRes, insightsRes]) => {
-        setJournal(journalRes.data || []);
-        setJournalInsights(insightsRes.data || []);
-        localStorage.setItem('userData', JSON.stringify({
-          ...JSON.parse(localStorage.getItem('userData') || '{}'),
-          journal: journalRes.data,
-          journalInsights: insightsRes.data,
-        }));
-      }).catch((err) => console.error('Error fetching non-critical data:', err));
+      const response = await axios.post(
+        `${API_URL}/api/regular/purchase-tokens`,
+        { quantity, price },
+        { headers: { Authorization: token } }
+      );
+      setTranquilTokens((prev) => prev + (response.data.tranquilTokens || quantity));
+      setMessage(`Successfully purchased ${quantity} Tranquil Tokens!`);
     } catch (err) {
-      console.error('Error fetching user data:', err);
-      setMessage('Error loading your data');
+      console.error('Error purchasing tokens:', err);
+      setMessage('Error purchasing tokens: ' + (err.response?.data?.error || err.message));
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Existing handlers
+  const handleRegularSignup = (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    axios.post(`${API_URL}/api/regular/signup`, regularSignupForm)
+      .then((res) => {
+        setMessage(res.data.message);
+        setToken(res.data.token);
+        setRole('regular');
+        debouncedFetchUserData(res.data.token);
+      })
+      .catch((err) => setMessage(err.response?.data?.error || 'Signup failed'))
+      .finally(() => setIsLoading(false));
+  };
+
+  const handleRegularLogin = (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    const loginData = { ...regularLoginForm, email: regularLoginForm.email.toLowerCase() };
+    axios.post(`${API_URL}/api/regular/login`, loginData)
+      .then((res) => {
+        setToken(res.data.token);
+        setRole('regular');
+        setMessage(`Welcome, ${res.data.name || 'User'}!`);
+        debouncedFetchUserData(res.data.token);
+      })
+      .catch((err) => setMessage(err.response?.data?.error || 'Login failed'))
+      .finally(() => setIsLoading(false));
+  };
+
+  const handleQuizAnswer = (value) => {
+    setSelectedAnswer(value);
+  };
+
+  const handleQuizKeyPress = (e, value) => {
+    if (e.key === 'Enter' || e.key === value.toString()) {
+      handleQuizAnswer(value);
+    }
+  };
+
+  const handleQuizNext = () => {
+    if (selectedAnswer === null) return;
+    const key = quizQuestions[currentQuizQuestion];
+    setQuiz({ ...quiz, [key]: selectedAnswer });
+    if (currentQuizQuestion < quizQuestions.length - 1) {
+      setCurrentQuizQuestion(currentQuizQuestion + 1);
+      setSelectedAnswer(null);
+    }
+  };
+
+  const handleStartChat = () => {
+    if (selectedAnswer === null) return;
+    const key = quizQuestions[currentQuizQuestion];
+    setQuiz({ ...quiz, [key]: selectedAnswer });
+    setIsQuizActive(false);
+    setShowBreathe(true);
+  };
+
+  const handleExtendChat = () => {
+    if (extendCount < 3) {
+      setTimeLeft((prev) => prev + 5 * 60);
+      setExtendCount((prev) => prev + 1);
+      setMessage('Chat extended by 5 minutes!');
+    }
+  };
+
+  const handleChat = useCallback(
+    debounce(async (text) => {
+      if (timeLeft <= 0 || text.length > 500) return;
+      const newUserMessage = { sender: 'user', text, timestamp: new Date() };
+      setChat((prev) => [...prev, newUserMessage]);
+      setChatInput('');
+      try {
+        const lowerText = text.toLowerCase();
+        if (
+          lowerText.includes('kill myself') ||
+          lowerText.includes('killing myself') ||
+          lowerText.includes('suicide') ||
+          lowerText.includes('end my life')
+        ) {
+          const helpline = "If you're in the UK, please call Samaritans at 116 123. In the US, call 988. You're not alone, and help is available.";
+          setChat((prev) => [...prev, { sender: 'pal', text: helpline, timestamp: new Date() }]);
+          return;
+        }
+        const response = await axios.post(
+          `${API_URL}/api/regular/chat`,
+          { message: text, chatHistory: chat },
+          { headers: { Authorization: token } }
+        );
+        setChat((prev) => [...prev, { sender: 'pal', text: response.data.text, timestamp: new Date(response.data.timestamp) }]);
+      } catch (error) {
+        console.error('Error chatting:', error);
+        setMessage('Error chatting: ' + (error.response?.data?.error || error.message));
+      }
+    }, 300),
+    [chat, timeLeft, token]
+  );
+
+  const handleEndChat = async () => {
+    setTimeLeft(0);
+    setIsLoading(true);
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/regular/end-chat`,
+        { chatHistory: chat, quiz },
+        { headers: { Authorization: token } }
+      );
+      const newReport = response.data;
+      setReports((prev) => [...prev, newReport]);
+      setLastChatTimestamp(new Date());
+      setChat([]);
+      setIsChatActive(false);
+      setExtendCount(0);
+      setShowSummaryBuffer(true);
+      setTimeout(() => {
+        setShowSummaryBuffer(false);
+        setActiveTab('reflect');
+        setSelectedReport(newReport);
+        setMessage('Session complete! Check your Reflect tab for the summary.');
+        debouncedFetchUserData(token);
+      }, 1500);
+    } catch (error) {
+      console.error('Error ending chat:', error);
+      setMessage('Error ending chat: ' + (error.response?.data?.error || error.message));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleOpenJournal = (type) => {
+    setOpenJournalType(type);
+    setJournalResponses({});
+  };
+
+  const handleCloseJournal = () => {
+    setOpenJournalType(null);
+    setJournalResponses({});
+  };
+
+  const handleJournalInput = (key, value) => {
+    setJournalResponses((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleSaveJournal = async () => {
+    if (Object.keys(journalResponses).length === 0) {
+      setMessage('Please fill in at least one response before saving.');
+      return;
+    }
+    setIsLoading(true);
+    const journalData = {
+      date: new Date().toISOString(),
+      type: openJournalType,
+      responses: { ...journalResponses },
+    };
+    try {
+      const response = await axios.post(`${API_URL}/api/regular/insights`, journalData, {
+        headers: { Authorization: token },
+      });
+      const newJournalEntry = {
+        _id: response.data._id,
+        date: new Date(journalData.date),
+        type: journalData.type,
+        responses: journalData.responses,
+      };
+      setJournal((prev) => [...prev, newJournalEntry]);
+      setOpenJournalType(null);
+      setJournalResponses({});
+      setActiveTab('journal');
+      setSelectedJournalEntry(newJournalEntry);
+      setMessage('Journal saved! Check your journal tab.');
+      await debouncedFetchUserData(token);
+    } catch (err) {
+      console.error('Error saving journal:', err);
+      setMessage('Error saving journal: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleOpenJournalEntry = (entry) => {
+    setSelectedJournalEntry(entry);
+    setOpenNotepadSection('reflect');
+  };
+
+  const handleCloseJournalEntry = () => {
+    setSelectedJournalEntry(null);
+    setOpenNotepadSection(null);
+  };
+
+  const handleDeleteJournal = async (entryId) => {
+    setIsLoading(true);
+    try {
+      await axios.delete(`${API_URL}/api/regular/journal/${entryId}`, {
+        headers: { Authorization: token },
+      });
+      setJournal((prev) => prev.filter((entry) => entry._id !== entryId));
+      setJournalInsights((prev) =>
+        prev.filter((insight) => {
+          const journalDate = journal.find((entry) => entry._id === entryId)?.date;
+          return journalDate ? new Date(insight.journalDate).getTime() !== new Date(journalDate).getTime() : true;
+        })
+      );
+      setSelectedJournalEntry(null);
+      setOpenNotepadSection(null);
+      setMessage('Journal entry deleted successfully.');
+    } catch (err) {
+      console.error('Error deleting journal:', err);
+      setMessage('Error deleting journal: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setIsLoading(false);
+      setDeleteConfirm(null);
+    }
+  };
+
+  const handleDeleteReport = async (reportId) => {
+    setIsLoading(true);
+    try {
+      await axios.delete(`${API_URL}/api/regular/reports/${reportId}`, {
+        headers: { Authorization: token },
+      });
+      setReports((prev) => prev.filter((report) => report._id !== reportId));
+      setSelectedReport(null);
+      setOpenNotepadSection(null);
+      setMessage('Report deleted successfully.');
+    } catch (err) {
+      console.error('Error deleting report:', err);
+      setMessage('Error deleting report: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setIsLoading(false);
+      setDeleteConfirm(null);
     }
   };
 
@@ -315,6 +732,7 @@ function App() {
       setShowDailyAffirmationsModal(true);
       setMessage('New daily affirmations generated!');
     } catch (err) {
+      console.error('Error generating affirmations:', err);
       setMessage('Error generating affirmations: ' + (err.response?.data?.error || err.message));
     } finally {
       setIsLoading(false);
@@ -336,6 +754,58 @@ function App() {
       setIsLoading(false);
       setDeleteConfirm(null);
     }
+  };
+
+  const handleLogout = () => {
+    setToken(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('userData');
+    setRole(null);
+    setIsQuizActive(false);
+    setIsChatActive(false);
+    setQuiz({ happiness: 0, anger: 0, stress: 0, energy: 0, confidence: 0, isPostChat: false });
+    setChat([]);
+    setTimeLeft(15 * 60);
+    setExtendCount(0);
+    setLastChatTimestamp(null);
+    setTranquilTokens(1);
+    setTokenRegenTime(null);
+    setGoals([]);
+    setReports([]);
+    setJournal([]);
+    setJournalInsights([]);
+    setMessage('Logged out');
+    setActiveTab('chat');
+    setSelectedReport(null);
+    setSelectedJournalEntry(null);
+    setOpenNotepadSection(null);
+    setOpenJournalType(null);
+    setJournalResponses({});
+    setShowSummaryBuffer(false);
+    setChatInput('');
+    setShowSignup(false);
+    setDeleteConfirm(null);
+    setAffirmationsList([]);
+    setDailyAffirmations(null);
+    setShowDailyAffirmationsModal(false);
+    setTokenConfirm(null);
+  };
+
+  const handleOpenNotepad = (section) => {
+    setOpenNotepadSection(section);
+  };
+
+  const handleCloseNotepad = () => {
+    setOpenNotepadSection(null);
+  };
+
+  const handleViewReport = (report) => {
+    setSelectedReport(report);
+    setTimeout(() => {
+      if (reportDetailsRef.current) {
+        reportDetailsRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }
+    }, 100);
   };
 
   const getBarChartData = useMemo(() => {
@@ -424,7 +894,6 @@ function App() {
         plugins: {
           tooltip: {
             callbacks: {
-              // MODIFICATION: Customize tooltip to show dataset label, value, and date
               label: function (context) {
                 const datasetLabel = context.dataset.label || '';
                 const value = context.parsed.y;
@@ -434,7 +903,7 @@ function App() {
             },
           },
         },
-        maintainAspectRatio: false, // Ensure chart respects CSS height
+        maintainAspectRatio: false,
       },
     };
   }, [reports]);
@@ -510,340 +979,6 @@ function App() {
       return `${key.charAt(0).toUpperCase() + key.slice(1)}: ${responses[key][index >= 0 && index < 5 ? index : 0]}`;
     });
   }, [reports]);
-
-  const handleRegularSignup = (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    axios.post(`${API_URL}/api/regular/signup`, regularSignupForm)
-      .then((res) => {
-        setMessage(res.data.message);
-        setToken(res.data.token);
-        setRole('regular');
-        fetchUserData(res.data.token);
-      })
-      .catch((err) => setMessage(err.response?.data?.error || 'Signup failed'))
-      .finally(() => setIsLoading(false));
-  };
-
-  const handleRegularLogin = (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    const loginData = { ...regularLoginForm, email: regularLoginForm.email.toLowerCase() };
-    axios.post(`${API_URL}/api/regular/login`, loginData)
-      .then((res) => {
-        setToken(res.data.token);
-        setRole('regular');
-        setMessage(`Welcome, ${res.data.name || 'User'}!`);
-        fetchUserData(res.data.token);
-      })
-      .catch((err) => setMessage(err.response?.data?.error || 'Login failed'))
-      .finally(() => setIsLoading(false));
-  };
-
-  const canStartChat = () => {
-    if (!token || role !== 'regular') return false;
-    return chatTokens > 0;
-  };
-
-  const handleStartQuiz = () => {
-    if (!canStartChat()) {
-      setMessage('No chat tokens available. Wait for a token to regenerate (every 3 hours).');
-      return;
-    }
-    setIsQuizActive(true);
-    setCurrentQuizQuestion(0);
-    setQuiz({ happiness: 0, anger: 0, stress: 0, energy: 0, confidence: 0, isPostChat: false });
-    setSelectedAnswer(null);
-  };
-
-  const handleQuizAnswer = (value) => {
-    setSelectedAnswer(value);
-  };
-
-  const handleQuizKeyPress = (e, value) => {
-    if (e.key === 'Enter' || e.key === value.toString()) {
-      handleQuizAnswer(value);
-    }
-  };
-
-  const handleQuizNext = () => {
-    if (selectedAnswer === null) return;
-    const key = quizQuestions[currentQuizQuestion];
-    setQuiz({ ...quiz, [key]: selectedAnswer });
-    if (currentQuizQuestion < quizQuestions.length - 1) {
-      setCurrentQuizQuestion(currentQuizQuestion + 1);
-      setSelectedAnswer(null);
-    }
-  };
-
-  const handleStartChat = () => {
-    if (selectedAnswer === null) return;
-    const key = quizQuestions[currentQuizQuestion];
-    setQuiz({ ...quiz, [key]: selectedAnswer });
-    setIsQuizActive(false);
-    setShowBreathe(true);
-  };
-
-  const handleExtendChat = () => {
-    if (extendCount < 3) {
-      setTimeLeft((prev) => prev + 5 * 60);
-      setExtendCount((prev) => prev + 1);
-      setMessage('Chat extended by 5 minutes!');
-    }
-  };
-
-  const debounce = (func, wait) => {
-    let timeout;
-    return (...args) => {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => func(...args), wait);
-    };
-  };
-
-  const handleChat = useCallback(
-    debounce(async (text) => {
-      if (timeLeft <= 0 || text.length > 500) return;
-      const newUserMessage = { sender: 'user', text, timestamp: new Date() };
-      setChat((prev) => [...prev, newUserMessage]);
-      setChatInput('');
-      try {
-        const lowerText = text.toLowerCase();
-        if (
-          lowerText.includes('kill myself') ||
-          lowerText.includes('killing myself') ||
-          lowerText.includes('suicide') ||
-          lowerText.includes('end my life')
-        ) {
-          const helpline = "If you're in the UK, please call Samaritans at 116 123. In the US, call 988. You're not alone, and help is available.";
-          setChat((prev) => [...prev, { sender: 'pal', text: helpline, timestamp: new Date() }]);
-          return;
-        }
-        const response = await axios.post(
-          `${API_URL}/api/regular/chat`,
-          { message: text, chatHistory: chat },
-          { headers: { Authorization: token } }
-        );
-        setChat((prev) => [...prev, { sender: 'pal', text: response.data.text, timestamp: new Date(response.data.timestamp) }]);
-      } catch (error) {
-        console.error('Error chatting:', error);
-        setMessage('Error chatting: ' + (error.response?.data?.error || error.message));
-      }
-    }, 300),
-    [chat, timeLeft, token]
-  );
-
-  const handleEndChat = async () => {
-    setTimeLeft(0);
-    setIsLoading(true);
-    try {
-      const response = await axios.post(
-        `${API_URL}/api/regular/end-chat`,
-        { chatHistory: chat, quiz },
-        { headers: { Authorization: token } }
-      );
-      const newReport = response.data;
-      setReports((prev) => [...prev, newReport]);
-      setLastChatTimestamp(new Date());
-      setChatTokens((prev) => Math.max(prev - 1, 0));
-      setChat([]);
-      setIsChatActive(false);
-      setExtendCount(0);
-      setShowSummaryBuffer(true);
-      setTimeout(() => {
-        setShowSummaryBuffer(false);
-        setActiveTab('reflect');
-        setSelectedReport(newReport);
-        setMessage('Session complete! Check your Reflect tab for the summary.');
-        fetchUserData(token);
-      }, 1500);
-    } catch (error) {
-      console.error('Error ending chat:', error);
-      setMessage('Error ending chat: ' + (error.response?.data?.error || error.message));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleOpenJournal = (type) => {
-    setOpenJournalType(type);
-    setJournalResponses({});
-  };
-
-  const handleCloseJournal = () => {
-    setOpenJournalType(null);
-    setJournalResponses({});
-  };
-
-  const handleJournalInput = (key, value) => {
-    setJournalResponses((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const handleSaveJournal = async () => {
-    if (Object.keys(journalResponses).length === 0) {
-      setMessage('Please fill in at least one response before saving.');
-      return;
-    }
-    setIsLoading(true);
-    const journalData = {
-      date: new Date().toISOString(),
-      type: openJournalType,
-      responses: { ...journalResponses },
-    };
-    try {
-      const response = await axios.post(`${API_URL}/api/regular/insights`, journalData, {
-        headers: { Authorization: token },
-      });
-      const newJournalEntry = {
-        _id: response.data._id,
-        date: new Date(journalData.date),
-        type: journalData.type,
-        responses: journalData.responses,
-      };
-      setJournal((prev) => [...prev, newJournalEntry]);
-      setOpenJournalType(null);
-      setJournalResponses({});
-      setActiveTab('journal');
-      setSelectedJournalEntry(newJournalEntry);
-      setMessage('Journal saved! Check your journal tab.');
-      await fetchUserData(token);
-    } catch (err) {
-      console.error('Error saving journal:', err);
-      setMessage('Error saving journal: ' + (err.response?.data?.error || err.message));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleOpenJournalEntry = (entry) => {
-    setSelectedJournalEntry(entry);
-    setOpenNotepadSection('reflect');
-  };
-
-  const handleCloseJournalEntry = () => {
-    setSelectedJournalEntry(null);
-    setOpenNotepadSection(null);
-  };
-
-  const handleDeleteJournal = async (entryId) => {
-    setIsLoading(true);
-    try {
-      await axios.delete(`${API_URL}/api/regular/journal/${entryId}`, {
-        headers: { Authorization: token },
-      });
-      setJournal((prev) => prev.filter((entry) => entry._id !== entryId));
-      setJournalInsights((prev) =>
-        prev.filter((insight) => {
-          const journalDate = journal.find((entry) => entry._id === entryId)?.date;
-          return journalDate ? new Date(insight.journalDate).getTime() !== new Date(journalDate).getTime() : true;
-        })
-      );
-      setSelectedJournalEntry(null);
-      setOpenNotepadSection(null);
-      setMessage('Journal entry deleted successfully.');
-    } catch (err) {
-      console.error('Error deleting journal:', err);
-      setMessage('Error deleting journal: ' + (err.response?.data?.error || err.message));
-    } finally {
-      setIsLoading(false);
-      setDeleteConfirm(null);
-    }
-  };
-
-  const handleDeleteReport = async (reportId) => {
-    setIsLoading(true);
-    try {
-      await axios.delete(`${API_URL}/api/regular/reports/${reportId}`, {
-        headers: { Authorization: token },
-      });
-      setReports((prev) => prev.filter((report) => report._id !== reportId));
-      setSelectedReport(null);
-      setOpenNotepadSection(null);
-      setMessage('Report deleted successfully.');
-    } catch (err) {
-      console.error('Error deleting report:', err);
-      setMessage('Error deleting report: ' + (err.response?.data?.error || err.message));
-    } finally {
-      setIsLoading(false);
-      setDeleteConfirm(null);
-    }
-  };
-
-  const handleGenerateInsight = async (entry) => {
-    setIsLoading(true);
-    try {
-      const response = await axios.post(
-        `${API_URL}/api/regular/journal-insights`,
-        {
-          journalDate: entry.date,
-          responses: entry.responses,
-        },
-        { headers: { Authorization: token } }
-      );
-      const newInsight = {
-        journalDate: new Date(entry.date),
-        insight: response.data.insight,
-        createdAt: new Date(),
-      };
-      setJournalInsights((prev) => [...prev, newInsight]);
-      setMessage('Insight generated! View it in the notepad.');
-    } catch (err) {
-      console.error('Error generating insight:', err);
-      setMessage('Error generating insight: ' + (err.response?.data?.error || err.message));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleLogout = () => {
-    setToken(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('userData');
-    setRole(null);
-    setIsQuizActive(false);
-    setIsChatActive(false);
-    setQuiz({ happiness: 0, anger: 0, stress: 0, energy: 0, confidence: 0, isPostChat: false });
-    setChat([]);
-    setTimeLeft(15 * 60);
-    setExtendCount(0);
-    setLastChatTimestamp(null);
-    setChatTokens(3);
-    setTokenRegenTime(null);
-    setGoals([]);
-    setReports([]);
-    setJournal([]);
-    setJournalInsights([]);
-    setMessage('Logged out');
-    setActiveTab('chat');
-    setSelectedReport(null);
-    setSelectedJournalEntry(null);
-    setOpenNotepadSection(null);
-    setOpenJournalType(null);
-    setJournalResponses({});
-    setShowSummaryBuffer(false);
-    setChatInput('');
-    setShowSignup(false);
-    setDeleteConfirm(null);
-    setAffirmationsList([]);
-    setDailyAffirmations(null);
-    setShowDailyAffirmationsModal(false);
-  };
-
-  const handleOpenNotepad = (section) => {
-    setOpenNotepadSection(section);
-  };
-
-  const handleCloseNotepad = () => {
-    setOpenNotepadSection(null);
-  };
-
-  const handleViewReport = (report) => {
-    setSelectedReport(report);
-    setTimeout(() => {
-      if (reportDetailsRef.current) {
-        reportDetailsRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
-      }
-    }, 100);
-  };
 
   const renderJournalResponses = (entry) => {
     const responses = entry.responses;
@@ -1002,6 +1137,25 @@ function App() {
           </div>
         </div>
       )}
+      {tokenConfirm && (
+        <div className={`token-confirm-modal ${tokenConfirm ? 'active' : ''}`}>
+          <div className="token-confirm-content">
+            <h3>Confirm Tranquil Token Usage</h3>
+            <p>This feature will cost 1 Tranquil Token. Are you sure?</p>
+            <div className="token-confirm-buttons">
+              <button
+                onClick={() => {
+                  consumeToken(tokenConfirm.action, tokenConfirm.callback);
+                  setTokenConfirm(null);
+                }}
+              >
+                Yes
+              </button>
+              <button onClick={() => setTokenConfirm(null)}>No</button>
+            </div>
+          </div>
+        </div>
+      )}
       {showDailyAffirmationsModal && dailyAffirmations && (
         <div className="daily-affirmations-modal active">
           <div className="daily-affirmations-content">
@@ -1025,6 +1179,11 @@ function App() {
         </div>
       )}
       <div className="canvas">
+        {token && (
+          <div className="top-bar">
+            <p>Tranquil Tokens: {tranquilTokens} {tokenRegenTime && tranquilTokens < 1 ? `(Next in ${formatTime(Math.max(0, Math.floor((tokenRegenTime - new Date()) / 1000)))})` : ''}</p>
+          </div>
+        )}
         {!token ? (
           <div className="auth">
             <img src="/logo.png" alt="MindSprout Logo" className="logo" />
@@ -1185,7 +1344,6 @@ function App() {
                   <div className="chat">
                     <h2>Chat with Pal</h2>
                     <p>Time left: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</p>
-                    <p>Tokens remaining: {chatTokens}</p>
                     <p>Extensions used: {extendCount}/3</p>
                     <div className="chat-box" ref={chatBoxRef}>
                       {chat.slice().reverse().map((msg, i) => (
@@ -1235,17 +1393,17 @@ function App() {
                   <div className="quiz">
                     <h2>Chat</h2>
                     <p>
-                      You have {chatTokens} chat tokens left today.{' '}
-                      {chatTokens < 3 && tokenRegenTime
+                      You have {tranquilTokens} Tranquil Tokens.{' '}
+                      {tranquilTokens < 1 && tokenRegenTime
                         ? `Next token in ${formatTime(
                             Math.max(0, Math.floor((tokenRegenTime - new Date()) / 1000))
                           )}`
-                        : 'Tokens regenerate every 3 hours.'}
+                        : 'Tokens regenerate every 24 hours.'}
                     </p>
-                    {chatTokens > 0 ? (
+                    {tranquilTokens > 0 ? (
                       <button onClick={handleStartQuiz}>Start Quiz</button>
                     ) : (
-                      <p>Come back later for a new token!</p>
+                      <p>Purchase more tokens or wait for a new token!</p>
                     )}
                   </div>
                 )}
@@ -1512,6 +1670,38 @@ function App() {
                   <p>No chat sessions yet. Start chatting to save insights!</p>
                 )}
               </div>
+            ) : activeTab === 'shop' ? (
+              <div className="shop">
+                <h2>Shop</h2>
+                <p>Purchase Tranquil Tokens to access features like chatting and generating insights.</p>
+                <div className="token-packages">
+                  <div className="token-card">
+                    <h3>1 Token</h3>
+                    <p>£0.99</p>
+                    <button onClick={() => handlePurchaseTokens(1, 0.99)}>Buy Now</button>
+                  </div>
+                  <div className="token-card">
+                    <h3>5 Tokens</h3>
+                    <p>£3.99</p>
+                    <button onClick={() => handlePurchaseTokens(5, 3.99)}>Buy Now</button>
+                  </div>
+                  <div className="token-card">
+                    <h3>10 Tokens</h3>
+                    <p>£6.99</p>
+                    <button onClick={() => handlePurchaseTokens(10, 6.99)}>Buy Now</button>
+                  </div>
+                  <div className="token-card">
+                    <h3>50 Tokens</h3>
+                    <p>£19.99</p>
+                    <button onClick={() => handlePurchaseTokens(50, 19.99)}>Buy Now</button>
+                  </div>
+                  <div className="token-card">
+                    <h3>100 Tokens</h3>
+                    <p>£29.99</p>
+                    <button onClick={() => handlePurchaseTokens(100, 29.99)}>Buy Now</button>
+                  </div>
+                </div>
+              </div>
             ) : null}
             <div className="menu-bar">
               <button
@@ -1530,13 +1720,7 @@ function App() {
                 aria-pressed={activeTab === 'chat'}
               >
                 <img src="/icons/chat.png" alt="Chat" className="icon" />
-                <span>
-                  {chatTokens < 3 && tokenRegenTime
-                    ? `Chat (${chatTokens}/3) ${formatTime(
-                        Math.max(0, Math.floor((tokenRegenTime - new Date()) / 1000))
-                      )}`
-                    : `Chat (${chatTokens}/3)`}
-                </span>
+                <span>Chat</span>
               </button>
               <button
                 onClick={() => setActiveTab('journal')}
@@ -1555,6 +1739,15 @@ function App() {
               >
                 <img src="/icons/meditation.png" alt="Reflect" className="icon" />
                 <span>Reflect</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('shop')}
+                className={activeTab === 'shop' ? 'active' : ''}
+                aria-label="View Shop"
+                aria-pressed={activeTab === 'shop'}
+              >
+                <img src="/icons/shop.png" alt="Shop" className="icon" />
+                <span>Shop</span>
               </button>
             </div>
           </div>
