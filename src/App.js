@@ -160,16 +160,14 @@ function App() {
           setTokenRegenTime(regenTime);
         } else {
           console.error('Failed to fetch tranquil tokens:', tokensRes.reason);
-          setTranquilTokens(cachedData.tranquilTokens || 1);
-          setTokenRegenTime(cachedData.lastTokenRegen ? new Date(cachedData.lastTokenRegen) : null);
-          setMessage('Unable to fetch Tranquil Tokens. Using cached or default values.');
+          setMessage('Unable to fetch Tranquil Tokens. Please try again.');
         }
 
         localStorage.setItem('userData', JSON.stringify({
           goals: goalsRes.status === 'fulfilled' ? goalsRes.value.data : cachedData.goals,
           reports: reportsRes.status === 'fulfilled' ? reportsRes.value.data : cachedData.reports,
           lastChatTimestamp: lastChatRes.status === 'fulfilled' ? lastChatRes.value.data.lastChatTimestamp : cachedData.lastChatTimestamp,
-          tranquilTokens: tokensRes.status === 'fulfilled' ? tokensRes.value.data.tranquilTokens : cachedData.tranquilTokens,
+          tranquilTokens: tokensRes.status === 'fulfilled' ? tokensRes.value.data.tranquilTokens : 1,
           lastTokenRegen: tokensRes.status === 'fulfilled' ? tokensRes.value.data.lastTokenRegen : cachedData.lastTokenRegen,
           dailyAffirmations: affirmationsRes.status === 'fulfilled' ? affirmationsRes.value.data : cachedData.dailyAffirmations
         }));
@@ -200,7 +198,7 @@ function App() {
         }));
       } catch (err) {
         console.error('Error fetching user data:', err);
-        setMessage('Some data could not be loaded. Using cached data where available.');
+        setMessage('Some data could not be loaded. Please try again.');
       } finally {
         setIsLoading(false);
         setIsFetchingUserData(false);
@@ -468,7 +466,7 @@ function App() {
     }});
   };
 
-  // Shop purchase handler
+  // Updated shop purchase handler
   const handlePurchaseTokens = async (quantity, price) => {
     setIsLoading(true);
     try {
@@ -477,8 +475,10 @@ function App() {
         { quantity, price },
         { headers: { Authorization: token } }
       );
-      setTranquilTokens((prev) => prev + (response.data.tranquilTokens || quantity));
+      setTranquilTokens(response.data.tranquilTokens);
       setMessage(`Successfully purchased ${quantity} Tranquil Tokens!`);
+      // Refresh user data to ensure consistency
+      debouncedFetchUserData(token);
     } catch (err) {
       console.error('Error purchasing tokens:', err);
       setMessage('Error purchasing tokens: ' + (err.response?.data?.error || err.message));
