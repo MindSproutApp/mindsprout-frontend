@@ -770,6 +770,9 @@ function App() {
     } catch (err) {
       console.error('Error deleting report:', err);
       setMessage('Error deleting report: ' + (err.response?.data?.error || err.message));
+      // Still need to fully integrate payment processing logic
+      console.error('Error deleting report:', err);
+      setMessage('Error deleting report: ' + (err.response?.data?.error || err.message));
     } finally {
       setIsLoading(false);
       setDeleteConfirm(null);
@@ -945,11 +948,11 @@ function App() {
             title: {
               display: true,
               text: 'Date',
-              padding: { top: 10 },
+              padding: { top: 10 }, // Add padding to prevent cutoff
             },
             ticks: {
-              padding: 10,
-              maxRotation: 45,
+              padding: 10, // Ensure labels have space
+              maxRotation: 45, // Rotate labels if needed
               minRotation: 45,
             },
           },
@@ -968,7 +971,7 @@ function App() {
         },
         layout: {
           padding: {
-            bottom: 20,
+            bottom: 20, // Extra padding to ensure dates are visible
           },
         },
         maintainAspectRatio: false,
@@ -1117,543 +1120,563 @@ function App() {
         </div>
       );
     }
-    return null;
+    return <p>No responses available</p>;
   };
 
-  const renderJournalEntry = (entry) => {
-    return (
-      <div key={entry._id} className="journal-entry">
-        <p>{new Date(entry.date).toLocaleDateString()}</p>
-        <p>Type: {entry.type.charAt(0).toUpperCase() + entry.type.slice(1)}</p>
-        <button onClick={() => handleOpenJournalEntry(entry)}>View</button>
-        <button onClick={() => setDeleteConfirm({ type: 'journal', id: entry._id })}>Delete</button>
-      </div>
-    );
+  const entriesPerPage = 5;
+  const sortedJournal = [...journal].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const journalPageCount = Math.ceil(sortedJournal.length / entriesPerPage);
+  const journalStartIndex = (journalPage - 1) * entriesPerPage;
+  const journalEndIndex = journalStartIndex + entriesPerPage;
+  const paginatedJournal = sortedJournal.slice(journalStartIndex, journalEndIndex);
+
+  const sortedReports = [...reports].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const reflectPageCount = Math.ceil(sortedReports.length / entriesPerPage);
+  const reflectStartIndex = (reflectPage - 1) * entriesPerPage;
+  const reflectEndIndex = reflectStartIndex + entriesPerPage;
+  const paginatedReports = sortedReports.slice(reflectStartIndex, reflectEndIndex);
+
+  const formatTime = (seconds) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
-
-  const paginatedJournal = useMemo(() => {
-    const start = (journalPage - 1) * 5;
-    const end = start + 5;
-    return journal.slice().reverse().slice(start, end);
-  }, [journal, journalPage]);
-
-  const paginatedReports = useMemo(() => {
-    const start = (reflectPage - 1) * 5;
-    const end = start + 5;
-    return reports.slice().reverse().slice(start, end);
-  }, [reports, reflectPage]);
-
-  // Render UI
-  if (!token) {
-    return (
-      <div className="auth">
-        {showSignup ? (
-          <>
-            <h2>Sign Up</h2>
-            <form onSubmit={handleRegularSignup}>
-              <input
-                type="text"
-                placeholder="Name"
-                value={regularSignupForm.name}
-                onChange={(e) => setRegularSignupForm({ ...regularSignupForm, name: e.target.value })}
-                required
-              />
-              <input
-                type="email"
-                placeholder="Email"
-                value={regularSignupForm.email}
-                onChange={(e) => setRegularSignupForm({ ...regularSignupForm, email: e.target.value })}
-                required
-              />
-              <input
-                type="text"
-                placeholder="Username"
-                value={regularSignupForm.username}
-                onChange={(e) => setRegularSignupForm({ ...regularSignupForm, username: e.target.value })}
-                required
-              />
-              <input
-                type="password"
-                placeholder="Password"
-                value={regularSignupForm.password}
-                onChange={(e) => setRegularSignupForm({ ...regularSignupForm, password: e.target.value })}
-                required
-              />
-              <button type="submit" disabled={isLoading}>Sign Up</button>
-            </form>
-            <p>{message}</p>
-            <button onClick={() => setShowSignup(false)}>Back to Login</button>
-          </>
-        ) : (
-          <>
-            <h2>Login</h2>
-            <form onSubmit={handleRegularLogin}>
-              <input
-                type="email"
-                placeholder="Email"
-                value={regularLoginForm.email}
-                onChange={(e) => setRegularLoginForm({ ...regularLoginForm, email: e.target.value })}
-                required
-              />
-              <input
-                type="password"
-                placeholder="Password"
-                value={regularLoginForm.password}
-                onChange={(e) => setRegularLoginForm({ ...regularLoginForm, password: e.target.value })}
-                required
-              />
-              <button type="submit" disabled={isLoading}>Login</button>
-            </form>
-            <p>{message}</p>
-            <button onClick={() => setShowSignup(true)}>Sign Up</button>
-          </>
-        )}
-        {isLoading && affirmationsList.map((aff) => (
-          <div key={aff.id} className={`affirmation ${aff.position}`}>
-            {aff.text}
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  if (showInsightBuffer) {
-    return (
-      <div className="buffer-screen">
-        <h2>Generating Your Insight...</h2>
-        <p>This may take a moment as we reflect deeply on your thoughts.</p>
-        {affirmationsList.map((aff) => (
-          <div key={aff.id} className={`affirmation ${aff.position}`}>
-            {aff.text}
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  if (showSummaryBuffer) {
-    return (
-      <div className="buffer-screen">
-        <h2>Preparing Your Summary...</h2>
-        <p>We're reflecting on our chat to provide meaningful insights.</p>
-        {affirmationsList.map((aff) => (
-          <div key={aff.id} className={`affirmation ${aff.position}`}>
-            {aff.text}
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  if (isQuizActive) {
-    const currentEmotion = quizQuestions[currentQuizQuestion];
-    const { question, feedback, emojis } = emotionDescriptions[currentEmotion];
-
-    return (
-      <div className="quiz">
-        <h2>{question}</h2>
-        <div className="quiz-options">
-          {[1, 2, 3, 4, 5].map((value) => (
-            <button
-              key={value}
-              className={selectedAnswer === value ? 'selected' : ''}
-              onClick={() => handleQuizAnswer(value)}
-              onKeyPress={(e) => handleQuizKeyPress(e, value)}
-              aria-label={feedback(value)}
-            >
-              {emojis[value - 1]} {feedback(value)}
-            </button>
-          ))}
-        </div>
-        {selectedAnswer !== null && (
-          <button
-            onClick={currentQuizQuestion < quizQuestions.length - 1 ? handleQuizNext : handleStartChat}
-            className="next-button"
-          >
-            {currentQuizQuestion < quizQuestions.length - 1 ? 'Next' : 'Start Chat'}
-          </button>
-        )}
-      </div>
-    );
-  }
-
-  if (showBreathe) {
-    return (
-      <div className="breathe">
-        <h2>Breathe</h2>
-        <div className="breathe-circle">{breatheCount}</div>
-      </div>
-    );
-  }
-
-  if (tokenConfirm) {
-    return (
-      <div className="confirmation">
-        <h2>Confirm Token Usage</h2>
-        <p>
-          This action ({tokenConfirm.action === 'startChat' ? 'starting a chat' : 'generating an insight'}) will use 1
-          Tranquil Token. You have {tranquilTokens} tokens remaining.
-        </p>
-        <button
-          onClick={() => {
-            consumeToken(tokenConfirm.action, tokenConfirm.callback);
-            setTokenConfirm(null);
-          }}
-          disabled={isLoading}
-        >
-          Confirm
-        </button>
-        <button onClick={() => setTokenConfirm(null)} disabled={isLoading}>
-          Cancel
-        </button>
-      </div>
-    );
-  }
-
-  if (deleteConfirm) {
-    return (
-      <div className="confirmation">
-        <h2>Confirm Deletion</h2>
-        <p>
-          Are you sure you want to delete this {deleteConfirm.type === 'report' ? 'report' : deleteConfirm.type === 'journal' ? 'journal entry' : 'account'}? This action cannot be undone.
-        </p>
-        <button
-          onClick={() => {
-            if (deleteConfirm.type === 'report') {
-              handleDeleteReport(deleteConfirm.id);
-            } else if (deleteConfirm.type === 'journal') {
-              handleDeleteJournal(deleteConfirm.id);
-            } else {
-              handleDeleteAccount();
-            }
-          }}
-          disabled={isLoading}
-        >
-          Confirm
-        </button>
-        <button onClick={() => setDeleteConfirm(null)} disabled={isLoading}>
-          Cancel
-        </button>
-      </div>
-    );
-  }
-
-  if (openJournalType) {
-    return (
-      <div className="journal-form">
-        <h2>{openJournalType.charAt(0).toUpperCase() + openJournalType.slice(1)} Journal</h2>
-        {journalPrompts[openJournalType].map((prompt) => (
-          <div key={prompt.key} className="journal-prompt">
-            <h3>{prompt.heading}</h3>
-            <p>{prompt.subheading}</p>
-            <textarea
-              value={journalResponses[prompt.key] || ''}
-              onChange={(e) => handleJournalInput(prompt.key, e.target.value)}
-              placeholder="Write here..."
-            />
-          </div>
-        ))}
-        <button onClick={handleSaveJournal} disabled={isLoading}>
-          Save Journal
-        </button>
-        <button onClick={handleCloseJournal} disabled={isLoading}>
-          Cancel
-        </button>
-      </div>
-    );
-  }
-
-  if (showDailyAffirmationsModal && dailyAffirmations) {
-    return (
-      <div className="daily-affirmations-modal">
-        <h2>Your Daily Affirmations</h2>
-        <div className="affirmation-card">
-          <h3>Suggest</h3>
-          <p>{dailyAffirmations.suggest}</p>
-        </div>
-        <div className="affirmation-card">
-          <h3>Encourage</h3>
-          <p>{dailyAffirmations.encourage}</p>
-        </div>
-        <div className="affirmation-card">
-          <h3>Invite</h3>
-          <p>{dailyAffirmations.invite}</p>
-        </div>
-        <button onClick={() => setShowDailyAffirmationsModal(false)}>Close</button>
-      </div>
-    );
-  }
 
   return (
     <div className="app">
-      <header>
-        <h1>MindSprout</h1>
-        <div className="header-info">
-          <span>Tokens: {tranquilTokens}</span>
-          {tokenRegenTime && tranquilTokens < 1 && (
-            <span>
-              Next token in:{' '}
-              {Math.floor((tokenRegenTime - new Date()) / (1000 * 60 * 60))}h{' '}
-              {Math.floor(((tokenRegenTime - new Date()) % (1000 * 60 * 60)) / (1000 * 60))}m
-            </span>
+      {(isLoading || showSummaryBuffer || showInsightBuffer) && (
+        <div className={showInsightBuffer ? "insight-buffer-overlay" : "loading-overlay"}>
+          <div className="spinner"></div>
+          {showInsightBuffer ? (
+            <p>Please wait whilst we gather your insights...</p>
+          ) : showSummaryBuffer ? (
+            <p>Preparing your summary...</p>
+          ) : (
+            affirmationsList.map((affirmation) => (
+              <p
+                key={affirmation.id}
+                className={`affirmation ${affirmation.position}`}
+              >
+                {affirmation.text}
+              </p>
+            ))
           )}
-          <button onClick={() => setDeleteConfirm({ type: 'account' })}>Delete Account</button>
-          <button onClick={handleLogout}>Logout</button>
         </div>
-      </header>
-      <nav>
-        <button
-          className={activeTab === 'chat' ? 'active' : ''}
-          onClick={() => setActiveTab('chat')}
-        >
-          Chat
-        </button>
-        <button
-          className={activeTab === 'journal' ? 'active' : ''}
-          onClick={() => setActiveTab('journal')}
-        >
-          Journal
-        </button>
-        <button
-          className={activeTab === 'reflect' ? 'active' : ''}
-          onClick={() => setActiveTab('reflect')}
-        >
-          Reflect
-        </button>
-        <button
-          className={activeTab === 'shop' ? 'active' : ''}
-          onClick={() => setActiveTab('shop')}
-        >
-          Shop
-        </button>
-      </nav>
-      <main>
-        {message && (
-          <div className="message">
-            {message}
-            <button onClick={() => setMessage('')}>×</button>
-          </div>
-        )}
-        {isLoading && affirmationsList.map((aff) => (
-          <div key={aff.id} className={`affirmation ${aff.position}`}>
-            {aff.text}
-          </div>
-        ))}
-        {activeTab === 'chat' && (
-          <div className="chat-tab">
-            {!isChatActive ? (
+      )}
+      {deleteConfirm && (
+        <div className={`delete-confirm-modal ${deleteConfirm ? 'active' : ''}`}>
+          <div className="delete-confirm-content">
+            {deleteConfirm.type === 'account' ? (
               <>
-                <button onClick={handleStartQuiz} disabled={isLoading}>
-                  Start New Chat
-                </button>
-                <button
-                  onClick={handleGenerateDailyAffirmations}
-                  disabled={isLoading || (dailyAffirmations && new Date(dailyAffirmations.validUntil) > new Date())}
-                >
-                  Generate Daily Affirmations
-                </button>
-                {dailyAffirmations && new Date(dailyAffirmations.validUntil) > new Date() && (
-                  <button onClick={() => setShowDailyAffirmationsModal(true)}>
-                    View Daily Affirmations
+                <h3>Are you sure you wish to delete your account?</h3>
+                <p>All data involving your account will be deleted, this data is irretrievable</p>
+                <div className="delete-confirm-buttons">
+                  <button
+                    onClick={handleDeleteAccount}
+                    className="delete-account-btn"
+                    aria-label="Confirm account deletion"
+                  >
+                    Yes
                   </button>
-                )}
+                  <button
+                    onClick={() => setDeleteConfirm(null)}
+                    aria-label="Cancel account deletion"
+                  >
+                    No
+                  </button>
+                </div>
               </>
             ) : (
               <>
-                <div className="chat-box" ref={chatBoxRef}>
-                  {chat.map((msg, index) => (
-                    <div key={index} className={`chat-message ${msg.sender}`}>
-                      <span>{msg.text}</span>
-                      <span className="timestamp">
-                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                <div className="chat-controls">
-                  <input
-                    type="text"
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleChat(chatInput)}
-                    placeholder="Type your message..."
-                    disabled={timeLeft <= 0}
-                  />
+                <h3>Are you sure you want to delete this entry?</h3>
+                <p>This action cannot be undone.</p>
+                <div className="delete-confirm-buttons">
                   <button
-                    onClick={() => handleChat(chatInput)}
-                    disabled={timeLeft <= 0 || !chatInput || isLoading}
+                    onClick={() => {
+                      if (deleteConfirm.type === 'journal') {
+                        handleDeleteJournal(deleteConfirm.id);
+                      } else {
+                        handleDeleteReport(deleteConfirm.id);
+                      }
+                    }}
                   >
-                    Send
+                    Yes
                   </button>
-                  <button
-                    onClick={handleExtendChat}
-                    disabled={extendCount >= 3 || timeLeft <= 0 || isLoading}
-                  >
-                    Extend Chat
-                  </button>
-                  <button onClick={handleEndChat} disabled={isLoading}>
-                    End Chat
-                  </button>
-                  <p>Time left: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</p>
+                  <button onClick={() => setDeleteConfirm(null)}>No</button>
                 </div>
               </>
             )}
           </div>
-        )}
-        {activeTab === 'journal' && (
-          <div className="journal-tab">
-            <h2>Journal</h2>
-            <div className="journal-options">
-              <button onClick={() => handleOpenJournal('daily')} disabled={isLoading}>
-                Daily Journal
-              </button>
-              <button onClick={() => handleOpenJournal('dream')} disabled={isLoading}>
-                Dream Journal
-              </button>
-              <button onClick={() => handleOpenJournal('freestyle')} disabled={isLoading}>
-                Freestyle Journal
-              </button>
-            </div>
-            <div className="journal-entries">
-              {paginatedJournal.map(renderJournalEntry)}
-            </div>
-            <div className="pagination">
+        </div>
+      )}
+      {tokenConfirm && (
+        <div className={`token-confirm-modal ${tokenConfirm ? 'active' : ''}`}>
+          <div className="token-confirm-content">
+            <h3>Confirm Tranquil Token Usage</h3>
+            <p>This feature will cost 1 Tranquil Token. Are you sure?</p>
+            <div className="token-confirm-buttons">
               <button
-                onClick={() => setJournalPage((prev) => Math.max(prev - 1, 1))}
-                disabled={journalPage === 1}
+                onClick={() => {
+                  consumeToken(tokenConfirm.action, tokenConfirm.callback);
+                  setTokenConfirm(null);
+                }}
               >
-                Previous
+                Yes
               </button>
-              <span>Page {journalPage}</span>
+              <button onClick={() => setTokenConfirm(null)}>No</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showDailyAffirmationsModal && dailyAffirmations && (
+        <div className="daily-affirmations-modal active">
+          <div className="daily-affirmations-content">
+            <button className="close-btn" onClick={() => setShowDailyAffirmationsModal(false)}>
+              X
+            </button>
+            <h3>Daily Inspiration</h3>
+            <div className="affirmation-section">
+              <h4>I Suggest</h4>
+              <p>{dailyAffirmations.suggest}</p>
+            </div>
+            <div className="affirmation-section">
+              <h4>I Encourage</h4>
+              <p>{dailyAffirmations.encourage}</p>
+            </div>
+            <div className="affirmation-section">
+              <h4>I Invite</h4>
+              <p>{dailyAffirmations.invite}</p>
+            </div>
+          </div>
+        </div>
+      )}
+      <div className="canvas">
+        {token && (
+          <div className="top-bar">
+            <div className="token-section">
+              <span>Tranquil Tokens: {tranquilTokens}</span>
+              {tokenRegenTime && tranquilTokens < 1 && (
+                <span className="regen-time">
+                  (Next in {formatTime(Math.max(0, Math.floor((tokenRegenTime - new Date()) / 1000)))}
+                  )
+                </span>
+              )}
               <button
-                onClick={() => setJournalPage((prev) => prev + 1)}
-                disabled={journalPage * 5 >= journal.length}
+                className="shop-nav-btn"
+                onClick={() => setActiveTab('shop')}
+                aria-label="Go to shop to purchase tokens"
               >
-                Next
+                +
               </button>
             </div>
           </div>
         )}
-        {activeTab === 'reflect' && (
-          <div className="reflect-tab">
-            <h2>Reflect</h2>
-            {isDesktop ? (
-              <div className="reflect-content">
-                <div className="reflect-sidebar">
-                  <button onClick={() => handleOpenNotepad('reports')}>
-                    View Reports
-                  </button>
-                  <button onClick={() => handleOpenNotepad('weekly')}>
-                    Weekly Mood
+        {!token ? (
+          <div className="auth">
+            <img src="/logo.png" alt="MindSprout Logo" className="logo" />
+            <h1>Welcome to MindSprout</h1>
+            <p className="tagline">Planting Seeds of Mindfulness!</p>
+            {message && <p className="message">{message}</p>}
+            <div className="standard-auth">
+              <h2>{isDesktop ? 'Sign Up or Log In' : showSignup ? 'Sign Up' : 'Log In'}</h2>
+              {!isDesktop && (
+                <div className="auth-toggle">
+                  <button className="toggle-btn" onClick={() => setShowSignup(!showSignup)}>
+                    {showSignup ? 'Switch to Log In' : 'Switch to Sign Up'}
                   </button>
                 </div>
-                <div className="reflect-main">
-                  {openNotepadSection === 'reports' && (
-                    <div className="reports">
-                      {paginatedReports.map((report) => (
-                        <div key={report._id} className="report">
-                          <p>{new Date(report.date).toLocaleDateString()}</p>
-                          <button onClick={() => handleViewReport(report)}>
-                            View
-                          </button>
+              )}
+              <div className="form-container">
+                {(isDesktop || showSignup) && (
+                  <div className="signup-form">
+                    <form onSubmit={handleRegularSignup}>
+                      <input
+                        placeholder="Name"
+                        value={regularSignupForm.name}
+                        onChange={(e) => setRegularSignupForm({ ...regularSignupForm, name: e.target.value })}
+                        required
+                      />
+                      <input
+                        placeholder="Email"
+                        type="email"
+                        value={regularSignupForm.email}
+                        onChange={(e) => setRegularSignupForm({ ...regularSignupForm, email: e.target.value })}
+                        required
+                      />
+                      <input
+                        placeholder="Username"
+                        value={regularSignupForm.username}
+                        onChange={(e) => setRegularSignupForm({ ...regularSignupForm, username: e.target.value })}
+                        required
+                      />
+                      <input
+                        placeholder="Password"
+                        type="password"
+                        value={regularSignupForm.password}
+                        onChange={(e) => setRegularSignupForm({ ...regularSignupForm, password: e.target.value })}
+                        required
+                      />
+                      <button type="submit" className="signup-btn">Sign Up</button>
+                    </form>
+                  </div>
+                )}
+                {(isDesktop || !showSignup) && (
+                  <div className="login-form">
+                    <form onSubmit={handleRegularLogin}>
+                      <input
+                        placeholder="Email"
+                        value={regularLoginForm.email}
+                        onChange={(e) => setRegularLoginForm({ ...regularLoginForm, email: e.target.value })}
+                        required
+                      />
+                      <input
+                        placeholder="Password"
+                        type="password"
+                        value={regularLoginForm.password}
+                        onChange={(e) => setRegularLoginForm({ ...regularLoginForm, password: e.target.value })}
+                        required
+                      />
+                      <button type="submit">Log In</button>
+                    </form>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="regular-dashboard">
+            <img src="/logo.png" alt="MindSprout Logo" className="logo" />
+            {message && <p className="message">{message}</p>}
+            {activeTab === 'profile' ? (
+              <div className="profile">
+                <h2>Your Profile</h2>
+                <div className="mood-trend">
+                  <h3>Weekly Mood Trends</h3>
+                  {reports.length > 0 ? (
+                    <>
+                      <Line data={weeklyMoodChartData} options={weeklyMoodChartData.options} />
+                      <div className="mood-summary">
+                        {weeklyMoodSummary.map((summary, index) => (
+                          <p key={index}>{summary}</p>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <p>No mood data yet. Start a chat session to track your mood!</p>
+                  )}
+                </div>
+                <div className="daily-inspiration">
+                  <h3>Daily Inspiration</h3>
+                  <button onClick={handleGenerateDailyAffirmations} disabled={dailyAffirmations && dailyAffirmations.validUntil > new Date()}>
+                    Generate Daily Affirmations
+                  </button>
+                </div>
+                <button onClick={handleLogout} className="logout-btn">
+                  <img src="/icons/logout.png" alt="Logout" className="icon" />
+                  Log Out
+                </button>
+                <button
+                  onClick={() => setDeleteConfirm({ type: 'account' })}
+                  className="delete-account-btn"
+                  aria-label="Delete account"
+                >
+                  <img src="/icons/delete.png" alt="Delete Account" className="icon" />
+                  Delete Account
+                </button>
+              </div>
+            ) : activeTab === 'chat' ? (
+              <>
+                {isQuizActive ? (
+                  <div className={`quiz-fullscreen ${isQuizActive ? 'active' : ''}`}>
+                    <div className="quiz-content">
+                      <h3 className="quiz-question">{emotionDescriptions[quizQuestions[currentQuizQuestion]].question}</h3>
+                      <div className="quiz-options">
+                        {[1, 2, 3, 4, 5].map((value) => (
                           <button
-                            onClick={() => setDeleteConfirm({ type: 'report', id: report._id })}
+                            key={value}
+                            className={`quiz-option-box ${selectedAnswer === value ? 'selected' : ''}`}
+                            onClick={() => handleQuizAnswer(value)}
+                            onKeyPress={(e) => handleQuizKeyPress(e, value)}
+                            tabIndex={0}
+                            role="radio"
+                            aria-checked={selectedAnswer === value}
+                            aria-label={`${emotionDescriptions[quizQuestions[currentQuizQuestion]].feedback(value)} (${value}/5)`}
                           >
-                            Delete
+                            <span className="quiz-value">{value}</span>
+                            <span className="quiz-feedback">{emotionDescriptions[quizQuestions[currentQuizQuestion]].feedback(value)}</span>
+                            <span className="quiz-emoji">{emotionDescriptions[quizQuestions[currentQuizQuestion]].emojis[value - 1]}</span>
                           </button>
+                        ))}
+                      </div>
+                      <div className="quiz-nav">
+                        {selectedAnswer !== null &&
+                          (currentQuizQuestion < quizQuestions.length - 1 ? (
+                            <button onClick={handleQuizNext}>Next</button>
+                          ) : (
+                            <button onClick={handleStartChat}>Start Chat</button>
+                          ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : showBreathe ? (
+                  <div className={`breathe-overlay ${showBreathe ? 'active' : ''}`}>
+                    <div className="breathe-animation">
+                      <h2>Take this moment to breathe...</h2>
+                      <p className={`breathe-count ${breatheCount === 4 ? 'fade-in' : 'fade-out'}`}>
+                        {breatheCount}
+                      </p>
+                    </div>
+                  </div>
+                ) : isChatActive ? (
+                  <div className="chat">
+                    <h2>Chat with Pal</h2>
+                    <p>Time left: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</p>
+                    <p>Extensions used: {extendCount}/3</p>
+                    <div className="chat-box" ref={chatBoxRef}>
+                      {chat.slice().reverse().map((msg, i) => (
+                        <p key={i} className={msg.sender === 'pal' ? 'pal' : 'user'}>
+                          {msg.text}
+                        </p>
+                      ))}
+                    </div>
+                    {timeLeft > 0 ? (
+                      <div className="chat-input-container">
+                        <input
+                          placeholder="Talk to Pal... (max 500 characters)"
+                          value={chatInput}
+                          onChange={(e) => setChatInput(e.target.value.slice(0, 500))}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter' && chatInput.trim()) {
+                              handleChat(chatInput);
+                            }
+                          }}
+                        />
+                        <button
+                          className="send-btn"
+                          onClick={() => chatInput.trim() && handleChat(chatInput)}
+                          disabled={!chatInput.trim()}
+                        >
+                          Send
+                        </button>
+                        <p className="char-counter">{chatInput.length}/500</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <h2>Session Complete</h2>
+                        <p>Check your Reflect tab for your summary!</p>
+                        <button onClick={() => setActiveTab('reflect')}>View Reflect</button>
+                      </div>
+                    )}
+                    {timeLeft > 0 && (
+                      <>
+                        <button onClick={handleEndChat}>End Chat</button>
+                        {timeLeft < 30 && extendCount < 3 && (
+                          <button onClick={handleExtendChat}>Extend Chat (+5 min)</button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <div className="quiz">
+                    <h2>Chat</h2>
+                    <p>
+                      You have {tranquilTokens} Tranquil Tokens.{' '}
+                      {tranquilTokens < 1 && tokenRegenTime
+                        ? `Next token in ${formatTime(
+                            Math.max(0, Math.floor((tokenRegenTime - new Date()) / 1000))
+                          )}`
+                        : 'Tokens regenerate every 24 hours.'}
+                    </p>
+                    {tranquilTokens > 0 ? (
+                      <button onClick={handleStartQuiz}>Start Quiz</button>
+                    ) : (
+                      <p>Purchase more tokens or wait for a new token!</p>
+                    )}
+                  </div>
+                )}
+              </>
+            ) : activeTab === 'journal' ? (
+              <div className="journal">
+                <h2>Journal</h2>
+                <div className="journal-options">
+                  <button
+                    className="journal-button"
+                    onClick={() => handleOpenJournal('daily')}
+                    role="button"
+                    tabIndex={0}
+                    onKeyPress={(e) => e.key === 'Enter' && handleOpenJournal('daily')}
+                    aria-label="Open Daily Journal"
+                  >
+                    <img src="/personal.png" alt="Daily Journal" />
+                    <span>Daily Journal</span>
+                  </button>
+                  <button
+                    className="journal-button"
+                    onClick={() => handleOpenJournal('dream')}
+                    role="button"
+                    tabIndex={0}
+                    onKeyPress={(e) => e.key === 'Enter' && handleOpenJournal('dream')}
+                    aria-label="Open Dream Journal"
+                  >
+                    <img src="/dream1.png" alt="Dream Journal" />
+                    <span>Dream Journal</span>
+                  </button>
+                  <button
+                    className="journal-button"
+                    onClick={() => handleOpenJournal('freestyle')}
+                    role="button"
+                    tabIndex={0}
+                    onKeyPress={(e) => e.key === 'Enter' && handleOpenJournal('freestyle')}
+                    aria-label="Open Freestyle Journal"
+                  >
+                    <img src="/freestyle.png" alt="Freestyle Journal" />
+                    <span>Freestyle Journal</span>
+                  </button>
+                </div>
+                {openJournalType && (
+                  <div className={`journal-modal ${openJournalType ? 'active' : ''}`}>
+                    <div className="journal-content">
+                      <button className="close-btn" onClick={handleCloseJournal}>
+                        X
+                      </button>
+                      <h3>
+                        {openJournalType === 'daily'
+                          ? 'Daily Journal'
+                          : openJournalType === 'dream'
+                          ? 'Dream Journal'
+                          : 'Freestyle Journal'}
+                      </h3>
+                      {journalPrompts[openJournalType].map((prompt) => (
+                        <div key={prompt.key} className="journal-prompt">
+                          <h2>{prompt.heading}</h2>
+                          <p>{prompt.subheading}</p>
+                          <textarea
+                            placeholder="Write your response..."
+                            value={journalResponses[prompt.key] || ''}
+                            onChange={(e) => handleJournalInput(prompt.key, e.target.value)}
+                          />
                         </div>
                       ))}
-                      <div className="pagination">
-                        <button
-                          onClick={() => setReflectPage((prev) => Math.max(prev - 1, 1))}
-                          disabled={reflectPage === 1}
-                        >
-                          Previous
-                        </button>
-                        <span>Page {reflectPage}</span>
-                        <button
-                          onClick={() => setReflectPage((prev) => prev + 1)}
-                          disabled={reflectPage * 5 >= reports.length}
-                        >
-                          Next
-                        </button>
+                      <div className="journal-actions">
+                        <button onClick={handleSaveJournal}>Save Journal</button>
                       </div>
                     </div>
-                  )}
-                  {openNotepadSection === 'weekly' && (
-                    <div className="weekly-mood">
-                      <h3>Weekly Mood Trends</h3>
-                      <div className="chart-container">
-                        <Line
-                          data={weeklyMoodChartData}
-                          options={weeklyMoodChartData.options}
-                        />
-                      </div>
-                      <h3>Weekly Summary</h3>
-                      <ul>
-                        {weeklyMoodSummary.map((summary, index) => (
-                          <li key={index}>{summary}</li>
+                  </div>
+                )}
+                <h3>Past Journal Entries</h3>
+                {journal.length > 0 ? (
+                  <div className="journal-tables">
+                    <table className="gradient-table">
+                      <thead>
+                        <tr>
+                          <th>Journal Type</th>
+                          <th>Date</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {paginatedJournal.map((entry, i) => (
+                          <tr key={i}>
+                            <td>
+                              {entry.type === 'daily'
+                                ? 'Daily Journal'
+                                : entry.type === 'dream'
+                                ? 'Dream Journal'
+                                : 'Freestyle Journal'}
+                            </td>
+                            <td>{new Date(entry.date).toLocaleDateString()}</td>
+                            <td>
+                              <button onClick={() => handleOpenJournalEntry(entry)}>Open</button>
+                              <button
+                                className="delete-btn"
+                                onClick={() => setDeleteConfirm({ type: 'journal', id: entry._id })}
+                              >
+                                Delete
+                              </button>
+                            </td>
+                          </tr>
                         ))}
-                      </ul>
+                      </tbody>
+                    </table>
+                    <div className="pagination">
+                      <button
+                        onClick={() => setJournalPage((prev) => Math.max(prev - 1, 1))}
+                        disabled={journalPage === 1}
+                      >
+                        Previous
+                      </button>
+                      <span>
+                        Page {journalPage} of {journalPageCount}
+                      </span>
+                      <button
+                        onClick={() => setJournalPage((prev) => Math.min(prev + 1, journalPageCount))}
+                        disabled={journalPage === journalPageCount}
+                      >
+                        Next
+                      </button>
                     </div>
-                  )}
-                  {selectedReport && (
-                    <div className="report-details" ref={reportDetailsRef}>
-                      <h3>Session on {new Date(selectedReport.date).toLocaleDateString()}</h3>
-                      {barChartData && (
-                        <div className="chart-container">
-                          <Bar data={barChartData} options={barChartData.options} />
+                    {selectedJournalEntry && openNotepadSection === 'reflect' && (
+                      <div className={`notepad-modal ${openNotepadSection ? 'active' : ''}`}>
+                        <div className="notepad-content">
+                          <button className="close-btn" onClick={handleCloseJournalEntry}>
+                            X
+                          </button>
+                          <div className="notepad-text">
+                            <h3>
+                              Entry: {new Date(selectedJournalEntry.date).toLocaleDateString()} (
+                              {selectedJournalEntry.type === 'daily'
+                                ? 'Daily Journal'
+                                : selectedJournalEntry.type === 'dream'
+                                ? 'Dream Journal'
+                                : 'Freestyle Journal'}
+                              )
+                            </h3>
+                            {renderJournalResponses(selectedJournalEntry)}
+                          </div>
                         </div>
-                      )}
-                      <h4>What We Discussed</h4>
-                      <p>{selectedReport.summary.discussed}</p>
-                      <h4>Your Thoughts & Feelings</h4>
-                      <p>{selectedReport.summary.thoughtsFeelings}</p>
-                      <h4>Insights Uncovered</h4>
-                      <p>{selectedReport.summary.insights}</p>
-                      <h4>Mood Reflection</h4>
-                      <p>{selectedReport.summary.moodReflection}</p>
-                      <h4>Recommendations</h4>
-                      <p>{selectedReport.summary.recommendations}</p>
-                      <button onClick={() => setSelectedReport(null)}>Close</button>
-                    </div>
-                  )}
-                  {selectedJournalEntry && (
-                    <div className="journal-details">
-                      <h3>
-                        {selectedJournalEntry.type.charAt(0).toUpperCase() +
-                          selectedJournalEntry.type.slice(1)}{' '}
-                        Journal - {new Date(selectedJournalEntry.date).toLocaleDateString()}
-                      </h3>
-                      {renderJournalResponses(selectedJournalEntry)}
-                      <button onClick={handleCloseJournalEntry}>Close</button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <>
-                <button onClick={() => handleOpenNotepad('reports')}>
-                  View Reports
-                </button>
-                <button onClick={() => handleOpenNotepad('weekly')}>
-                  Weekly Mood
-                </button>
-                {openNotepadSection === 'reports' && (
-                  <div className="reports">
-                    {paginatedReports.map((report) => (
-                      <div key={report._id} className="report">
-                        <p>{new Date(report.date).toLocaleDateString()}</p>
-                        <button onClick={() => handleViewReport(report)}>
-                          View
-                        </button>
-                        <button
-                          onClick={() => setDeleteConfirm({ type: 'report', id: report._id })}
-                        >
-                          Delete
-                        </button>
                       </div>
-                    ))}
+                    )}
+                  </div>
+                ) : (
+                  <p>No journal entries yet. Start writing to save one!</p>
+                )}
+              </div>
+            ) : activeTab === 'reflect' ? (
+              <div className="reflect">
+                <h2>Reflect</h2>
+                <h3>Past Chat Sessions</h3>
+                {reports.length > 0 ? (
+                  <>
+                    <table className="gradient-table">
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {paginatedReports.map((report, i) => (
+                          <tr key={i}>
+                            <td>{new Date(report.date).toLocaleDateString()}</td>
+                            <td>
+                              <button
+                                onClick={() => handleViewReport(report)}
+                                className={selectedReport?._id === report._id ? 'active' : ''}
+                              >
+                                View
+                              </button>
+                              <button
+                                className="delete-btn"
+                                onClick={() => setDeleteConfirm({ type: 'report', id: report._id })}
+                              >
+                                Delete
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                     <div className="pagination">
                       <button
                         onClick={() => setReflectPage((prev) => Math.max(prev - 1, 1))}
@@ -1661,127 +1684,163 @@ function App() {
                       >
                         Previous
                       </button>
-                      <span>Page {reflectPage}</span>
+                      <span>
+                        Page {reflectPage} of {reflectPageCount}
+                      </span>
                       <button
-                        onClick={() => setReflectPage((prev) => prev + 1)}
-                        disabled={reflectPage * 5 >= reports.length}
+                        onClick={() => setReflectPage((prev) => Math.min(prev + 1, reflectPageCount))}
+                        disabled={reflectPage === reflectPageCount}
                       >
                         Next
                       </button>
                     </div>
-                  </div>
-                )}
-                {openNotepadSection === 'weekly' && (
-                  <div className="weekly-mood">
-                    <h3>Weekly Mood Trends</h3>
-                    <div className="chart-container">
-                      <Line
-                        data={weeklyMoodChartData}
-                        options={weeklyMoodChartData.options}
-                      />
-                    </div>
-                    <h3>Weekly Summary</h3>
-                    <ul>
-                      {weeklyMoodSummary.map((summary, index) => (
-                        <li key={index}>{summary}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {selectedReport && (
-                  <div className="report-details" ref={reportDetailsRef}>
-                    <h3>Session on {new Date(selectedReport.date).toLocaleDateString()}</h3>
-                    {barChartData && (
-                      <div className="chart-container">
-                        <Bar data={barChartData} options={barChartData.options} />
+                    {selectedReport && (
+                      <div className="report-details" ref={reportDetailsRef}>
+                        <h3>Session: {new Date(selectedReport.date).toLocaleDateString()}</h3>
+                        <div className="bar-chart-container">
+                          {barChartData && <Bar data={barChartData} options={barChartData.options} />}
+                        </div>
+                        <p className="feedback">Select to read your insights</p>
+                        <div className="summary-container">
+                          {['discussed', 'thoughtsFeelings', 'insights', 'moodReflection', 'recommendations'].map(
+                            (section) => (
+                              <div
+                                key={section}
+                                className="summary-card"
+                                onClick={() => handleOpenNotepad(section)}
+                              >
+                                <div className="summary-front">
+                                  <h4>
+                                    {section === 'discussed'
+                                      ? 'What We Discussed'
+                                      : section === 'thoughtsFeelings'
+                                      ? 'Your Thoughts & Feelings'
+                                      : section === 'insights'
+                                      ? 'Insights Uncovered'
+                                      : section === 'moodReflection'
+                                      ? 'Mood Reflection'
+                                      : 'Recommendations'}
+                                  </h4>
+                                </div>
+                              </div>
+                            )
+                          )}
+                        </div>
+                        {openNotepadSection && (
+                          <div className={`notepad-modal ${openNotepadSection ? 'active' : ''}`}>
+                            <div className="notepad-content">
+                              <button className="close-btn" onClick={handleCloseNotepad}>
+                                X
+                              </button>
+                              <div className="notepad-text">
+                                <h3>
+                                  {openNotepadSection === 'discussed'
+                                    ? 'What We Discussed'
+                                    : openNotepadSection === 'thoughtsFeelings'
+                                    ? 'Your Thoughts & Feelings'
+                                    : openNotepadSection === 'insights'
+                                    ? 'Insights Uncovered'
+                                    : openNotepadSection === 'moodReflection'
+                                    ? 'Mood Reflection'
+                                    : 'Recommendations'}
+                                </h3>
+                                {openNotepadSection === 'reflect' && selectedJournalEntry
+                                  ? renderJournalResponses(selectedJournalEntry)
+                                  : selectedReport.summary?.[openNotepadSection] || 'Not available'}
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
-                    <h4>What We Discussed</h4>
-                    <p>{selectedReport.summary.discussed}</p>
-                    <h4>Your Thoughts & Feelings</h4>
-                    <p>{selectedReport.summary.thoughtsFeelings}</p>
-                    <h4>Insights Uncovered</h4>
-                    <p>{selectedReport.summary.insights}</p>
-                    <h4>Mood Reflection</h4>
-                    <p>{selectedReport.summary.moodReflection}</p>
-                    <h4>Recommendations</h4>
-                    <p>{selectedReport.summary.recommendations}</p>
-                    <button onClick={() => setSelectedReport(null)}>Close</button>
-                  </div>
+                  </>
+                ) : (
+                  <p>No chat sessions yet. Start chatting to save insights!</p>
                 )}
-                {selectedJournalEntry && (
-                  <div className="journal-details">
-                    <h3>
-                      {selectedJournalEntry.type.charAt(0).toUpperCase() +
-                        selectedJournalEntry.type.slice(1)}{' '}
-                      Journal - {new Date(selectedJournalEntry.date).toLocaleDateString()}
-                    </h3>
-                    {renderJournalResponses(selectedJournalEntry)}
-                    <button onClick={handleCloseJournalEntry}>Close</button>
+              </div>
+            ) : activeTab === 'shop' ? (
+              <div className="shop">
+                <h2>Shop</h2>
+                <p>Purchase Tranquil Tokens to access features like chatting and generating insights.</p>
+                <div className="token-packages">
+                  <div className="token-card">
+                    <h3>1 Token</h3>
+                    <p>£0.99</p>
+                    <button onClick={() => handlePurchaseTokens(1, 'tranquil_tokens_1')}>Buy Now</button>
                   </div>
-                )}
-              </>
-            )}
-          </div>
-        )}
-        {activeTab === 'shop' && (
-          <div className="shop-tab">
-            <h2>Shop Tranquil Tokens</h2>
-            <div className="shop-items">
-              <div className="shop-item">
-                <h3>1 Tranquil Token</h3>
-                <p>£0.99</p>
-                <button
-                  onClick={() => handlePurchaseTokens(1, 'tranquil_tokens_1')}
-                  disabled={isLoading}
-                >
-                  Buy Now
-                </button>
+                  <div className="token-card">
+                    <h3>5 Tokens</h3>
+                    <p>£3.99</p>
+                    <button onClick={() => handlePurchaseTokens(5, 'tranquil_tokens_5')}>Buy Now</button>
+                  </div>
+                  <div className="token-card">
+                    <h3>10 Tokens</h3>
+                    <p>£6.99</p>
+                    <button onClick={() => handlePurchaseTokens(10, 'tranquil_tokens_10')}>Buy Now</button>
+                  </div>
+                  <div className="token-card">
+                    <h3>50 Tokens</h3>
+                    <p>£19.99</p>
+                    <button onClick={() => handlePurchaseTokens(50, 'tranquil_tokens_50')}>Buy Now</button>
+                  </div>
+                  <div className="token-card">
+                    <h3>100 Tokens</h3>
+                    <p>£29.99</p>
+                    <button onClick={() => handlePurchaseTokens(100, 'tranquil_tokens_100')}>Buy Now</button>
+                  </div>
+                </div>
               </div>
-              <div className="shop-item">
-                <h3>5 Tranquil Tokens</h3>
-                <p>£3.99</p>
-                <button
-                  onClick={() => handlePurchaseTokens(5, 'tranquil_tokens_5')}
-                  disabled={isLoading}
-                >
-                  Buy Now
-                </button>
-              </div>
-              <div className="shop-item">
-                <h3>10 Tranquil Tokens</h3>
-                <p>£6.99</p>
-                <button
-                  onClick={() => handlePurchaseTokens(10, 'tranquil_tokens_10')}
-                  disabled={isLoading}
-                >
-                  Buy Now
-                </button>
-              </div>
-              <div className="shop-item">
-                <h3>50 Tranquil Tokens</h3>
-                <p>£19.99</p>
-                <button
-                  onClick={() => handlePurchaseTokens(50, 'tranquil_tokens_50')}
-                  disabled={isLoading}
-                >
-                  Buy Now
-                </button>
-              </div>
-              <div className="shop-item">
-                <h3>100 Tranquil Tokens</h3>
-                <p>£29.99</p>
-                <button
-                  onClick={() => handlePurchaseTokens(100, 'tranquil_tokens_100')}
-                  disabled={isLoading}
-                >
-                  Buy Now
-                </button>
-              </div>
+            ) : null}
+            <div className="menu-bar">
+              <button
+                onClick={() => setActiveTab('profile')}
+                className={activeTab === 'profile' ? 'active' : ''}
+                aria-label="View Profile"
+                aria-pressed={activeTab === 'profile'}
+              >
+                <img src="/icons/user.png" alt="Profile" className="icon" />
+                <span>Profile</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('chat')}
+                className={activeTab === 'chat' ? 'active' : ''}
+                aria-label="Start Chat"
+                aria-pressed={activeTab === 'chat'}
+              >
+                <img src="/icons/chat.png" alt="Chat" className="icon" />
+                <span>Chat</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('journal')}
+                className={activeTab === 'journal' ? 'active' : ''}
+                aria-label="View Journal"
+                aria-pressed={activeTab === 'journal'}
+              >
+                <img src="/icons/journal.png" alt="Journal" className="icon" />
+                <span>Journal</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('reflect')}
+                className={activeTab === 'reflect' ? 'active' : ''}
+                aria-label="View Reflect"
+                aria-pressed={activeTab === 'reflect'}
+              >
+                <img src="/icons/meditation.png" alt="Reflect" className="icon" />
+                <span>Reflect</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('shop')}
+                className={activeTab === 'shop' ? 'active' : ''}
+                aria-label="View Shop"
+                aria-pressed={activeTab === 'shop'}
+              >
+                <img src="/icons/shop.png" alt="Shop" className="icon" />
+                <span>Shop</span>
+              </button>
             </div>
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }
