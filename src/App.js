@@ -478,17 +478,30 @@ function App() {
   };
 
   // Shop purchase handler
-  const handlePurchaseTokens = async (quantity, price) => {
+  const handlePurchaseTokens = async (quantity, productId) => {
     setIsLoading(true);
     try {
-      const response = await axios.post(
-        `${API_URL}/api/regular/purchase-tokens`,
-        { quantity, price },
-        { headers: { Authorization: token } }
-      );
-      setTranquilTokens(response.data.tranquilTokens);
-      setMessage(`Successfully purchased ${quantity} Tranquil Tokens!`);
-      debouncedFetchUserData(token);
+      // Check if running in Flutter WebView
+      if (window.flutter_inapp_purchase) {
+        // Call Flutter to initiate in-app purchase
+        const purchaseResult = await window.flutter_inapp_purchase.buyProduct(productId);
+        if (purchaseResult.success) {
+          // Notify backend to credit tokens
+          const response = await axios.post(
+            `${API_URL}/api/regular/purchase-tokens`,
+            { quantity, purchaseToken: purchaseResult.purchaseToken },
+            { headers: { Authorization: token } }
+          );
+          setTranquilTokens(response.data.tranquilTokens);
+          setMessage(`Successfully purchased ${quantity} Tranquil Tokens!`);
+          debouncedFetchUserData(token);
+        } else {
+          setMessage(`Purchase failed: ${purchaseResult.error || 'Unknown error'}`);
+        }
+      } else {
+        // Fallback for non-Flutter environments (e.g., web)
+        setMessage('In-app purchases are only available in the mobile app.');
+      }
     } catch (err) {
       console.error('Error purchasing tokens:', err);
       setMessage('Error purchasing tokens: ' + (err.response?.data?.error || err.message));
@@ -1717,27 +1730,27 @@ function App() {
                   <div className="token-card">
                     <h3>1 Token</h3>
                     <p>£0.99</p>
-                    <button onClick={() => handlePurchaseTokens(1, 0.99)}>Buy Now</button>
+                    <button onClick={() => handlePurchaseTokens(1, 'tranquil_tokens_1')}>Buy Now</button>
                   </div>
                   <div className="token-card">
                     <h3>5 Tokens</h3>
                     <p>£3.99</p>
-                    <button onClick={() => handlePurchaseTokens(5, 3.99)}>Buy Now</button>
+                    <button onClick={() => handlePurchaseTokens(5, 'tranquil_tokens_5')}>Buy Now</button>
                   </div>
                   <div className="token-card">
                     <h3>10 Tokens</h3>
                     <p>£6.99</p>
-                    <button onClick={() => handlePurchaseTokens(10, 6.99)}>Buy Now</button>
+                    <button onClick={() => handlePurchaseTokens(10, 'tranquil_tokens_10')}>Buy Now</button>
                   </div>
                   <div className="token-card">
                     <h3>50 Tokens</h3>
                     <p>£19.99</p>
-                    <button onClick={() => handlePurchaseTokens(50, 19.99)}>Buy Now</button>
+                    <button onClick={() => handlePurchaseTokens(50, 'tranquil_tokens_50')}>Buy Now</button>
                   </div>
                   <div className="token-card">
                     <h3>100 Tokens</h3>
                     <p>£29.99</p>
-                    <button onClick={() => handlePurchaseTokens(100, 29.99)}>Buy Now</button>
+                    <button onClick={() => handlePurchaseTokens(100, 'tranquil_tokens_100')}>Buy Now</button>
                   </div>
                 </div>
               </div>
