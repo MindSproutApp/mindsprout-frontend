@@ -1770,7 +1770,7 @@ function App() {
                   </div>
                   <div className="token-card">
                     <h3>5 Tokens</h3>
-                    <p>£3.99</p>
+                    <p>£1.99</p>
                     <button onClick={() => handlePurchaseTokens(5, 'tranquil_tokens_5')}>Buy Now</button>
                   </div>
                   <div className="token-card">
