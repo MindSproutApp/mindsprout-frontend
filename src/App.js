@@ -1386,7 +1386,21 @@ const handleDeleteReport = async (reportId) => {
                 </div>
                 <div className="starlit-guidance">
   <h3>Starlit Guidance</h3>
-  <div className="guidance-table-container">
+  <div
+    className="guidance-table-container"
+    style={{
+      background: `
+        url(${process.env.PUBLIC_URL}/keep.png) left center / 50% no-repeat,
+        url(${process.env.PUBLIC_URL}/letgo.png) right center / 50% no-repeat
+      `,
+      backgroundSize: '50% 100%',
+      padding: '20px',
+      minHeight: '200px',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center'
+    }}
+  >
     {starlitGuidance ? (
       <table className="guidance-table">
         <thead>
