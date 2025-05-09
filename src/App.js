@@ -757,27 +757,27 @@ function App() {
     }
   };
 
-  const handleDeleteReport = async (reportId) => {
-    setIsLoading(true);
-    try {
-      await axios.delete(`${API_URL}/api/regular/reports/${reportId}`, {
-        headers: { Authorization: token },
-      });
-      setReports((prev) => prev.filter((report) => report._id !== reportId));
-      setSelectedReport(null);
-      setOpenNotepadSection(null);
-      setMessage('Report deleted successfully.');
-    } catch (err) {
-      console.error('Error deleting report:', err);
-      setMessage('Error deleting report: ' + (err.response?.data?.error || err.message));
-      // Still need to fully integrate payment processing logic
-      console.error('Error deleting report:', err);
-      setMessage('Error deleting report: ' + (err.response?.data?.error || err.message));
-    } finally {
-      setIsLoading(false);
-      setDeleteConfirm(null);
-    }
-  };
+const handleDeleteReport = async (reportId) => {
+  setIsLoading(true);
+  try {
+    await axios.delete(`${API_URL}/api/regular/reports/${reportId}`, {
+      headers: { Authorization: token },
+    });
+    setReports((prev) => prev.filter((report) => report._id !== reportId));
+    setSelectedReport(null);
+    setOpenNotepadSection(null);
+    setMessage('Report deleted successfully.');
+  } catch (err) {
+    console.error('Error deleting report:', err);
+    setMessage('Error deleting report: ' + (err.response?.data?.error || err.message));
+    // Still need to fully integrate payment processing logic
+    console.error('Error deleting report:', err);
+    setMessage('Error deleting report: ' + (err.response?.data?.error || err.message));
+  } finally {
+    setIsLoading(false);
+    setDeleteConfirm(null);
+  }
+};
 
   const handleGenerateDailyAffirmations = async () => {
     setIsLoading(true);
@@ -1768,11 +1768,15 @@ function App() {
                     <p>£0.99</p>
                     <button onClick={() => handlePurchaseTokens(1, 'tranquil_tokens_1')}>Buy Now</button>
                   </div>
-                  <div className="token-card">
-                    <h3>5 Tokens</h3>
-                    <p>£1.99</p>
-                    <button onClick={() => handlePurchaseTokens(5, 'tranquil_tokens_5')}>Buy Now</button>
-                  </div>
+                  <div className="token-card highlighted">
+  <h3>Best Value Pack</h3>
+  <p className="original-price">£3.99</p>
+  <p className="sale-price">£1.99</p>
+  <p className="best-value">Sale - BEST VALUE</p>
+  <button onClick={() => handlePurchaseTokens(5, 'prod_5_tokens')} disabled={isLoading}>
+    Buy Now
+  </button>
+</div>
                   <div className="token-card">
                     <h3>10 Tokens</h3>
                     <p>£6.99</p>
