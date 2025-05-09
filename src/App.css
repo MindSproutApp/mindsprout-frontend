@@ -1693,6 +1693,10 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
 /* Shop Section */
 /* ========================================================================== */
 
+/* ========================================================================== */
+/* Shop Section */
+/* ========================================================================== */
+
 .shop {
   background: #fff;
   padding: 20px;
@@ -1748,6 +1752,38 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
   background: #2E7D32;
 }
 
+.token-card.highlighted {
+  position: relative;
+  animation: pulse 2s infinite;
+  box-shadow: 0 0 15px rgba(56, 142, 60, 0.5), 0 0 30px rgba(56, 142, 60, 0.3);
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 15px rgba(56, 142, 60, 0.5), 0 0 30px rgba(56, 142, 60, 0.3); }
+  50% { box-shadow: 0 0 25px rgba(56, 142, 60, 0.7), 0 0 40px rgba(56, 142, 60, 0.5); }
+  100% { box-shadow: 0 0 15px rgba(56, 142, 60, 0.5), 0 0 30px rgba(56, 142, 60, 0.3); }
+}
+
+.original-price {
+  font-size: 14px;
+  color: #EF9A9A;
+  text-decoration: line-through;
+  margin-bottom: 5px;
+}
+
+.sale-price {
+  font-size: 18px;
+  font-weight: 700;
+  color: #388E3C;
+  margin-bottom: 5px;
+}
+
+.best-value {
+  font-size: 12px;
+  color: #2E7D32;
+  font-weight: 500;
+}
+
 @media (max-width: 768px) {
   .shop {
     padding: 15px;
@@ -1765,6 +1801,48 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
     padding: 6px 12px;
     font-size: 12px;
   }
+  .original-price {
+    font-size: 12px;
+  }
+  .sale-price {
+    font-size: 16px;
+  }
+  .best-value {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .token-card {
+    width: 120px;
+  }
+  .token-card h3 {
+    font-size: 14px;
+  }
+  .token-card p {
+    font-size: 12px;
+  }
+  .token-card button {
+    padding: 5px 10px;
+    font-size: 10px;
+  }
+  .original-price {
+    font-size: 10px;
+  }
+  .sale-price {
+    font-size: 14px;
+  }
+  .best-value {
+    font-size: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .token-card.highlighted {
+    animation: none;
+    box-shadow: 0 0 15px rgba(56, 142, 60, 0.5), 0 0 30px rgba(56, 142, 60, 0.3);
+  }
+}
 
   /* Responsive styles for insight buffer overlay */
   .insight-buffer-overlay p {
@@ -1851,7 +1929,6 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
   .pagination span {
     font-size: 12px;
   }
-}
 
 /* ========================================================================== */
 /* Additional Responsive Breakpoints */
