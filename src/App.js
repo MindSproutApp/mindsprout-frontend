@@ -60,23 +60,24 @@ function App() {
   const [showInsightBuffer, setShowInsightBuffer] = useState(false);
   const [starlitGuidance, setStarlitGuidance] = useState(null);
 
-useEffect(() => {
-  const fetchStarlitGuidance = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/api/regular/starlit-guidance`, {
-        headers: { Authorization: token },
-      });
-      setStarlitGuidance(response.data);
-    } catch (error) {
-      console.error('Error fetching Starlit Guidance:', error);
-      setMessage('Failed to fetch Starlit Guidance.');
+  useEffect(() => {
+    const fetchStarlitGuidance = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/api/regular/starlit-guidance`, {
+          headers: { Authorization: token },
+        });
+        console.log('Starlit Guidance:', response.data); // Debug
+        setStarlitGuidance(response.data);
+      } catch (error) {
+        console.error('Error fetching Starlit Guidance:', error);
+        setMessage('Failed to fetch Starlit Guidance.');
+      }
+    };
+  
+    if (token) {
+      fetchStarlitGuidance();
     }
-  };
-
-  if (token) {
-    fetchStarlitGuidance();
-  }
-}, [token, API_URL]); // New state for insight buffering
+  }, [token, API_URL]);
 
   const chatBoxRef = useRef(null);
   const reportDetailsRef = useRef(null);
@@ -1385,31 +1386,10 @@ const handleDeleteReport = async (reportId) => {
                     <p>No mood data yet. Start a chat session to track your mood!</p>
                   )}
                 </div>
+            
                 <div className="starlit-guidance">
   <h3>Starlit Guidance</h3>
-  <div
-    className="guidance-table-container"
-    style={{
-      background: window.innerWidth > 768
-        ? `
-            url(${process.env.PUBLIC_URL}/keep.png) left center / auto 100% no-repeat,
-            url(${process.env.PUBLIC_URL}/letgo.png) right center / auto 100% no-repeat
-          `
-        : `
-            url(${process.env.PUBLIC_URL}/keep.png) top center / 100% auto no-repeat,
-            url(${process.env.PUBLIC_URL}/letgo.png) bottom center / 100% auto no-repeat
-          `,
-      backgroundSize: window.innerWidth > 768 ? '50% 100%' : '100% 50%',
-      padding: window.innerWidth > 768 ? '40px 20px' : '60px 20px',
-      minHeight: window.innerWidth > 768 ? '300px' : '400px',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      aspectRatio: window.innerWidth > 768 ? '9 / 16' : undefined,
-      maxWidth: '100%',
-      boxSizing: 'border-box'
-    }}
-  >
+  <div className="guidance-table-container">
     {starlitGuidance ? (
       <table className="guidance-table">
         <thead>
