@@ -2086,8 +2086,6 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
 }
 
 .guidance-table-container {
-  background: url('/keep.png') left center / 50% no-repeat,
-              url('/letgo.png') right center / 50% no-repeat;
   background-size: 50% 100%;
   padding: 20px;
   min-height: 200px;
@@ -2122,10 +2120,13 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
 
 @media (max-width: 768px) {
   .guidance-table-container {
-    background: url('/keep.png') top center / 100% no-repeat,
-                url('/letgo.png') bottom center / 100% no-repeat;
-    background-size: 100% 50%;
+    padding: 20px;
+    min-height: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
+}
 
   .guidance-table {
     width: 90%;
@@ -2139,7 +2140,6 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
   .guidance-table th {
     font-size: 16px;
   }
-}
 
 @media (max-width: 480px) {
   .starlit-guidance h3 {
