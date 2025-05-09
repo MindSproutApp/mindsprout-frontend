@@ -2077,7 +2077,7 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
   text-align: center;
   padding: 20px;
   margin: 20px 0;
-  position: relative; /* For absolute positioning of h3 */
+  position: relative;
 }
 
 .starlit-guidance h3 {
@@ -2085,42 +2085,48 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
   color: #388E3C;
   margin: 0;
   position: absolute;
-  top: 10px; /* Close to the top */
+  top: 10px;
   left: 50%;
-  transform: translateX(-50%); /* Center horizontally */
-  z-index: 10; /* Above table */
+  transform: translateX(-50%);
+  z-index: 10;
 }
 
 .guidance-table-container {
-  position: relative; /* For absolute positioning of content */
-  padding: 40px 20px; /* Extra padding-top for heading */
-  min-height: 300px; /* Ensure enough space */
+  position: relative;
+  padding: 40px 20px;
+  min-height: 300px;
   display: flex;
   justify-content: center;
   align-items: center;
-  aspect-ratio: 9 / 16; /* Enforce 1080x1920 aspect ratio */
-  max-width: 100%; /* Prevent overflow */
+  max-width: 100%;
   box-sizing: border-box;
+  background: linear-gradient(to right, #E8F5E9, #FFEBEE); /* Pale green to pale red */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15), /* Outer shadow for depth */
+              inset 0 2px 4px rgba(255, 255, 255, 0.3), /* Inner highlight */
+              inset 0 -2px 4px rgba(0, 0, 0, 0.1); /* Inner shadow */
+  border-radius: 12px; /* Rounded corners for 3D effect */
 }
 
 .guidance-table {
   width: 80%;
   max-width: 600px;
   border-collapse: collapse;
-  background: rgba(255, 255, 255, 0.8);
+  background: transparent; /* No background to show gradient */
 }
 
 .guidance-table th,
 .guidance-table td {
-  padding: 10px;
+  padding: 12px;
   font-size: 16px;
   color: #2E7D32;
-  border: none;
+  border: none; /* Borderless */
+  text-align: center;
 }
 
 .guidance-table th {
   font-weight: 700;
   font-size: 18px;
+  color: #1B5E20;
 }
 
 .guidance-table td {
@@ -2134,9 +2140,11 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
   }
 
   .guidance-table-container {
-    padding: 60px 20px; /* More padding for heading */
-    min-height: 400px; /* Adjust for stacked layout */
-    aspect-ratio: unset; /* Remove aspect ratio on mobile */
+    padding: 60px 20px;
+    min-height: 350px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1),
+                inset 0 1px 2px rgba(255, 255, 255, 0.2),
+                inset 0 -1px 2px rgba(0, 0, 0, 0.05);
   }
 
   .guidance-table {
@@ -2146,6 +2154,7 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
   .guidance-table th,
   .guidance-table td {
     font-size: 14px;
+    padding: 10px;
   }
 
   .guidance-table th {
@@ -2160,13 +2169,14 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
   }
 
   .guidance-table-container {
-    min-height: 350px;
     padding: 50px 10px;
+    min-height: 300px;
   }
 
   .guidance-table th,
   .guidance-table td {
     font-size: 12px;
+    padding: 8px;
   }
 
   .guidance-table th {
