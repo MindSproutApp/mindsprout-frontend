@@ -1390,16 +1390,24 @@ const handleDeleteReport = async (reportId) => {
   <div
     className="guidance-table-container"
     style={{
-      background: `
-        url(${process.env.PUBLIC_URL}/keep.png) left center / 50% no-repeat,
-        url(${process.env.PUBLIC_URL}/letgo.png) right center / 50% no-repeat
-      `,
-      backgroundSize: '50% 100%',
-      padding: '20px',
-      minHeight: '200px',
+      background: window.innerWidth > 768
+        ? `
+            url(${process.env.PUBLIC_URL}/keep.png) left center / auto 100% no-repeat,
+            url(${process.env.PUBLIC_URL}/letgo.png) right center / auto 100% no-repeat
+          `
+        : `
+            url(${process.env.PUBLIC_URL}/keep.png) top center / 100% auto no-repeat,
+            url(${process.env.PUBLIC_URL}/letgo.png) bottom center / 100% auto no-repeat
+          `,
+      backgroundSize: window.innerWidth > 768 ? '50% 100%' : '100% 50%',
+      padding: window.innerWidth > 768 ? '40px 20px' : '60px 20px',
+      minHeight: window.innerWidth > 768 ? '300px' : '400px',
       display: 'flex',
       justifyContent: 'center',
-      alignItems: 'center'
+      alignItems: 'center',
+      aspectRatio: window.innerWidth > 768 ? '9 / 16' : undefined,
+      maxWidth: '100%',
+      boxSizing: 'border-box'
     }}
   >
     {starlitGuidance ? (
@@ -1411,10 +1419,10 @@ const handleDeleteReport = async (reportId) => {
           </tr>
         </thead>
         <tbody>
-          {starlitGuidance.embrace.map((embraceWord, index) => (
+          {starlitGuidance.embrace.slice(0, 3).map((embraceWord, index) => (
             <tr key={index}>
               <td>{embraceWord}</td>
-              <td>{starlitGuidance.letGo[index]}</td>
+              <td>{starlitGuidance.letGo[index] || 'N/A'}</td>
             </tr>
           ))}
         </tbody>
