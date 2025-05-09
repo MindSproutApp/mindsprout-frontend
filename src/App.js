@@ -57,7 +57,25 @@ function App() {
   const [showDailyAffirmationsModal, setShowDailyAffirmationsModal] = useState(false);
   const [tokenConfirm, setTokenConfirm] = useState(null);
   const [isFetchingUserData, setIsFetchingUserData] = useState(false);
-  const [showInsightBuffer, setShowInsightBuffer] = useState(false); // New state for insight buffering
+  const [starlitGuidance, setStarlitGuidance] = useState(null);
+
+useEffect(() => {
+  const fetchStarlitGuidance = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/regular/starlit-guidance`, {
+        headers: { Authorization: token },
+      });
+      setStarlitGuidance(response.data);
+    } catch (error) {
+      console.error('Error fetching Starlit Guidance:', error);
+      setMessage('Failed to fetch Starlit Guidance.');
+    }
+  };
+
+  if (token) {
+    fetchStarlitGuidance();
+  }
+}, [token, API_URL]); // New state for insight buffering
 
   const chatBoxRef = useRef(null);
   const reportDetailsRef = useRef(null);
@@ -1366,12 +1384,31 @@ const handleDeleteReport = async (reportId) => {
                     <p>No mood data yet. Start a chat session to track your mood!</p>
                   )}
                 </div>
-                <div className="daily-inspiration">
-                  <h3>Daily Inspiration</h3>
-                  <button onClick={handleGenerateDailyAffirmations} disabled={dailyAffirmations && dailyAffirmations.validUntil > new Date()}>
-                    Generate Daily Affirmations
-                  </button>
-                </div>
+                <div className="starlit-guidance">
+  <h3>Starlit Guidance</h3>
+  <div className="guidance-table-container">
+    {starlitGuidance ? (
+      <table className="guidance-table">
+        <thead>
+          <tr>
+            <th>What Should I Embrace</th>
+            <th>What Should I Let Go Of</th>
+          </tr>
+        </thead>
+        <tbody>
+          {starlitGuidance.embrace.map((embraceWord, index) => (
+            <tr key={index}>
+              <td>{embraceWord}</td>
+              <td>{starlitGuidance.letGo[index]}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    ) : (
+      <p>Loading guidance...</p>
+    )}
+  </div>
+</div>
                 <button onClick={handleLogout} className="logout-btn">
                   <img src="/icons/logout.png" alt="Logout" className="icon" />
                   Log Out
