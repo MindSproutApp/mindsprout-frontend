@@ -1819,7 +1819,7 @@ const handleDeleteReport = async (reportId) => {
 </div>
                   <div className="token-card">
                     <h3>10 Tokens</h3>
-                    <p>£6.99</p>
+                    <p>£5.99</p>
                     <button onClick={() => handlePurchaseTokens(10, 'tranquil_tokens_10')}>Buy Now</button>
                   </div>
                   <div className="token-card">
