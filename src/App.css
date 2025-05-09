@@ -2069,6 +2069,92 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
     border: 1px solid #000;
   }
 }
+/* ========================================================================== */
+/* Starlit Guidance Section */
+/* ========================================================================== */
+
+.starlit-guidance {
+  text-align: center;
+  padding: 20px;
+  margin: 20px 0;
+}
+
+.starlit-guidance h3 {
+  font-size: 24px;
+  color: #388E3C;
+  margin-bottom: 15px;
+}
+
+.guidance-table-container {
+  background: url('/keep.png') left center / 50% no-repeat,
+              url('/letgo.png') right center / 50% no-repeat;
+  background-size: 50% 100%;
+  padding: 20px;
+  min-height: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.guidance-table {
+  width: 80%;
+  max-width: 600px;
+  border-collapse: collapse;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.guidance-table th,
+.guidance-table td {
+  padding: 10px;
+  font-size: 16px;
+  color: #2E7D32;
+  border: none;
+}
+
+.guidance-table th {
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.guidance-table td {
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .guidance-table-container {
+    background: url('/keep.png') top center / 100% no-repeat,
+                url('/letgo.png') bottom center / 100% no-repeat;
+    background-size: 100% 50%;
+  }
+
+  .guidance-table {
+    width: 90%;
+  }
+
+  .guidance-table th,
+  .guidance-table td {
+    font-size: 14px;
+  }
+
+  .guidance-table th {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .starlit-guidance h3 {
+    font-size: 20px;
+  }
+
+  .guidance-table th,
+  .guidance-table td {
+    font-size: 12px;
+  }
+
+  .guidance-table th {
+    font-size: 14px;
+  }
+}
 
 /* ========================================================================== */
 /* Touch Device Optimizations */
