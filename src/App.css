@@ -2077,21 +2077,30 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
   text-align: center;
   padding: 20px;
   margin: 20px 0;
+  position: relative; /* For absolute positioning of h3 */
 }
 
 .starlit-guidance h3 {
   font-size: 24px;
   color: #388E3C;
-  margin-bottom: 15px;
+  margin: 0;
+  position: absolute;
+  top: 10px; /* Close to the top */
+  left: 50%;
+  transform: translateX(-50%); /* Center horizontally */
+  z-index: 10; /* Above table */
 }
 
 .guidance-table-container {
-  background-size: 50% 100%;
-  padding: 20px;
-  min-height: 200px;
+  position: relative; /* For absolute positioning of content */
+  padding: 40px 20px; /* Extra padding-top for heading */
+  min-height: 300px; /* Ensure enough space */
   display: flex;
   justify-content: center;
   align-items: center;
+  aspect-ratio: 9 / 16; /* Enforce 1080x1920 aspect ratio */
+  max-width: 100%; /* Prevent overflow */
+  box-sizing: border-box;
 }
 
 .guidance-table {
@@ -2119,14 +2128,16 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
 }
 
 @media (max-width: 768px) {
-  .guidance-table-container {
-    padding: 20px;
-    min-height: 200px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  .starlit-guidance h3 {
+    font-size: 20px;
+    top: 15px;
   }
-}
+
+  .guidance-table-container {
+    padding: 60px 20px; /* More padding for heading */
+    min-height: 400px; /* Adjust for stacked layout */
+    aspect-ratio: unset; /* Remove aspect ratio on mobile */
+  }
 
   .guidance-table {
     width: 90%;
@@ -2140,10 +2151,17 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
   .guidance-table th {
     font-size: 16px;
   }
+}
 
 @media (max-width: 480px) {
   .starlit-guidance h3 {
-    font-size: 20px;
+    font-size: 18px;
+    top: 10px;
+  }
+
+  .guidance-table-container {
+    min-height: 350px;
+    padding: 50px 10px;
   }
 
   .guidance-table th,
