@@ -57,6 +57,7 @@ function App() {
   const [showDailyAffirmationsModal, setShowDailyAffirmationsModal] = useState(false);
   const [tokenConfirm, setTokenConfirm] = useState(null);
   const [isFetchingUserData, setIsFetchingUserData] = useState(false);
+  const [showInsightBuffer, setShowInsightBuffer] = useState(false);
   const [starlitGuidance, setStarlitGuidance] = useState(null);
 
 useEffect(() => {
