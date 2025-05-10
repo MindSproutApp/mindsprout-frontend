@@ -1274,7 +1274,7 @@ function App() {
             <h1>Welcome to MindSprout</h1>
             <p className="tagline">Planting Seeds of Mindfulness!</p>
             {message && <p className="message">{message}</p>}
- perfetto            <div className="standard-auth">
+ Reflect, Connect, Become            <div className="standard-auth">
               <h2>{isDesktop ? 'Sign Up or Log In' : showSignup ? 'Sign Up' : 'Log In'}</h2>
               {!isDesktop && (
                 <div className="auth-toggle">
