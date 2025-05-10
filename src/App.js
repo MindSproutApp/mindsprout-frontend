@@ -137,95 +137,71 @@ function App() {
       setIsFetchingUserData(true);
       setIsLoading(true);
       try {
+        // Load cached data as fallback
         const cachedData = JSON.parse(localStorage.getItem('userData') || '{}');
         if (cachedData.goals) setGoals(cachedData.goals);
         if (cachedData.reports) setReports(cachedData.reports);
+        if (cachedData.journal) setJournal(cachedData.journal);
+        if (cachedData.journalInsights) setJournalInsights(cachedData.journalInsights);
 
-        const results = await Promise.allSettled([
-          axios.get(`${API_URL}/api/regular/goals`, { headers: { Authorization: authToken } }),
-          axios.get(`${API_URL}/api/regular/reports`, { headers: { Authorization: authToken } }),
-          axios.get(`${API_URL}/api/regular/last-chat`, { headers: { Authorization: authToken } }),
-          axios.get(`${API_URL}/api/regular/daily-affirmations`, { headers: { Authorization: authToken } }),
-          axios.get(`${API_URL}/api/regular/tranquil-tokens`, { headers: { Authorization: authToken } })
-        ]);
+        // Fetch all user data from the new endpoint
+        const response = await axios.get(`${API_URL}/api/regular/user-data`, {
+          headers: { Authorization: authToken }
+        });
 
-        const [goalsRes, reportsRes, lastChatRes, affirmationsRes, tokensRes] = results;
+        const {
+          goals,
+          reports,
+          lastChatTimestamp,
+          tranquilTokens,
+          lastTokenRegen,
+          journal,
+          journalInsights,
+          starlitGuidance
+        } = response.data;
 
-        if (goalsRes.status === 'fulfilled') {
-          setGoals(goalsRes.value.data || []);
-        } else {
-          console.error('Failed to fetch goals:', goalsRes.reason);
-          setGoals(cachedData.goals || []);
-        }
+        // Update state with fetched data
+        setGoals(goals || []);
+        setReports(reports || []);
+        setLastChatTimestamp(lastChatTimestamp ? new Date(lastChatTimestamp) : null);
+        setTranquilTokens(tranquilTokens || 1);
+        setTokenRegenTime(
+          lastTokenRegen
+            ? new Date(new Date(lastTokenRegen).getTime() + 24 * 60 * 60 * 1000)
+            : null
+        );
+        setJournal(journal || []);
+        setJournalInsights(journalInsights || []);
+        setStarlitGuidance(starlitGuidance || null);
 
-        if (reportsRes.status === 'fulfilled') {
-          setReports(reportsRes.value.data || []);
-        } else {
-          console.error('Failed to fetch reports:', reportsRes.reason);
-          setReports(cachedData.reports || []);
-        }
-
-        if (lastChatRes.status === 'fulfilled') {
-          setLastChatTimestamp(lastChatRes.value.data.lastChatTimestamp ? new Date(lastChatRes.value.data.lastChatTimestamp) : null);
-        } else {
-          console.error('Failed to fetch last chat:', lastChatRes.reason);
-          setLastChatTimestamp(cachedData.lastChatTimestamp ? new Date(cachedData.lastChatTimestamp) : null);
-        }
-
-        if (affirmationsRes.status === 'fulfilled') {
-          setDailyAffirmations(affirmationsRes.value.data || null);
-        } else {
-          console.error('Failed to fetch daily affirmations:', affirmationsRes.reason);
-          setDailyAffirmations(cachedData.dailyAffirmations || null);
-        }
-
-        if (tokensRes.status === 'fulfilled') {
-          setTranquilTokens(tokensRes.value.data.tranquilTokens || 1);
-          const regenTime = tokensRes.value.data.lastTokenRegen
-            ? new Date(new Date(tokensRes.value.data.lastTokenRegen).getTime() + 24 * 60 * 60 * 1000)
-            : null;
-          setTokenRegenTime(regenTime);
-        } else {
-          console.error('Failed to fetch tranquil tokens:', tokensRes.reason);
-          setMessage('Unable to fetch Tranquil Tokens. Please try again.');
-        }
-
+        // Cache the fetched data
         localStorage.setItem('userData', JSON.stringify({
-          goals: goalsRes.status === 'fulfilled' ? goalsRes.value.data : cachedData.goals,
-          reports: reportsRes.status === 'fulfilled' ? reportsRes.value.data : cachedData.reports,
-          lastChatTimestamp: lastChatRes.status === 'fulfilled' ? lastChatRes.value.data.lastChatTimestamp : cachedData.lastChatTimestamp,
-          tranquilTokens: tokensRes.status === 'fulfilled' ? tokensRes.value.data.tranquilTokens : 1,
-          lastTokenRegen: tokensRes.status === 'fulfilled' ? tokensRes.value.data.lastTokenRegen : cachedData.lastTokenRegen,
-          dailyAffirmations: affirmationsRes.status === 'fulfilled' ? affirmationsRes.value.data : cachedData.dailyAffirmations
-        }));
-
-        const [journalRes, insightsRes] = await Promise.all([
-          axios.get(`${API_URL}/api/regular/journal`, { headers: { Authorization: authToken } }).catch(err => ({ error: err })),
-          axios.get(`${API_URL}/api/regular/journal-insights`, { headers: { Authorization: authToken } }).catch(err => ({ error: err }))
-        ]);
-
-        if (!journalRes.error) {
-          setJournal(journalRes.data || []);
-        } else {
-          console.error('Failed to fetch journal:', journalRes.error);
-          setJournal(cachedData.journal || []);
-        }
-
-        if (!insightsRes.error) {
-          setJournalInsights(insightsRes.data || []);
-        } else {
-          console.error('Failed to fetch journal insights:', insightsRes.error);
-          setJournalInsights(cachedData.journalInsights || []);
-        }
-
-        localStorage.setItem('userData', JSON.stringify({
-          ...JSON.parse(localStorage.getItem('userData') || '{}'),
-          journal: !journalRes.error ? journalRes.data : cachedData.journal,
-          journalInsights: !insightsRes.error ? insightsRes.data : cachedData.journalInsights,
+          goals,
+          reports,
+          lastChatTimestamp,
+          tranquilTokens,
+          lastTokenRegen,
+          journal,
+          journalInsights,
+          starlitGuidance
         }));
       } catch (err) {
         console.error('Error fetching user data:', err);
         setMessage('Some data could not be loaded. Please try again.');
+        // Use cached data as fallback
+        const cachedData = JSON.parse(localStorage.getItem('userData') || '{}');
+        setGoals(cachedData.goals || []);
+        setReports(cachedData.reports || []);
+        setLastChatTimestamp(cachedData.lastChatTimestamp ? new Date(cachedData.lastChatTimestamp) : null);
+        setTranquilTokens(cachedData.tranquilTokens || 1);
+        setTokenRegenTime(
+          cachedData.lastTokenRegen
+            ? new Date(new Date(cachedData.lastTokenRegen).getTime() + 24 * 60 * 60 * 1000)
+            : null
+        );
+        setJournal(cachedData.journal || []);
+        setJournalInsights(cachedData.journalInsights || []);
+        setStarlitGuidance(cachedData.starlitGuidance || null);
       } finally {
         setIsLoading(false);
         setIsFetchingUserData(false);
@@ -777,27 +753,27 @@ function App() {
     }
   };
 
-const handleDeleteReport = async (reportId) => {
-  setIsLoading(true);
-  try {
-    await axios.delete(`${API_URL}/api/regular/reports/${reportId}`, {
-      headers: { Authorization: token },
-    });
-    setReports((prev) => prev.filter((report) => report._id !== reportId));
-    setSelectedReport(null);
-    setOpenNotepadSection(null);
-    setMessage('Report deleted successfully.');
-  } catch (err) {
-    console.error('Error deleting report:', err);
-    setMessage('Error deleting report: ' + (err.response?.data?.error || err.message));
-    // Still need to fully integrate payment processing logic
-    console.error('Error deleting report:', err);
-    setMessage('Error deleting report: ' + (err.response?.data?.error || err.message));
-  } finally {
-    setIsLoading(false);
-    setDeleteConfirm(null);
-  }
-};
+  const handleDeleteReport = async (reportId) => {
+    setIsLoading(true);
+    try {
+      await axios.delete(`${API_URL}/api/regular/reports/${reportId}`, {
+        headers: { Authorization: token },
+      });
+      setReports((prev) => prev.filter((report) => report._id !== reportId));
+      setSelectedReport(null);
+      setOpenNotepadSection(null);
+      setMessage('Report deleted successfully.');
+    } catch (err) {
+      console.error('Error deleting report:', err);
+      setMessage('Error deleting report: ' + (err.response?.data?.error || err.message));
+      // Still need to fully integrate payment processing logic
+      console.error('Error deleting report:', err);
+      setMessage('Error deleting report: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setIsLoading(false);
+      setDeleteConfirm(null);
+    }
+  };
 
   const handleGenerateDailyAffirmations = async () => {
     setIsLoading(true);
@@ -1298,11 +1274,11 @@ const handleDeleteReport = async (reportId) => {
             <h1>Welcome to MindSprout</h1>
             <p className="tagline">Planting Seeds of Mindfulness!</p>
             {message && <p className="message">{message}</p>}
-            <div className="standard-auth">
+ perfetto            <div className="standard-auth">
               <h2>{isDesktop ? 'Sign Up or Log In' : showSignup ? 'Sign Up' : 'Log In'}</h2>
               {!isDesktop && (
                 <div className="auth-toggle">
-                  <button className="toggle-btn" onClick={() => setShowSignup(!showSignup)}>
+                  <button className="toggle-btn" on하시겠습니다click={() => setShowSignup(!showSignup)}>
                     {showSignup ? 'Switch to Log In' : 'Switch to Sign Up'}
                   </button>
                 </div>
@@ -1809,7 +1785,7 @@ const handleDeleteReport = async (reportId) => {
                     <button onClick={() => handlePurchaseTokens(1, 'tranquil_tokens_1')}>Buy Now</button>
                   </div>
                   <div className="token-card highlighted">
-  <h3>Best Value Pack 5 Tokens</h3>
+  <h3>Best Value Pack</h3>
   <p className="original-price">£3.99</p>
   <p className="sale-price">£1.99</p>
   <p className="best-value">Sale - BEST VALUE</p>
@@ -1819,17 +1795,17 @@ const handleDeleteReport = async (reportId) => {
 </div>
                   <div className="token-card">
                     <h3>10 Tokens</h3>
-                    <p>£5.99</p>
+                    <p>£6.99</p>
                     <button onClick={() => handlePurchaseTokens(10, 'tranquil_tokens_10')}>Buy Now</button>
                   </div>
                   <div className="token-card">
                     <h3>50 Tokens</h3>
-                    <p>£24.99</p>
+                    <p>£19.99</p>
                     <button onClick={() => handlePurchaseTokens(50, 'tranquil_tokens_50')}>Buy Now</button>
                   </div>
                   <div className="token-card">
                     <h3>100 Tokens</h3>
-                    <p>£42.99</p>
+                    <p>£29.99</p>
                     <button onClick={() => handlePurchaseTokens(100, 'tranquil_tokens_100')}>Buy Now</button>
                   </div>
                 </div>
