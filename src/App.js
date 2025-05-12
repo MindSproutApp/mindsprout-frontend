@@ -1785,7 +1785,7 @@ function App() {
                     <button onClick={() => handlePurchaseTokens(1, 'tranquil_tokens_1')}>Buy Now</button>
                   </div>
                   <div className="token-card highlighted">
-  <h3>Best Value Pack</h3>
+  <h3>5 Tokens</h3>
   <p className="original-price">£3.99</p>
   <p className="sale-price">£1.99</p>
   <p className="best-value">Sale - BEST VALUE</p>
