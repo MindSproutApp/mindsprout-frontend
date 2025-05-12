@@ -1447,6 +1447,10 @@ function App() {
                 ) : isChatActive ? (
                   <div className="chat">
                     <h2>Chat with Pal</h2>
+                   <h3 className="chat-subheading">Chat With Pal</h3>
+    <p className="chat-description">
+      Complete the quiz to have an in-depth chat with Pal. Make sure to check your summaries to gain profound insights into your chat session.
+    </p>
                     <p>Time left: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</p>
                     <p>Extensions used: {extendCount}/3</p>
                     <div className="chat-box" ref={chatBoxRef}>
