@@ -333,8 +333,9 @@ button:disabled, .send-btn:disabled {
   top: 0;
   left: 0;
   right: 0;
-  bottom: 80px;
-  background: #E0F2E9; /* Green background for consistency */
+  bottom: 0; /* Full-screen coverage */
+  background: rgba(0, 0, 0, 0.5); /* Dark semi-transparent backdrop */
+  backdrop-filter: blur(5px); /* Blur for modern aesthetic */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -350,35 +351,55 @@ button:disabled, .send-btn:disabled {
 }
 
 .journal-content, .notepad-content, .daily-affirmations-content {
-  background: rgba(224, 242, 233, 0.9); /* Consistent green background */
+  background: rgba(255, 255, 255, 0.95); /* White with slight transparency */
   border: 1px solid #388E3C;
   border-radius: 15px;
-  padding: 20px;
-  max-width: 600px;
-  max-height: 80vh;
+  padding: 30px; /* Increased padding */
+  max-width: 800px; /* Larger modal width */
+  width: 90%; /* Responsive scaling */
+  max-height: 90vh; /* Larger modal height */
   overflow-y: auto;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2); /* Enhanced shadow */
   color: #388E3C;
   position: relative;
   box-sizing: border-box;
 }
 
+/* Textarea styling for journal prompts */
+.journal-prompt textarea {
+  min-height: 120px; /* Larger input area */
+  max-height: 400px; /* Increased max height */
+  width: 100%;
+  background: #f9fafb;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 14px;
+  color: #388E3C;
+}
+
+/* Ensure consistent text styling */
 .journal-content h2, .journal-content p,
 .notepad-text h3, .notepad-text p,
 .daily-affirmations-content h3, .daily-affirmations-content p {
   color: #388E3C;
 }
 
+/* Mobile responsiveness */
 @media (max-width: 768px) {
   .journal-content, .notepad-content, .daily-affirmations-content {
-    max-width: 90%;
-    padding: 15px;
+    max-width: 95%; /* Maximize width on mobile */
+    padding: 20px; /* Slightly reduced padding */
   }
   .journal-content h2, .daily-affirmations-content h3 {
-    font-size: 16px;
+    font-size: 16px; /* Smaller headings */
   }
   .journal-content p, .notepad-text p, .daily-affirmations-content p {
-    font-size: 12px;
+    font-size: 12px; /* Smaller text */
+  }
+  .journal-prompt textarea {
+    min-height: 100px; /* Slightly smaller textarea */
+    font-size: 12px; /* Smaller font */
   }
 }
 
