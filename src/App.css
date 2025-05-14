@@ -326,23 +326,23 @@ button:disabled, .send-btn:disabled {
 
 /* ========================================================================== */
 /* Glassmorphism for Modals */
-/* ========================================================================== */
-
 .journal-modal, .notepad-modal, .daily-affirmations-modal {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  bottom: 0; /* Full-screen coverage */
+  bottom: 60px; /* Offset to avoid overlap with menu-bar (height: ~50px + padding) */
   background: rgba(0, 0, 0, 0.5); /* Dark semi-transparent backdrop */
   backdrop-filter: blur(5px); /* Blur for modern aesthetic */
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start; /* Align to top to maximize scrollable area */
   z-index: 2000;
   opacity: 0;
   transition: opacity 0.3s ease, transform 0.3s ease;
   transform: scale(0.9);
+  overflow-y: auto; /* Allow scrolling on the modal itself */
+  box-sizing: border-box;
 }
 
 .journal-modal.active, .notepad-modal.active, .daily-affirmations-modal.active {
@@ -354,21 +354,23 @@ button:disabled, .send-btn:disabled {
   background: rgba(255, 255, 255, 0.95); /* White with slight transparency */
   border: 1px solid #388E3C;
   border-radius: 15px;
-  padding: 30px; /* Increased padding */
+  padding: 30px 30px 50px; /* Increased bottom padding for mobile scrolling */
   max-width: 800px; /* Larger modal width */
   width: 90%; /* Responsive scaling */
-  max-height: 90vh; /* Larger modal height */
-  overflow-y: auto;
+  max-height: calc(100vh - 80px); /* Account for top-bar (~50px) and padding */
+  min-height: 400px; /* Ensure minimum height for content */
+  overflow-y: auto; /* Enable scrolling within content */
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2); /* Enhanced shadow */
   color: #388E3C;
   position: relative;
   box-sizing: border-box;
+  margin: 20px 0; /* Add top/bottom margin for better positioning */
 }
 
 /* Textarea styling for journal prompts */
 .journal-prompt textarea {
-  min-height: 120px; /* Larger input area */
-  max-height: 400px; /* Increased max height */
+  min-height: 100px; /* Reduced for mobile to fit more content */
+  max-height: 300px; /* Consistent max height */
   width: 100%;
   background: #f9fafb;
   border: 1px solid #ddd;
@@ -376,6 +378,7 @@ button:disabled, .send-btn:disabled {
   padding: 12px;
   font-size: 14px;
   color: #388E3C;
+  margin-bottom: 15px; /* Space between textareas */
 }
 
 /* Ensure consistent text styling */
@@ -385,21 +388,92 @@ button:disabled, .send-btn:disabled {
   color: #388E3C;
 }
 
+/* Close button positioning */
+.close-btn {
+  position: sticky;
+  top: 10px;
+  right: 10px;
+  background: #EF9A9A;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  z-index: 10;
+  margin-left: auto; /* Push to right */
+}
+
+.close-btn:hover {
+  background: #E57373;
+}
+
+/* Submit/save button styling */
+.journal-content button:not(.close-btn) {
+  margin-top: 20px; /* Space above buttons */
+  width: 100%; /* Full-width buttons on mobile */
+  max-width: 300px; /* Limit width on larger screens */
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 /* Mobile responsiveness */
 @media (max-width: 768px) {
+  .journal-modal, .notepad-modal, .daily-affirmations-modal {
+    bottom: 70px; /* Account for taller menu-bar on mobile */
+    align-items: flex-start; /* Ensure content starts at top */
+  }
+
   .journal-content, .notepad-content, .daily-affirmations-content {
     max-width: 95%; /* Maximize width on mobile */
-    padding: 20px; /* Slightly reduced padding */
+    padding: 20px 20px 60px; /* Increased bottom padding */
+    max-height: calc(100vh - 100px); /* Adjust for top-bar and menu-bar */
+    min-height: 300px; /* Smaller minimum height */
+    margin: 10px 0; /* Reduced margin */
   }
+
   .journal-content h2, .daily-affirmations-content h3 {
     font-size: 16px; /* Smaller headings */
   }
+
   .journal-content p, .notepad-text p, .daily-affirmations-content p {
     font-size: 12px; /* Smaller text */
   }
+
   .journal-prompt textarea {
-    min-height: 100px; /* Slightly smaller textarea */
+    min-height: 80px; /* Smaller textarea for mobile */
     font-size: 12px; /* Smaller font */
+    margin-bottom: 10px; /* Tighter spacing */
+  }
+
+  .journal-content button:not(.close-btn) {
+    max-width: 100%; /* Full-width buttons */
+  }
+}
+
+@media (max-width: 480px) {
+  .journal-modal, .notepad-modal, .daily-affirmations-modal {
+    bottom: 80px; /* Extra offset for smaller screens */
+  }
+
+  .journal-content, .notepad-content, .daily-affirmations-content {
+    padding: 15px 15px 80px; /* More bottom padding for scroll clearance */
+    max-height: calc(100vh - 120px); /* Further adjust for small screens */
+    min-height: 250px;
+  }
+
+  .journal-content h2, .daily-affirmations-content h3 {
+    font-size: 14px;
+  }
+
+  .journal-content p, .notepad-text p, .daily-affirmations-content p {
+    font-size: 10px;
+  }
+
+  .journal-prompt textarea {
+    min-height: 70px;
+    font-size: 10px;
   }
 }
 
