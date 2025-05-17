@@ -56,6 +56,12 @@ body {
   animation: gradientShift 10s ease infinite;
   background: linear-gradient(45deg, #e0f7e9, #b3e0c6, #e0f7e9);
   background-size: 200% 200%;
+  padding: 20px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 @keyframes gradientShift {
@@ -64,9 +70,97 @@ body {
   100% { background-position: 0% 50%; }
 }
 
+.auth-toggle {
+  margin: 10px 0;
+  transition: opacity 0.3s ease;
+}
+
+.auth-toggle button {
+  width: 100%;
+  max-width: 200px;
+  padding: 10px;
+  font-size: 14px;
+  background: #e0f2e9;
+  border: 2px solid #388E3C;
+  border-radius: 8px;
+  color: #388E3C;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s, box-shadow 0.2s;
+}
+
+.auth-toggle button:hover {
+  background: #2E7D32;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.auth-toggle button:focus {
+  outline: 2px solid #388E3C;
+  outline-offset: 2px;
+}
+
+.form-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  max-width: 400px;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.signup-form, .login-form {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.signup-form.hidden, .login-form.hidden {
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+}
+
 @media (max-width: 768px) {
   .auth {
+    padding: 15px;
+  }
+  .form-container {
+    gap: 15px;
+  }
+  .signup-form, .login-form {
+    padding: 15px;
+    max-width: 100%;
+  }
+  .auth-toggle {
+    width: 100%;
+    max-width: 200px;
+  }
+  .auth-toggle button {
+    font-size: 12px;
+    padding: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth {
     padding: 10px;
+  }
+  .form-container {
+    gap: 10px;
+  }
+  .signup-form, .login-form {
+    padding: 10px;
+  }
+  .auth-toggle button {
+    font-size: 10px;
+    padding: 6px;
   }
 }
 
