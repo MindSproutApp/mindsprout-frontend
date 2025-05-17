@@ -130,7 +130,6 @@ function App() {
     };
   };
 
-  // Debounced fetchUserData
   const debouncedFetchUserData = useCallback(
     debounce(async (authToken) => {
       if (isFetchingUserData) return;
@@ -138,91 +137,113 @@ function App() {
       setIsLoading(true);
       try {
         const cachedData = JSON.parse(localStorage.getItem('userData') || '{}');
-        if (cachedData.goals) setGoals(cachedData.goals);
-        if (cachedData.reports) setReports(cachedData.reports);
-
+  
         const results = await Promise.allSettled([
           axios.get(`${API_URL}/api/regular/goals`, { headers: { Authorization: authToken } }),
           axios.get(`${API_URL}/api/regular/reports`, { headers: { Authorization: authToken } }),
           axios.get(`${API_URL}/api/regular/last-chat`, { headers: { Authorization: authToken } }),
           axios.get(`${API_URL}/api/regular/daily-affirmations`, { headers: { Authorization: authToken } }),
-          axios.get(`${API_URL}/api/regular/tranquil-tokens`, { headers: { Authorization: authToken } })
+          axios.get(`${API_URL}/api/regular/tranquil-tokens`, { headers: { Authorization: authToken } }),
         ]);
-
+  
         const [goalsRes, reportsRes, lastChatRes, affirmationsRes, tokensRes] = results;
-
+  
+        // Handle tokens response
+        let tranquilTokensData = cachedData.tranquilTokens || 1;
+        let lastTokenRegenData = cachedData.lastTokenRegen;
+        if (tokensRes.status === 'fulfilled') {
+          tranquilTokensData = tokensRes.value.data.tranquilTokens || 0;
+          lastTokenRegenData = tokensRes.value.data.lastTokenRegen;
+          setTranquilTokens(tranquilTokensData);
+          setTokenRegenTime(
+            lastTokenRegenData
+              ? new Date(new Date(lastTokenRegenData).getTime() + 24 * 60 * 60 * 1000)
+              : null
+          );
+        } else {
+          console.error('Failed to fetch tranquil tokens:', tokensRes.reason);
+          setMessage('Unable to fetch Tranquil Tokens. Please try again.');
+        }
+  
+        // Handle other responses (goals, reports, etc.)
         if (goalsRes.status === 'fulfilled') {
           setGoals(goalsRes.value.data || []);
         } else {
           console.error('Failed to fetch goals:', goalsRes.reason);
           setGoals(cachedData.goals || []);
         }
-
+  
         if (reportsRes.status === 'fulfilled') {
           setReports(reportsRes.value.data || []);
         } else {
           console.error('Failed to fetch reports:', reportsRes.reason);
           setReports(cachedData.reports || []);
         }
-
+  
         if (lastChatRes.status === 'fulfilled') {
-          setLastChatTimestamp(lastChatRes.value.data.lastChatTimestamp ? new Date(lastChatRes.value.data.lastChatTimestamp) : null);
+          setLastChatTimestamp(
+            lastChatRes.value.data.lastChatTimestamp ? new Date(lastChatRes.value.data.lastChatTimestamp) : null
+          );
         } else {
           console.error('Failed to fetch last chat:', lastChatRes.reason);
           setLastChatTimestamp(cachedData.lastChatTimestamp ? new Date(cachedData.lastChatTimestamp) : null);
         }
-
+  
         if (affirmationsRes.status === 'fulfilled') {
           setDailyAffirmations(affirmationsRes.value.data || null);
         } else {
           console.error('Failed to fetch daily affirmations:', affirmationsRes.reason);
           setDailyAffirmations(cachedData.dailyAffirmations || null);
         }
-
-        if (tokensRes.status === 'fulfilled') {
-          setTranquilTokens(tokensRes.value.data.tranquilTokens || 1);
-          const regenTime = tokensRes.value.data.lastTokenRegen
-            ? new Date(new Date(tokensRes.value.data.lastTokenRegen).getTime() + 24 * 60 * 60 * 1000)
-            : null;
-          setTokenRegenTime(regenTime);
-        } else {
-          console.error('Failed to fetch tranquil tokens:', tokensRes.reason);
-          setMessage('Unable to fetch Tranquil Tokens. Please try again.');
-        }
-
-        localStorage.setItem('userData', JSON.stringify({
-          goals: goalsRes.status === 'fulfilled' ? goalsRes.value.data : cachedData.goals,
-          reports: reportsRes.status === 'fulfilled' ? reportsRes.value.data : cachedData.reports,
-          lastChatTimestamp: lastChatRes.status === 'fulfilled' ? lastChatRes.value.data.lastChatTimestamp : cachedData.lastChatTimestamp,
-          tranquilTokens: tokensRes.status === 'fulfilled' ? tokensRes.value.data.tranquilTokens : 1,
-          lastTokenRegen: tokensRes.status === 'fulfilled' ? tokensRes.value.data.lastTokenRegen : cachedData.lastTokenRegen,
-          dailyAffirmations: affirmationsRes.status === 'fulfilled' ? affirmationsRes.value.data : cachedData.dailyAffirmations
-        }));
-
+  
+        // Update localStorage with latest data
+        localStorage.setItem(
+          'userData',
+          JSON.stringify({
+            goals: goalsRes.status === 'fulfilled' ? goalsRes.value.data : cachedData.goals,
+            reports: reportsRes.status === 'fulfilled' ? reportsRes.value.data : cachedData.reports,
+            lastChatTimestamp:
+              lastChatRes.status === 'fulfilled' ? lastChatRes.value.data.lastChatTimestamp : cachedData.lastChatTimestamp,
+            tranquilTokens: tranquilTokensData,
+            lastTokenRegen: lastTokenRegenData,
+            dailyAffirmations:
+              affirmationsRes.status === 'fulfilled' ? affirmationsRes.value.data : cachedData.dailyAffirmations,
+            journal: cachedData.journal,
+            journalInsights: cachedData.journalInsights,
+          })
+        );
+  
         const [journalRes, insightsRes] = await Promise.all([
-          axios.get(`${API_URL}/api/regular/journal`, { headers: { Authorization: authToken } }).catch(err => ({ error: err })),
-          axios.get(`${API_URL}/api/regular/journal-insights`, { headers: { Authorization: authToken } }).catch(err => ({ error: err }))
+          axios.get(`${API_URL}/api/regular/journal`, { headers: { Authorization: authToken } }).catch((err) => ({
+            error: err,
+          })),
+          axios.get(`${API_URL}/api/regular/journal-insights`, { headers: { Authorization: authToken } }).catch((err) => ({
+            error: err,
+          })),
         ]);
-
+  
         if (!journalRes.error) {
           setJournal(journalRes.data || []);
         } else {
           console.error('Failed to fetch journal:', journalRes.error);
           setJournal(cachedData.journal || []);
         }
-
+  
         if (!insightsRes.error) {
           setJournalInsights(insightsRes.data || []);
         } else {
           console.error('Failed to fetch journal insights:', insightsRes.error);
           setJournalInsights(cachedData.journalInsights || []);
         }
-
-        localStorage.setItem('userData', JSON.stringify({
-          ...JSON.parse(localStorage.getItem('userData') || '{}'),
-          journal: !journalRes.error ? journalRes.data : cachedData.journal,
-          journalInsights: !insightsRes.error ? insightsRes.data : cachedData.journalInsights,
-        }));
+  
+        localStorage.setItem(
+          'userData',
+          JSON.stringify({
+            ...JSON.parse(localStorage.getItem('userData') || '{}'),
+            journal: !journalRes.error ? journalRes.data : cachedData.journal,
+            journalInsights: !insightsRes.error ? insightsRes.data : cachedData.journalInsights,
+          })
+        );
       } catch (err) {
         console.error('Error fetching user data:', err);
         setMessage('Some data could not be loaded. Please try again.');
@@ -332,12 +353,19 @@ function App() {
     }
     setIsLoading(true);
     try {
-      await axios.post(
+      const response = await axios.post(
         `${API_URL}/api/regular/consume-token`,
         { action },
         { headers: { Authorization: token } }
       );
-      setTranquilTokens((prev) => prev - 1);
+      // Update state with backend response
+      setTranquilTokens(response.data.tranquilTokens);
+      // Update localStorage to prevent caching issues
+      const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+      localStorage.setItem(
+        'userData',
+        JSON.stringify({ ...userData, tranquilTokens: response.data.tranquilTokens })
+      );
       callback();
     } catch (err) {
       setMessage('Error consuming token: ' + (err.response?.data?.error || err.message));
@@ -345,7 +373,6 @@ function App() {
       setIsLoading(false);
     }
   };
-
   // Update user data when token or role changes
   useEffect(() => {
     if (token && role === 'regular') {
