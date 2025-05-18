@@ -1328,6 +1328,7 @@ const handleDeleteReport = async (reportId) => {
     <p>Reflect, Connect, Become</p>
     <div className="standard-auth">
       <h2>{isDesktop ? 'Sign Up or Log In' : showSignup ? 'Sign Up' : 'Log In'}</h2>
+          <p>By signing up you agree to the terms and conditions</p> 
       {!isDesktop && (
         <div className="auth-toggle">
           <button
