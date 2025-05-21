@@ -2372,6 +2372,119 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
     font-size: 14px;
   }
 }
+/* ========================================================================== */
+/* Welcome Token Modal */
+/* ========================================================================== */
+
+.welcome-token-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 60px; /* Offset for menu-bar */
+  background: rgba(0, 0, 0, 0.5); /* Dark semi-transparent backdrop */
+  backdrop-filter: blur(5px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  transform: scale(0.9);
+}
+
+.welcome-token-modal.active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.welcome-token-content {
+  background: rgba(255, 255, 255, 0.95); /* White with slight transparency */
+  border: 1px solid #388E3C;
+  border-radius: 15px;
+  padding: 30px;
+  max-width: 500px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  color: #388E3C;
+  position: relative;
+  animation: fadeIn 0.3s ease-in;
+}
+
+.welcome-token-content h2 {
+  font-size: 24px;
+  margin-bottom: 15px;
+}
+
+.welcome-token-content p {
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.claim-btn {
+  background: #388E3C;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s, box-shadow 0.2s;
+}
+
+.claim-btn:hover {
+  background: #2E7D32;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.claim-btn:focus {
+  outline: 2px solid #388E3C;
+  outline-offset: 2px;
+}
+
+.claim-btn:disabled {
+  background: #a0a0a0;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+@media (max-width: 768px) {
+  .welcome-token-content {
+    padding: 20px;
+    max-width: 95%;
+  }
+  .welcome-token-content h2 {
+    font-size: 20px;
+  }
+  .welcome-token-content p {
+    font-size: 14px;
+  }
+  .claim-btn {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .welcome-token-content {
+    padding: 15px;
+  }
+  .welcome-token-content h2 {
+    font-size: 18px;
+  }
+  .welcome-token-content p {
+    font-size: 12px;
+  }
+  .claim-btn {
+    padding: 8px 16px;
+    font-size: 12px;
+  }
+}
 
 /* ========================================================================== */
 /* Touch Device Optimizations */
