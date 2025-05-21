@@ -59,6 +59,7 @@ function App() {
   const [isFetchingUserData, setIsFetchingUserData] = useState(false);
   const [showInsightBuffer, setShowInsightBuffer] = useState(false);
   const [starlitGuidance, setStarlitGuidance] = useState(null);
+  const [showWelcomeTokenModal, setShowWelcomeTokenModal] = useState(false);
 
   useEffect(() => {
     const fetchStarlitGuidance = async () => {
@@ -600,6 +601,7 @@ function App() {
         setToken(res.data.token);
         setRole('regular');
         debouncedFetchUserData(res.data.token);
+        setShowWelcomeTokenModal(true); // Show the welcome token modal
       })
       .catch((err) => setMessage(err.response?.data?.error || 'Signup failed'))
       .finally(() => setIsLoading(false));
@@ -618,6 +620,24 @@ function App() {
       })
       .catch((err) => setMessage(err.response?.data?.error || 'Login failed'))
       .finally(() => setIsLoading(false));
+  };
+
+  const handleClaimWelcomeTokens = async () => {
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/regular/claim-welcome-tokens`,
+        {},
+        {
+          headers: { Authorization: token },
+        }
+      );
+      setTranquilTokens(response.data.tranquilTokens); // Update token count
+      setShowWelcomeTokenModal(false); // Close the modal
+      setMessage('5 Tranquil Tokens claimed! Enjoy your journey with MindSprout.');
+    } catch (error) {
+      console.error('Error claiming welcome tokens:', error);
+      setMessage('Failed to claim tokens: ' + (error.response?.data?.error || error.message));
+    }
   };
 
   const handleQuizAnswer = (value) => {
@@ -1276,6 +1296,31 @@ const handleDeleteReport = async (reportId) => {
           </div>
         </div>
       )}
+          {showWelcomeTokenModal && (
+      <div className={`welcome-token-modal ${showWelcomeTokenModal ? 'active' : ''}`}>
+        <div className="welcome-token-content">
+          <button
+            className="close-btn"
+            onClick={() => setShowWelcomeTokenModal(false)}
+            aria-label="Close welcome token modal"
+          >
+            ×
+          </button>
+          <h2>Welcome to MindSprout!</h2>
+          <p>
+            We're thrilled to have you here! To get you started, we're giving you <strong>5 free Tranquil Tokens</strong> to explore all the amazing features of our app. Claim them now and dive into your journey of self-discovery!
+          </p>
+          <button
+            className="claim-btn"
+            onClick={handleClaimWelcomeTokens}
+            disabled={isLoading}
+            aria-label="Claim 5 free Tranquil Tokens"
+          >
+            Claim Now
+          </button>
+        </div>
+      </div>
+    )}
       {showDailyAffirmationsModal && dailyAffirmations && (
         <div className="daily-affirmations-modal active">
           <div className="daily-affirmations-content">
@@ -1327,8 +1372,8 @@ const handleDeleteReport = async (reportId) => {
     {message && <p className="message">{message}</p>}
     <p>Reflect, Connect, Become</p>
     <div className="standard-auth">
-      <h2>{isDesktop ? 'Sign Up or Log In' : showSignup ? 'Sign Up' : 'Log In'}</h2>
-          <p>By signing up you agree to the terms and conditions</p> 
+      <h2>{isDesktop ? 'Sign Up or Log In' : showSignup ? 'Sign Up' : 'Log In'}</h2> 
+      <p>By signing up you agree to the terms and conditions</p> 
       {!isDesktop && (
         <div className="auth-toggle">
           <button
@@ -1862,7 +1907,7 @@ const handleDeleteReport = async (reportId) => {
                   <div className="token-card highlighted">
   <h3>Best Value Pack</h3>
   <p className="original-price">£3.99</p>
-  <p className="sale-price">£1.39</p>
+  <p className="sale-price">£1.99</p>
   <p className="best-value">Sale - BEST VALUE</p>
   <button onClick={() => handlePurchaseTokens(5, 'tranquil_tokens_5')} disabled={isLoading}>
     Buy Now
