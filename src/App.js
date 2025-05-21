@@ -489,10 +489,10 @@ function App() {
 
   const journalPrompts = {
     daily: [
-      { key: 'highlights', heading: 'Highlights', subheading: 'What were the best parts of your day?' },
+      { key: 'highlights', heading: 'Highlights', subheading: 'What was a highlight of your day?' },
       { key: 'learned', heading: 'Learned', subheading: 'What did you learn today?' },
       { key: 'challenges', heading: 'Challenges', subheading: 'What challenges did you face?' },
-      { key: 'emotions', heading: 'Emotions', subheading: 'How did you feel today?' }
+      { key: 'emotions', heading: 'Emotions', subheading: 'How did you feel overall today?' }
     ],
     dream: [
       { key: 'dreamDescription', heading: 'Dream Description', subheading: 'Describe your dream in detail.' },
@@ -1905,7 +1905,7 @@ const handleDeleteReport = async (reportId) => {
                     <button onClick={() => handlePurchaseTokens(1, 'tranquil_tokens_1')}>Buy Now</button>
                   </div>
                   <div className="token-card highlighted">
-  <h3>Best Value Pack</h3>
+  <h3>5 Token Pack</h3>
   <p className="original-price">£3.99</p>
   <p className="sale-price">£1.99</p>
   <p className="best-value">Sale - BEST VALUE</p>
