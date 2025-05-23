@@ -17,6 +17,14 @@ ChartJS.register(BarElement, LineElement, PointElement, CategoryScale, LinearSca
 function App() {
   const API_URL = process.env.REACT_APP_API_URL || 'https://mindsprout-backend-new.onrender.com';
 
+   useEffect(() => {
+    // Check if fbq is initialized and consent has been granted
+    if (window.fbq && localStorage.getItem('MindSproutCookieConsent')) {
+      window.fbq('track', 'PageView');
+      console.log('Meta Pixel: PageView tracked');
+    }
+  }, []);
+
   // Initialize token as null (no auto-login)
   const [token, setToken] = useState(null);
   const [role, setRole] = useState(null);
