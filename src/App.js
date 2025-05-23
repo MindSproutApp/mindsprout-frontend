@@ -1907,7 +1907,7 @@ const handleDeleteReport = async (reportId) => {
                   <div className="token-card highlighted">
   <h3>5 Token Pack</h3>
   <p className="original-price">£3.99</p>
-  <p className="sale-price">£1.99</p>
+  <p className="sale-price">£1.39</p>
   <p className="best-value">Sale - BEST VALUE</p>
   <button onClick={() => handlePurchaseTokens(5, 'tranquil_tokens_5')} disabled={isLoading}>
     Buy Now
