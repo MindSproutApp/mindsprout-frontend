@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import axios from 'axios';
-import CookieConsent from 'react-cookie-consent';
 import './App.css';
 import { Bar, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js';
@@ -17,7 +16,7 @@ ChartJS.register(BarElement, LineElement, PointElement, CategoryScale, LinearSca
 function App() {
   const API_URL = process.env.REACT_APP_API_URL || 'https://mindsprout-backend-new.onrender.com';
 
-   useEffect(() => {
+  useEffect(() => {
     // Check if fbq is initialized and consent has been granted
     if (window.fbq && localStorage.getItem('MindSproutCookieConsent')) {
       window.fbq('track', 'PageView');
@@ -612,9 +611,14 @@ function App() {
         setRole('regular');
         debouncedFetchUserData(res.data.token);
         setShowWelcomeTokenModal(true); // Show the welcome token modal
-      })
+        if (window.fbq && localStorage.getItem('MindSproutCookieConsent')) {
+          window.fbq('track', 'CompleteRegistration');
+          console.log('Meta Pixel: CompleteRegistration tracked');
+        }
+            })
       .catch((err) => setMessage(err.response?.data?.error || 'Signup failed'))
       .finally(() => setIsLoading(false));
+      
   };
 
   const handleRegularLogin = (e) => {
@@ -1219,9 +1223,27 @@ const handleDeleteReport = async (reportId) => {
     const secs = seconds % 60;
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
+  
 
   return (
-    <div className="app">
+      <div className="app">
+        <CookieConsent
+          location="bottom"
+          buttonText="Accept"
+          cookieName="MindSproutCookieConsent"
+          style={{ background: "#2B373B" }}
+          buttonStyle={{ color: "#fff", background: "#388E3C" }}
+          expires={150}
+          onAccept={() => {
+            if (window.fbq) {
+              window.fbq('consent', 'grant');
+              window.fbq('track', 'PageView');
+              console.log('Meta Pixel: Consent granted, PageView tracked');
+            }
+          }}
+        >
+          This website uses cookies to enhance user experience and track analytics via Meta Pixel.
+        </CookieConsent>
       {(isLoading || showSummaryBuffer || showInsightBuffer) && (
         <div className={showInsightBuffer ? "insight-buffer-overlay" : "loading-overlay"}>
           <div className="spinner"></div>
