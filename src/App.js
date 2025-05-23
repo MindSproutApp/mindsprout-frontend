@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import './App.css';
 import { Bar, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js';
 // === START OF STRIPE ADDITION ===
 import { loadStripe } from '@stripe/stripe-js';
-// ADDED FOR COOKIE CONSENT
-import CookieConsent from 'react-cookie-consent';
+
 
 // Initialize Stripe with your publishable key
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
@@ -63,19 +61,6 @@ function App() {
   const [showInsightBuffer, setShowInsightBuffer] = useState(false);
   const [starlitGuidance, setStarlitGuidance] = useState(null);
   const [showWelcomeTokenModal, setShowWelcomeTokenModal] = useState(false);
-
-  // ADDED FOR META PIXEL
-  const location = useLocation();
-
-  // Track PageView on route changes
-  useEffect(() => {
-    if (window.fbq) {
-      window.fbq('track', 'PageView');
-      console.log('Meta Pixel: PageView tracked for path:', location.pathname);
-    } else {
-      console.warn('Meta Pixel: fbq not initialized');
-    }
-  }, [location.pathname]);
 
   useEffect(() => {
     const fetchStarlitGuidance = async () => {
@@ -618,13 +603,6 @@ function App() {
         setRole('regular');
         debouncedFetchUserData(res.data.token);
         setShowWelcomeTokenModal(true); // Show the welcome token modal
-        // ADDED FOR META PIXEL
-        if (window.fbq) {
-          window.fbq('track', 'CompleteRegistration');
-          console.log('Meta Pixel: CompleteRegistration tracked');
-        } else {
-          console.warn('Meta Pixel: fbq not initialized for signup');
-        }
       })
       .catch((err) => setMessage(err.response?.data?.error || 'Signup failed'))
       .finally(() => setIsLoading(false));
@@ -847,24 +825,27 @@ function App() {
     }
   };
 
-  const handleDeleteReport = async (reportId) => {
-    setIsLoading(true);
-    try {
-      await axios.delete(`${API_URL}/api/regular/reports/${reportId}`, {
-        headers: { Authorization: token },
-      });
-      setReports((prev) => prev.filter((report) => report._id !== reportId));
-      setSelectedReport(null);
-      setOpenNotepadSection(null);
-      setMessage('Report deleted successfully.');
-    } catch (err) {
-      console.error('Error deleting report:', err);
-      setMessage('Error deleting report: ' + (err.response?.data?.error || err.message));
-    } finally {
-      setIsLoading(false);
-      setDeleteConfirm(null);
-    }
-  };
+const handleDeleteReport = async (reportId) => {
+  setIsLoading(true);
+  try {
+    await axios.delete(`${API_URL}/api/regular/reports/${reportId}`, {
+      headers: { Authorization: token },
+    });
+    setReports((prev) => prev.filter((report) => report._id !== reportId));
+    setSelectedReport(null);
+    setOpenNotepadSection(null);
+    setMessage('Report deleted successfully.');
+  } catch (err) {
+    console.error('Error deleting report:', err);
+    setMessage('Error deleting report: ' + (err.response?.data?.error || err.message));
+    // Still need to fully integrate payment processing logic
+    console.error('Error deleting report:', err);
+    setMessage('Error deleting report: ' + (err.response?.data?.error || err.message));
+  } finally {
+    setIsLoading(false);
+    setDeleteConfirm(null);
+  }
+};
 
   const handleGenerateDailyAffirmations = async () => {
     setIsLoading(true);
@@ -1232,23 +1213,6 @@ function App() {
 
   return (
     <div className="app">
-      {/* ADDED FOR COOKIE CONSENT */}
-      <CookieConsent
-        location="bottom"
-        buttonText="Accept"
-        cookieName="MindSproutCookieConsent"
-        style={{ background: "#2B373B" }}
-        buttonStyle={{ color: "#fff", background: "#388E3C" }}
-        expires={150}
-        onAccept={() => {
-          if (window.fbq) {
-            window.fbq('consent', 'grant');
-            window.fbq('track', 'PageView');
-          }
-        }}
-      >
-        This website uses cookies to enhance user experience and track analytics via Meta Pixel.
-      </CookieConsent>
       {(isLoading || showSummaryBuffer || showInsightBuffer) && (
         <div className={showInsightBuffer ? "insight-buffer-overlay" : "loading-overlay"}>
           <div className="spinner"></div>
@@ -1333,31 +1297,31 @@ function App() {
           </div>
         </div>
       )}
-      {showWelcomeTokenModal && (
-        <div className={`welcome-token-modal ${showWelcomeTokenModal ? 'active' : ''}`}>
-          <div className="welcome-token-content">
-            <button
-              className="close-btn"
-              onClick={() => setShowWelcomeTokenModal(false)}
-              aria-label="Close welcome token modal"
-            >
-              ×
-            </button>
-            <h2>Welcome to MindSprout!</h2>
-            <p>
-              We're thrilled to have you here! To get you started, we're giving you <strong>5 free Tranquil Tokens</strong> to explore all the amazing features of our app. Claim them now and dive into your journey of self-discovery!
-            </p>
-            <button
-              className="claim-btn"
-              onClick={handleClaimWelcomeTokens}
-              disabled={isLoading}
-              aria-label="Claim 5 free Tranquil Tokens"
-            >
-              Claim Now
-            </button>
-          </div>
+          {showWelcomeTokenModal && (
+      <div className={`welcome-token-modal ${showWelcomeTokenModal ? 'active' : ''}`}>
+        <div className="welcome-token-content">
+          <button
+            className="close-btn"
+            onClick={() => setShowWelcomeTokenModal(false)}
+            aria-label="Close welcome token modal"
+          >
+            ×
+          </button>
+          <h2>Welcome to MindSprout!</h2>
+          <p>
+            We're thrilled to have you here! To get you started, we're giving you <strong>5 free Tranquil Tokens</strong> to explore all the amazing features of our app. Claim them now and dive into your journey of self-discovery!
+          </p>
+          <button
+            className="claim-btn"
+            onClick={handleClaimWelcomeTokens}
+            disabled={isLoading}
+            aria-label="Claim 5 free Tranquil Tokens"
+          >
+            Claim Now
+          </button>
         </div>
-      )}
+      </div>
+    )}
       {showDailyAffirmationsModal && dailyAffirmations && (
         <div className="daily-affirmations-modal active">
           <div className="daily-affirmations-content">
@@ -1402,97 +1366,97 @@ function App() {
           </div>
         )}
         {!token ? (
-          <div className="auth">
-            <img src="/logo.png" alt="MindSprout Logo" className="logo" />
-            <h1>Welcome to MindSprout</h1>
-            <p className="tagline">Planting Seeds of Mindfulness!</p>
-            {message && <p className="message">{message}</p>}
-            <p>Reflect, Connect, Become</p>
-            <div className="standard-auth">
-              <h2>{isDesktop ? 'Sign Up or Log In' : showSignup ? 'Sign Up' : 'Log In'}</h2> 
-              <p>By signing up you agree to the terms and conditions</p> 
-              {!isDesktop && (
-                <div className="auth-toggle">
-                  <button
-                    className="toggle-btn"
-                    onClick={() => setShowSignup((prev) => !prev)}
-                    aria-label={showSignup ? 'Switch to Log In' : 'Switch to Sign Up'}
-                    type="button"
-                  >
-                    {showSignup ? 'Switch to Log In' : 'Switch to Sign Up'}
-                  </button>
-                </div>
-              )}
-              <div className="form-container">
-                {(isDesktop || showSignup) && (
-                  <div className="signup-form">
-                    <form onSubmit={handleRegularSignup}>
-                      <input
-                        placeholder="Name"
-                        value={regularSignupForm.name}
-                        onChange={(e) => setRegularSignupForm({ ...regularSignupForm, name: e.target.value })}
-                        required
-                        aria-label="Name"
-                        type="text"
-                      />
-                      <input
-                        placeholder="Email"
-                        type="email"
-                        value={regularSignupForm.email}
-                        onChange={(e) => setRegularSignupForm({ ...regularSignupForm, email: e.target.value })}
-                        required
-                        aria-label="Email"
-                      />
-                      <input
-                        placeholder="Username"
-                        value={regularSignupForm.username}
-                        onChange={(e) => setRegularSignupForm({ ...regularSignupForm, username: e.target.value })}
-                        required
-                        aria-label="Username"
-                        type="text"
-                      />
-                      <input
-                        placeholder="Password"
-                        type="password"
-                        value={regularSignupForm.password}
-                        onChange={(e) => setRegularSignupForm({ ...regularSignupForm, password: e.target.value })}
-                        required
-                        aria-label="Password"
-                      />
-                      <button type="submit" className="signup-btn" disabled={isLoading}>
-                        Sign Up
-                      </button>
-                    </form>
-                  </div>
-                )}
-                {(isDesktop || !showSignup) && (
-                  <div className="login-form">
-                    <form onSubmit={handleRegularLogin}>
-                      <input
-                        placeholder="Email"
-                        type="email"
-                        value={regularLoginForm.email}
-                        onChange={(e) => setRegularLoginForm({ ...regularLoginForm, email: e.target.value })}
-                        required
-                        aria-label="Email"
-                      />
-                      <input
-                        placeholder="Password"
-                        type="password"
-                        value={regularLoginForm.password}
-                        onChange={(e) => setRegularLoginForm({ ...regularLoginForm, password: e.target.value })}
-                        required
-                        aria-label="Password"
-                      />
-                      <button type="submit" disabled={isLoading}>
-                        Log In
-                      </button>
-                    </form>
-                  </div>
-                )}
-              </div>
-            </div>
+  <div className="auth">
+    <img src="/logo.png" alt="MindSprout Logo" className="logo" />
+    <h1>Welcome to MindSprout</h1>
+    <p className="tagline">Planting Seeds of Mindfulness!</p>
+    {message && <p className="message">{message}</p>}
+    <p>Reflect, Connect, Become</p>
+    <div className="standard-auth">
+      <h2>{isDesktop ? 'Sign Up or Log In' : showSignup ? 'Sign Up' : 'Log In'}</h2> 
+      <p>By signing up you agree to the terms and conditions</p> 
+      {!isDesktop && (
+        <div className="auth-toggle">
+          <button
+            className="toggle-btn"
+            onClick={() => setShowSignup((prev) => !prev)}
+            aria-label={showSignup ? 'Switch to Log In' : 'Switch to Sign Up'}
+            type="button"
+          >
+            {showSignup ? 'Switch to Log In' : 'Switch to Sign Up'}
+          </button>
+        </div>
+      )}
+      <div className="form-container">
+        {(isDesktop || showSignup) && (
+          <div className="signup-form">
+            <form onSubmit={handleRegularSignup}>
+              <input
+                placeholder="Name"
+                value={regularSignupForm.name}
+                onChange={(e) => setRegularSignupForm({ ...regularSignupForm, name: e.target.value })}
+                required
+                aria-label="Name"
+                type="text"
+              />
+              <input
+                placeholder="Email"
+                type="email"
+                value={regularSignupForm.email}
+                onChange={(e) => setRegularSignupForm({ ...regularSignupForm, email: e.target.value })}
+                required
+                aria-label="Email"
+              />
+              <input
+                placeholder="Username"
+                value={regularSignupForm.username}
+                onChange={(e) => setRegularSignupForm({ ...regularSignupForm, username: e.target.value })}
+                required
+                aria-label="Username"
+                type="text"
+              />
+              <input
+                placeholder="Password"
+                type="password"
+                value={regularSignupForm.password}
+                onChange={(e) => setRegularSignupForm({ ...regularSignupForm, password: e.target.value })}
+                required
+                aria-label="Password"
+              />
+              <button type="submit" className="signup-btn" disabled={isLoading}>
+                Sign Up
+              </button>
+            </form>
           </div>
+        )}
+        {(isDesktop || !showSignup) && (
+          <div className="login-form">
+            <form onSubmit={handleRegularLogin}>
+              <input
+                placeholder="Email"
+                type="email"
+                value={regularLoginForm.email}
+                onChange={(e) => setRegularLoginForm({ ...regularLoginForm, email: e.target.value })}
+                required
+                aria-label="Email"
+              />
+              <input
+                placeholder="Password"
+                type="password"
+                value={regularLoginForm.password}
+                onChange={(e) => setRegularLoginForm({ ...regularLoginForm, password: e.target.value })}
+                required
+                aria-label="Password"
+              />
+              <button type="submit" disabled={isLoading}>
+                Log In
+              </button>
+            </form>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
         ) : (
           <div className="regular-dashboard">
             <img src="/logo.png" alt="MindSprout Logo" className="logo" />
@@ -1517,30 +1481,30 @@ function App() {
                 </div>
             
                 <div className="starlit-guidance">
-                  <h3>Starlit Guidance</h3>
-                  <div className="guidance-table-container">
-                    {starlitGuidance ? (
-                      <table className="guidance-table">
-                        <thead>
-                          <tr>
-                            <th>What Should I Embrace</th>
-                            <th>What Should I Let Go Of</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {starlitGuidance.embrace.slice(0, 3).map((embraceWord, index) => (
-                            <tr key={index}>
-                              <td>{embraceWord}</td>
-                              <td>{starlitGuidance.letGo[index] || 'N/A'}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    ) : (
-                      <p>Loading guidance...</p>
-                    )}
-                  </div>
-                </div>
+  <h3>Starlit Guidance</h3>
+  <div className="guidance-table-container">
+    {starlitGuidance ? (
+      <table className="guidance-table">
+        <thead>
+          <tr>
+            <th>What Should I Embrace</th>
+            <th>What Should I Let Go Of</th>
+          </tr>
+        </thead>
+        <tbody>
+          {starlitGuidance.embrace.slice(0, 3).map((embraceWord, index) => (
+            <tr key={index}>
+              <td>{embraceWord}</td>
+              <td>{starlitGuidance.letGo[index] || 'N/A'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    ) : (
+      <p>Loading guidance...</p>
+    )}
+  </div>
+</div>
                 <button onClick={handleLogout} className="logout-btn">
                   <img src="/icons/logout.png" alt="Logout" className="icon" />
                   Log Out
@@ -1650,10 +1614,10 @@ function App() {
                   <div className="quiz">
                     <h2>Chat</h2>
                     <p>
-                      <h3 className="chat-subheading">Chat With Pal</h3>
-                      <p className="chat-description">
-                        Complete the quiz to have an in-depth chat with Pal. Make sure to check your summaries to gain profound insights into your chat session.
-                      </p>
+                    <h3 className="chat-subheading">Chat With Pal</h3>
+    <p className="chat-description">
+      Complete the quiz to have an in-depth chat with Pal. Make sure to check your summaries to gain profound insights into your chat session.
+    </p>
                       You have {tranquilTokens} Tranquil Tokens.{' '}
                       {tranquilTokens < 1 && tokenRegenTime
                         ? `Next token in ${formatTime(
@@ -1878,115 +1842,148 @@ function App() {
                           {['discussed', 'thoughtsFeelings', 'insights', 'moodReflection', 'recommendations'].map(
                             (section) => (
                               <div
-                              key={section}
-                              className="summary-card"
-                              onClick={() => handleOpenNotepad(section)}
-                            >
-                              <h4>{section.charAt(0).toUpperCase() + section.slice(1)}</h4>
-                              <p>{selectedReport[section] || 'No data available'}</p>
+                                key={section}
+                                className="summary-card"
+                                onClick={() => handleOpenNotepad(section)}
+                              >
+                                <div className="summary-front">
+                                  <h4>
+                                    {section === 'discussed'
+                                      ? 'What We Discussed'
+                                      : section === 'thoughtsFeelings'
+                                      ? 'Your Thoughts & Feelings'
+                                      : section === 'insights'
+                                      ? 'Insights Uncovered'
+                                      : section === 'moodReflection'
+                                      ? 'Mood Reflection'
+                                      : 'Recommendations'}
+                                  </h4>
+                                </div>
+                              </div>
+                            )
+                          )}
+                        </div>
+                        {openNotepadSection && (
+                          <div className={`notepad-modal ${openNotepadSection ? 'active' : ''}`}>
+                            <div className="notepad-content">
+                              <button className="close-btn" onClick={handleCloseNotepad}>
+                                X
+                              </button>
+                              <div className="notepad-text">
+                                <h3>
+                                  {openNotepadSection === 'discussed'
+                                    ? 'What We Discussed'
+                                    : openNotepadSection === 'thoughtsFeelings'
+                                    ? 'Your Thoughts & Feelings'
+                                    : openNotepadSection === 'insights'
+                                    ? 'Insights Uncovered'
+                                    : openNotepadSection === 'moodReflection'
+                                    ? 'Mood Reflection'
+                                    : 'Recommendations'}
+                                </h3>
+                                {openNotepadSection === 'reflect' && selectedJournalEntry
+                                  ? renderJournalResponses(selectedJournalEntry)
+                                  : selectedReport.summary?.[openNotepadSection] || 'Not available'}
+                              </div>
                             </div>
-                          )
+                          </div>
                         )}
                       </div>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <p>No chat sessions yet. Start a chat to save a summary!</p>
-              )}
-            </div>
-          ) : activeTab === 'shop' ? (
-            <div className="shop">
-              <h2>Shop</h2>
-              <p>Purchase Tranquil Tokens to unlock more chats and insights!</p>
-              <div className="token-packages">
-                <div className="token-package">
-                  <h3>5 Tokens</h3>
-                  <button
-                    onClick={() => handlePurchaseTokens(5, 'prod_5_tokens')}
-                    disabled={isLoading}
-                  >
-                    Buy Now
-                  </button>
-                </div>
-                <div className="token-package">
-                  <h3>10 Tokens</h3>
-                  <button
-                    onClick={() => handlePurchaseTokens(10, 'prod_10_tokens')}
-                    disabled={isLoading}
-                  >
-                    Buy Now
-                  </button>
-                </div>
-                <div className="token-package">
-                  <h3>20 Tokens</h3>
-                  <button
-                    onClick={() => handlePurchaseTokens(20, 'prod_20_tokens')}
-                    disabled={isLoading}
-                  >
-                    Buy Now
-                  </button>
+                    )}
+                  </>
+                ) : (
+                  <p>No chat sessions yet. Start chatting to save insights!</p>
+                )}
+              </div>
+            ) : activeTab === 'shop' ? (
+              <div className="shop">
+                <h2>Shop</h2>
+                <p>Purchase Tranquil Tokens to access features like chatting and generating insights.</p>
+                <div className="token-packages">
+                  <div className="token-card">
+                    <h3>1 Token</h3>
+                    <p>£0.99</p>
+                    <button onClick={() => handlePurchaseTokens(1, 'tranquil_tokens_1')}>Buy Now</button>
+                  </div>
+                  <div className="token-card highlighted">
+  <h3>5 Token Pack</h3>
+  <p className="original-price">£3.99</p>
+  <p className="sale-price">£1.39</p>
+  <p className="best-value">Sale - BEST VALUE</p>
+  <button onClick={() => handlePurchaseTokens(5, 'tranquil_tokens_5')} disabled={isLoading}>
+    Buy Now
+  </button>
+</div>
+                  <div className="token-card">
+                    <h3>10 Tokens</h3>
+                    <p>£6.99</p>
+                    <button onClick={() => handlePurchaseTokens(10, 'tranquil_tokens_10')}>Buy Now</button>
+                  </div>
+                  <div className="token-card">
+                    <h3>50 Tokens</h3>
+                    <p>£19.99</p>
+                    <button onClick={() => handlePurchaseTokens(50, 'tranquil_tokens_50')}>Buy Now</button>
+                  </div>
+                  <div className="token-card">
+                    <h3>100 Tokens</h3>
+                    <p>£29.99</p>
+                    <button onClick={() => handlePurchaseTokens(100, 'tranquil_tokens_100')}>Buy Now</button>
+                  </div>
                 </div>
               </div>
+            ) : null}
+            <div className="menu-bar">
+              <button
+                onClick={() => setActiveTab('profile')}
+                className={activeTab === 'profile' ? 'active' : ''}
+                aria-label="View Profile"
+                aria-pressed={activeTab === 'profile'}
+              >
+                <img src="/icons/user.png" alt="Profile" className="icon" />
+                <span>Profile</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('chat')}
+                className={activeTab === 'chat' ? 'active' : ''}
+                aria-label="Start Chat"
+                aria-pressed={activeTab === 'chat'}
+              >
+                <img src="/icons/chat.png" alt="Chat" className="icon" />
+                <span>Chat</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('journal')}
+                className={activeTab === 'journal' ? 'active' : ''}
+                aria-label="View Journal"
+                aria-pressed={activeTab === 'journal'}
+              >
+                <img src="/icons/journal.png" alt="Journal" className="icon" />
+                <span>Journal</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('reflect')}
+                className={activeTab === 'reflect' ? 'active' : ''}
+                aria-label="View Reflect"
+                aria-pressed={activeTab === 'reflect'}
+              >
+                <img src="/icons/meditation.png" alt="Reflect" className="icon" />
+                <span>Reflect</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('shop')}
+                className={activeTab === 'shop' ? 'active' : ''}
+                aria-label="View Shop"
+                aria-pressed={activeTab === 'shop'}
+              >
+                <img src="/icons/shop.png" alt="Shop" className="icon" />
+                <span>Shop</span>
+              </button>
             </div>
-          ) : null}
-          {openNotepadSection && (
-            <div className={`notepad-modal ${openNotepadSection ? 'active' : ''}`}>
-              <div className="notepad-content">
-                <button className="close-btn" onClick={handleCloseNotepad}>
-                  X
-                </button>
-                <div className="notepad-text">
-                  <h3>{openNotepadSection.charAt(0).toUpperCase() + openNotepadSection.slice(1)}</h3>
-                  <p>{selectedReport?.[openNotepadSection] || 'No data available'}</p>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-      {token && (
-        <div className="nav-bar">
-          <button
-            className={activeTab === 'chat' ? 'active' : ''}
-            onClick={() => setActiveTab('chat')}
-          >
-            <img src="/icons/chat.png" alt="Chat" className="nav-icon" />
-            Chat
-          </button>
-          <button
-            className={activeTab === 'journal' ? 'active' : ''}
-            onClick={() => setActiveTab('journal')}
-          >
-            <img src="/icons/journal.png" alt="Journal" className="nav-icon" />
-            Journal
-          </button>
-          <button
-            className={activeTab === 'reflect' ? 'active' : ''}
-            onClick={() => setActiveTab('reflect')}
-          >
-            <img src="/icons/reflect.png" alt="Reflect" className="nav-icon" />
-            Reflect
-          </button>
-          <button
-            className={activeTab === 'profile' ? 'active' : ''}
-            onClick={() => setActiveTab('profile')}
-          >
-            <img src="/icons/profile.png" alt="Profile" className="nav-icon" />
-            Profile
-          </button>
-          <button
-            className={activeTab === 'shop' ? 'active' : ''}
-            onClick={() => setActiveTab('shop')}
-          >
-            <img src="/icons/shop.png" alt="Shop" className="nav-icon" />
-            Shop
-          </button>
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
 }
 
 export default App;
