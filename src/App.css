@@ -2501,5 +2501,37 @@ button:focus, input:focus, textarea:focus, .journal-button:focus, .quiz-option-b
 }
 
 /* ========================================================================== */
+/* Rainbow Text Animation */
+/* ========================================================================== */
+
+.rainbow-text {
+  background: linear-gradient(
+    45deg,
+    #ff0000,
+    #ff9900,
+    #33cc33,
+    #3399ff,
+    #cc33cc,
+    #ff0000
+  );
+  background-size: 600% 600%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: rainbowAnimation 6s ease infinite;
+}
+
+@keyframes rainbowAnimation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* ========================================================================== */
 /* End of CSS */
 /* ========================================================================== */
