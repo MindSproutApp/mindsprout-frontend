@@ -1401,9 +1401,9 @@ const handleDeleteReport = async (reportId) => {
   <div className="auth">
     <img src="/logo.png" alt="MindSprout Logo" className="logo" />
     <h1>Welcome to MindSprout</h1>
-    <p className="tagline">Planting Seeds of Mindfulness!</p>
+    <p className="tagline">Welcome to MindSprout, your nurturing space for mental wellness. Explore our impactful tools designed to support your journey of self-discovery and growth.</p>
     {message && <p className="message">{message}</p>}
-    <p>Reflect, Connect, Become</p>
+    <p>Sign up today to start your journey with 5 free tokens!.</p>
     <div className="standard-auth">
       <h2>{isDesktop ? 'Sign Up or Log In' : showSignup ? 'Sign Up' : 'Log In'}</h2> 
       <p>By signing up you agree to the terms and conditions</p> 
