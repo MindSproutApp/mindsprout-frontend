@@ -4,13 +4,6 @@ import CookieConsent from 'react-cookie-consent';
 import './App.css';
 import { Bar, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js';
-// === START OF STRIPE ADDITION ===
-import { loadStripe } from '@stripe/stripe-js';
-
-
-// Initialize Stripe with your publishable key
-const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
-// === END OF STRIPE ADDITION ===
 
 ChartJS.register(BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend);
 
@@ -18,14 +11,12 @@ function App() {
   const API_URL = process.env.REACT_APP_API_URL || 'https://mindsprout-backend-new.onrender.com';
 
   useEffect(() => {
-    // Check if fbq is initialized and consent has been granted
     if (window.fbq && localStorage.getItem('MindSproutCookieConsent')) {
       window.fbq('track', 'PageView');
       console.log('Meta Pixel: PageView tracked');
     }
   }, []);
 
-  // Initialize token as null (no auto-login)
   const [token, setToken] = useState(null);
   const [role, setRole] = useState(null);
   const [regularSignupForm, setRegularSignupForm] = useState({ name: '', email: '', username: '', password: '' });
@@ -77,14 +68,13 @@ function App() {
         const response = await axios.get(`${API_URL}/api/regular/starlit-guidance`, {
           headers: { Authorization: token },
         });
-        console.log('Starlit Guidance:', response.data); // Debug
         setStarlitGuidance(response.data);
       } catch (error) {
         console.error('Error fetching Starlit Guidance:', error);
         setMessage('Failed to fetch Starlit Guidance.');
       }
     };
-  
+
     if (token) {
       fetchStarlitGuidance();
     }
@@ -132,7 +122,6 @@ function App() {
 
   const affirmationPositions = ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'center'];
 
-  // Debounce utility
   const debounce = (func, wait) => {
     let timeout;
     return (...args) => {
@@ -148,7 +137,7 @@ function App() {
       setIsLoading(true);
       try {
         const cachedData = JSON.parse(localStorage.getItem('userData') || '{}');
-  
+
         const results = await Promise.allSettled([
           axios.get(`${API_URL}/api/regular/goals`, { headers: { Authorization: authToken } }),
           axios.get(`${API_URL}/api/regular/reports`, { headers: { Authorization: authToken } }),
@@ -156,10 +145,9 @@ function App() {
           axios.get(`${API_URL}/api/regular/daily-affirmations`, { headers: { Authorization: authToken } }),
           axios.get(`${API_URL}/api/regular/tranquil-tokens`, { headers: { Authorization: authToken } }),
         ]);
-  
+
         const [goalsRes, reportsRes, lastChatRes, affirmationsRes, tokensRes] = results;
-  
-        // Handle tokens response
+
         let tranquilTokensData = cachedData.tranquilTokens || 1;
         let lastTokenRegenData = cachedData.lastTokenRegen;
         if (tokensRes.status === 'fulfilled') {
@@ -175,22 +163,21 @@ function App() {
           console.error('Failed to fetch tranquil tokens:', tokensRes.reason);
           setMessage('Unable to fetch Tranquil Tokens. Please try again.');
         }
-  
-        // Handle other responses (goals, reports, etc.)
+
         if (goalsRes.status === 'fulfilled') {
           setGoals(goalsRes.value.data || []);
         } else {
           console.error('Failed to fetch goals:', goalsRes.reason);
           setGoals(cachedData.goals || []);
         }
-  
+
         if (reportsRes.status === 'fulfilled') {
           setReports(reportsRes.value.data || []);
         } else {
           console.error('Failed to fetch reports:', reportsRes.reason);
           setReports(cachedData.reports || []);
         }
-  
+
         if (lastChatRes.status === 'fulfilled') {
           setLastChatTimestamp(
             lastChatRes.value.data.lastChatTimestamp ? new Date(lastChatRes.value.data.lastChatTimestamp) : null
@@ -199,15 +186,14 @@ function App() {
           console.error('Failed to fetch last chat:', lastChatRes.reason);
           setLastChatTimestamp(cachedData.lastChatTimestamp ? new Date(cachedData.lastChatTimestamp) : null);
         }
-  
+
         if (affirmationsRes.status === 'fulfilled') {
           setDailyAffirmations(affirmationsRes.value.data || null);
         } else {
           console.error('Failed to fetch daily affirmations:', affirmationsRes.reason);
           setDailyAffirmations(cachedData.dailyAffirmations || null);
         }
-  
-        // Update localStorage with latest data
+
         localStorage.setItem(
           'userData',
           JSON.stringify({
@@ -223,7 +209,7 @@ function App() {
             journalInsights: cachedData.journalInsights,
           })
         );
-  
+
         const [journalRes, insightsRes] = await Promise.all([
           axios.get(`${API_URL}/api/regular/journal`, { headers: { Authorization: authToken } }).catch((err) => ({
             error: err,
@@ -232,21 +218,21 @@ function App() {
             error: err,
           })),
         ]);
-  
+
         if (!journalRes.error) {
           setJournal(journalRes.data || []);
         } else {
           console.error('Failed to fetch journal:', journalRes.error);
           setJournal(cachedData.journal || []);
         }
-  
+
         if (!insightsRes.error) {
           setJournalInsights(insightsRes.data || []);
         } else {
           console.error('Failed to fetch journal insights:', insightsRes.error);
           setJournalInsights(cachedData.journalInsights || []);
         }
-  
+
         localStorage.setItem(
           'userData',
           JSON.stringify({
@@ -266,7 +252,6 @@ function App() {
     []
   );
 
-  // Manage affirmations during loading
   useEffect(() => {
     if (isLoading && !showSummaryBuffer && !showInsightBuffer) {
       const usedPositions = new Set();
@@ -293,7 +278,6 @@ function App() {
     }
   }, [isLoading, showSummaryBuffer, showInsightBuffer]);
 
-  // Check for token on mount to maintain session
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     if (storedToken && !token) {
@@ -303,14 +287,12 @@ function App() {
     }
   }, []);
 
-  // Handle window resize
   useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth > 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Token regeneration (every 24 hours)
   useEffect(() => {
     if (tranquilTokens < 1 && tokenRegenTime) {
       const interval = setInterval(() => {
@@ -325,38 +307,37 @@ function App() {
     }
   }, [tranquilTokens, tokenRegenTime]);
 
-  // === START OF STRIPE ADDITION ===
-  // Handle Stripe redirect after payment
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const sessionId = urlParams.get('session_id');
-    if (sessionId && token) {
-      const completePurchase = async () => {
-        setIsLoading(true);
-        try {
-          const response = await axios.post(
-            `${API_URL}/api/regular/purchase-tokens`,
-            { sessionId },
-            { headers: { Authorization: token } }
-          );
-          setTranquilTokens(response.data.tranquilTokens);
-          setMessage(`Successfully purchased Tranquil Tokens!`);
-          // Clear query parameters
-          window.history.replaceState({}, document.title, window.location.pathname);
-          setActiveTab('chat'); // Redirect to chat tab after purchase
-        } catch (err) {
-          console.error('Error completing purchase:', err);
-          setMessage('Error completing purchase: ' + (err.response?.data?.error || err.message));
-        } finally {
-          setIsLoading(false);
+    const handleMessage = async (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.action === 'purchaseComplete') {
+          setIsLoading(true);
+          try {
+            const response = await axios.post(
+              `${API_URL}/api/regular/purchase-tokens`,
+              { purchaseToken: data.purchaseToken, productId: data.productId },
+              { headers: { Authorization: token } }
+            );
+            setTranquilTokens(response.data.tranquilTokens);
+            setMessage(`Successfully purchased tokens!`);
+            setActiveTab('chat');
+          } catch (err) {
+            setMessage('Purchase error: ' + (err.response?.data?.error || err.message));
+          } finally {
+            setIsLoading(false);
+          }
+        } else if (data.action === 'purchaseError') {
+          setMessage('Purchase failed: ' + data.error);
         }
-      };
-      completePurchase();
-    }
+      } catch (err) {
+        console.error('Message parsing error:', err);
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
   }, [token]);
-  // === END OF STRIPE ADDITION ===
 
-  // Token consumption
   const consumeToken = async (action, callback) => {
     if (tranquilTokens < 1) {
       setMessage('No Tranquil Tokens available. Purchase more or wait for regeneration (every 24 hours).');
@@ -369,13 +350,10 @@ function App() {
         { action },
         { headers: { Authorization: token } }
       );
-      // Update state with backend response
       setTranquilTokens(response.data.tranquilTokens);
-      // Update localStorage to prevent caching issues
-      const userData = JSON.parse(localStorage.getItem('userData') || '{}');
       localStorage.setItem(
         'userData',
-        JSON.stringify({ ...userData, tranquilTokens: response.data.tranquilTokens })
+        JSON.stringify({ ...JSON.parse(localStorage.getItem('userData') || '{}'), tranquilTokens: response.data.tranquilTokens })
       );
       callback();
     } catch (err) {
@@ -384,7 +362,18 @@ function App() {
       setIsLoading(false);
     }
   };
-  // Update user data when token or role changes
+
+  const handlePurchaseTokens = (productId) => {
+    if (window.PurchaseChannel) {
+      window.PurchaseChannel.postMessage(JSON.stringify({
+        action: 'initiatePurchase',
+        productId: productId
+      }));
+    } else {
+      setMessage('Purchases are only available in the mobile app.');
+    }
+  };
+
   useEffect(() => {
     if (token && role === 'regular') {
       localStorage.setItem('token', token);
@@ -392,7 +381,6 @@ function App() {
     }
   }, [token, role]);
 
-  // Existing useEffects
   useEffect(() => {
     if (isChatActive && timeLeft > 0) {
       const timer = setInterval(() => setTimeLeft((prev) => {
@@ -447,7 +435,7 @@ function App() {
         "Quite happy",
         "Very happy"
       ][value - 1],
-      emojis: ["😢", "🙁", "😐", "🙂", "😊"]
+      emojis: ["😢", "🙁", "😊", "🙂", "😄"]
     },
     anger: {
       question: "How angry are you feeling right now?",
@@ -458,7 +446,7 @@ function App() {
         "Quite angry",
         "Very angry"
       ][value - 1],
-      emojis: ["😊", "🙂", "😐", "😣", "😣"]
+      emojis: ["😊", "🙂", "😣", "😣", "😣"]
     },
     stress: {
       question: "How stressed are you feeling right now?",
@@ -469,7 +457,7 @@ function App() {
         "Quite stressed",
         "Very stressed"
       ][value - 1],
-      emojis: ["😊", "🙂", "😐", "😣", "😣"]
+      emojis: ["😊", "🙂", "😣", "😣", "😣"]
     },
     energy: {
       question: "How energized are you feeling right now?",
@@ -480,7 +468,7 @@ function App() {
         "Quite energized",
         "Very energized"
       ][value - 1],
-      emojis: ["😴", "😪", "😐", "💪", "⚡"]
+      emojis: ["😴", "😪", "😊", "💪", "⚡"]
     },
     confidence: {
       question: "How confident are you feeling right now?",
@@ -491,7 +479,7 @@ function App() {
         "Quite confident",
         "Very confident"
       ][value - 1],
-      emojis: ["😓", "😕", "😐", "😊", "😊"]
+      emojis: ["😓", "😕", "😊", "😄", "😄"]
     }
   };
 
@@ -515,7 +503,6 @@ function App() {
     ]
   };
 
-  // Modified handleStartQuiz to require token confirmation
   const handleStartQuiz = () => {
     if (tranquilTokens < 1) {
       setMessage('No Tranquil Tokens available. Purchase more or wait for regeneration (every 24 hours).');
@@ -529,7 +516,6 @@ function App() {
     }});
   };
 
-  // Modified handleGenerateInsight with buffering
   const handleGenerateInsight = async (entry) => {
     if (tranquilTokens < 1) {
       setMessage('No Tranquil Tokens available. Purchase more or wait for regeneration (every 24 hours).');
@@ -541,7 +527,6 @@ function App() {
         setShowInsightBuffer(true);
         setIsLoading(true);
         try {
-          // Simulate 8-second buffering
           await new Promise((resolve) => setTimeout(resolve, 8000));
           const response = await axios.post(
             `${API_URL}/api/regular/journal-insights`,
@@ -558,7 +543,6 @@ function App() {
           };
           setJournalInsights((prev) => [...prev, newInsight]);
           setMessage('Insight generated! View it in the notepad.');
-          // Ensure journal entry remains open
           setOpenNotepadSection('reflect');
           setSelectedJournalEntry(entry);
         } catch (err) {
@@ -572,36 +556,6 @@ function App() {
     });
   };
 
-  // === START OF STRIPE ADDITION ===
-  // Shop purchase handler
-  const handlePurchaseTokens = async (quantity, productId) => {
-    setIsLoading(true);
-    try {
-      // Create a Stripe Checkout session
-      const response = await axios.post(
-        `${API_URL}/api/regular/create-checkout-session`,
-        { quantity, productId },
-        { headers: { Authorization: token } }
-      );
-
-      const { sessionId } = response.data;
-      const stripe = await stripePromise;
-      const { error } = await stripe.redirectToCheckout({ sessionId });
-
-      if (error) {
-        console.error('Stripe redirect error:', error);
-        setMessage(`Purchase failed: ${error.message}`);
-      }
-    } catch (err) {
-      console.error('Error initiating purchase:', err);
-      setMessage('Error initiating purchase: ' + (err.response?.data?.error || err.message));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  // === END OF STRIPE ADDITION ===
-
-  // Existing handlers
   const handleRegularSignup = (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -611,15 +565,14 @@ function App() {
         setToken(res.data.token);
         setRole('regular');
         debouncedFetchUserData(res.data.token);
-        setShowWelcomeTokenModal(true); // Show the welcome token modal
+        setShowWelcomeTokenModal(true);
         if (window.fbq && localStorage.getItem('MindSproutCookieConsent')) {
           window.fbq('track', 'CompleteRegistration');
           console.log('Meta Pixel: CompleteRegistration tracked');
         }
-            })
+      })
       .catch((err) => setMessage(err.response?.data?.error || 'Signup failed'))
       .finally(() => setIsLoading(false));
-      
   };
 
   const handleRegularLogin = (e) => {
@@ -646,8 +599,8 @@ function App() {
           headers: { Authorization: token },
         }
       );
-      setTranquilTokens(response.data.tranquilTokens); // Update token count
-      setShowWelcomeTokenModal(false); // Close the modal
+      setTranquilTokens(response.data.tranquilTokens);
+      setShowWelcomeTokenModal(false);
       setMessage('5 Tranquil Tokens claimed! Enjoy your journey with MindSprout.');
     } catch (error) {
       console.error('Error claiming welcome tokens:', error);
@@ -839,27 +792,24 @@ function App() {
     }
   };
 
-const handleDeleteReport = async (reportId) => {
-  setIsLoading(true);
-  try {
-    await axios.delete(`${API_URL}/api/regular/reports/${reportId}`, {
-      headers: { Authorization: token },
-    });
-    setReports((prev) => prev.filter((report) => report._id !== reportId));
-    setSelectedReport(null);
-    setOpenNotepadSection(null);
-    setMessage('Report deleted successfully.');
-  } catch (err) {
-    console.error('Error deleting report:', err);
-    setMessage('Error deleting report: ' + (err.response?.data?.error || err.message));
-    // Still need to fully integrate payment processing logic
-    console.error('Error deleting report:', err);
-    setMessage('Error deleting report: ' + (err.response?.data?.error || err.message));
-  } finally {
-    setIsLoading(false);
-    setDeleteConfirm(null);
-  }
-};
+  const handleDeleteReport = async (reportId) => {
+    setIsLoading(true);
+    try {
+      await axios.delete(`${API_URL}/api/regular/reports/${reportId}`, {
+        headers: { Authorization: token },
+      });
+      setReports((prev) => prev.filter((report) => report._id !== reportId));
+      setSelectedReport(null);
+      setOpenNotepadSection(null);
+      setMessage('Report deleted successfully.');
+    } catch (err) {
+      console.error('Error deleting report:', err);
+      setMessage('Error deleting report: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setIsLoading(false);
+      setDeleteConfirm(null);
+    }
+  };
 
   const handleGenerateDailyAffirmations = async () => {
     setIsLoading(true);
@@ -1030,11 +980,11 @@ const handleDeleteReport = async (reportId) => {
             title: {
               display: true,
               text: 'Date',
-              padding: { top: 10 }, // Add padding to prevent cutoff
+              padding: { top: 10 },
             },
             ticks: {
-              padding: 10, // Ensure labels have space
-              maxRotation: 45, // Rotate labels if needed
+              padding: 10,
+              maxRotation: 45,
               minRotation: 45,
             },
           },
@@ -1053,7 +1003,7 @@ const handleDeleteReport = async (reportId) => {
         },
         layout: {
           padding: {
-            bottom: 20, // Extra padding to ensure dates are visible
+            bottom: 20,
           },
         },
         maintainAspectRatio: false,
@@ -1224,27 +1174,26 @@ const handleDeleteReport = async (reportId) => {
     const secs = seconds % 60;
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
-  
 
   return (
-      <div className="app">
-        <CookieConsent
-          location="bottom"
-          buttonText="Accept"
-          cookieName="MindSproutCookieConsent"
-          style={{ background: "#2B373B" }}
-          buttonStyle={{ color: "#fff", background: "#388E3C" }}
-          expires={150}
-          onAccept={() => {
-            if (window.fbq) {
-              window.fbq('consent', 'grant');
-              window.fbq('track', 'PageView');
-              console.log('Meta Pixel: Consent granted, PageView tracked');
-            }
-          }}
-        >
-          This website uses cookies to enhance user experience and track analytics via Meta Pixel.
-        </CookieConsent>
+    <div className="app">
+      <CookieConsent
+        location="bottom"
+        buttonText="Accept"
+        cookieName="MindSproutCookieConsent"
+        style={{ background: "#2B373B" }}
+        buttonStyle={{ color: "#fff", background: "#388E3C" }}
+        expires={150}
+        onAccept={() => {
+          if (window.fbq) {
+            window.fbq('consent', 'grant');
+            window.fbq('track', 'PageView');
+            console.log('Meta Pixel: Consent granted, PageView tracked');
+          }
+        }}
+      >
+        This website uses cookies to enhance user experience and track analytics via Meta Pixel.
+      </CookieConsent>
       {(isLoading || showSummaryBuffer || showInsightBuffer) && (
         <div className={showInsightBuffer ? "insight-buffer-overlay" : "loading-overlay"}>
           <div className="spinner"></div>
@@ -1329,31 +1278,31 @@ const handleDeleteReport = async (reportId) => {
           </div>
         </div>
       )}
-          {showWelcomeTokenModal && (
-      <div className={`welcome-token-modal ${showWelcomeTokenModal ? 'active' : ''}`}>
-        <div className="welcome-token-content">
-          <button
-            className="close-btn"
-            onClick={() => setShowWelcomeTokenModal(false)}
-            aria-label="Close welcome token modal"
-          >
-            ×
-          </button>
-          <h2>Welcome to MindSprout!</h2>
-          <p>
-            We're thrilled to have you here! To get you started, we're giving you <strong>5 free Tranquil Tokens</strong> to explore all the amazing features of our app. Claim them now and dive into your journey of self-discovery!
-          </p>
-          <button
-            className="claim-btn"
-            onClick={handleClaimWelcomeTokens}
-            disabled={isLoading}
-            aria-label="Claim 5 free Tranquil Tokens"
-          >
-            Claim Now
-          </button>
+      {showWelcomeTokenModal && (
+        <div className={`welcome-token-modal ${showWelcomeTokenModal ? 'active' : ''}`}>
+          <div className="welcome-token-content">
+            <button
+              className="close-btn"
+              onClick={() => setShowWelcomeTokenModal(false)}
+              aria-label="Close welcome token modal"
+            >
+              ×
+            </button>
+            <h2>Welcome to MindSprout!</h2>
+            <p>
+              We're thrilled to have you here! To get you started, we're giving you <strong>5 free Tranquil Tokens</strong> to explore all the amazing features of our app. Claim them now and dive into your journey of self-discovery!
+            </p>
+            <button
+              className="claim-btn"
+              onClick={handleClaimWelcomeTokens}
+              disabled={isLoading}
+              aria-label="Claim 5 free Tranquil Tokens"
+            >
+              Claim Now
+            </button>
+          </div>
         </div>
-      </div>
-    )}
+      )}
       {showDailyAffirmationsModal && dailyAffirmations && (
         <div className="daily-affirmations-modal active">
           <div className="daily-affirmations-content">
@@ -1398,97 +1347,97 @@ const handleDeleteReport = async (reportId) => {
           </div>
         )}
         {!token ? (
- <div className="auth">
-  <img src="/logo.png" alt="MindSprout Logo" className="logo" />
-  <h1>Welcome to MindSprout</h1>
-  <p className="tagline">Welcome to MindSprout, your nurturing space for mental wellness. Explore our impactful tools designed to support your journey of self-discovery and growth.</p>
-  {message && <p className="message">{message}</p>}
-  <p className="rainbow-text">Sign up today to start your journey with 5 free tokens!.</p>
-  <div className="standard-auth">
-    <h2>{isDesktop ? 'Sign Up or Log In' : showSignup ? 'Sign Up' : 'Log In'}</h2> 
-    <p>By signing up you agree to the terms and conditions</p> 
-    {!isDesktop && (
-      <div className="auth-toggle">
-        <button
-          className="toggle-btn"
-          onClick={() => setShowSignup((prev) => !prev)}
-          aria-label={showSignup ? 'Switch to Log In' : 'Switch to Sign Up'}
-          type="button"
-        >
-            {showSignup ? 'Switch to Log In' : 'Switch to Sign Up'}
-          </button>
-        </div>
-      )}
-      <div className="form-container">
-        {(isDesktop || showSignup) && (
-          <div className="signup-form">
-            <form onSubmit={handleRegularSignup}>
-              <input
-                placeholder="Name"
-                value={regularSignupForm.name}
-                onChange={(e) => setRegularSignupForm({ ...regularSignupForm, name: e.target.value })}
-                required
-                aria-label="Name"
-                type="text"
-              />
-              <input
-                placeholder="Email"
-                type="email"
-                value={regularSignupForm.email}
-                onChange={(e) => setRegularSignupForm({ ...regularSignupForm, email: e.target.value })}
-                required
-                aria-label="Email"
-              />
-              <input
-                placeholder="Username"
-                value={regularSignupForm.username}
-                onChange={(e) => setRegularSignupForm({ ...regularSignupForm, username: e.target.value })}
-                required
-                aria-label="Username"
-                type="text"
-              />
-              <input
-                placeholder="Password"
-                type="password"
-                value={regularSignupForm.password}
-                onChange={(e) => setRegularSignupForm({ ...regularSignupForm, password: e.target.value })}
-                required
-                aria-label="Password"
-              />
-              <button type="submit" className="signup-btn" disabled={isLoading}>
-                Sign Up
-              </button>
-            </form>
+          <div className="auth">
+            <img src="/logo.png" alt="MindSprout Logo" className="logo" />
+            <h1>Welcome to MindSprout</h1>
+            <p className="tagline">Welcome to MindSprout, your nurturing space for mental wellness. Explore our impactful tools designed to support your journey of self-discovery and growth.</p>
+            {message && <p className="message">{message}</p>}
+            <p className="rainbow-text">Sign up today to start your journey with 5 free tokens!</p>
+            <div className="standard-auth">
+              <h2>{isDesktop ? 'Sign Up or Log In' : showSignup ? 'Sign Up' : 'Log In'}</h2>
+              <p>By signing up you agree to the terms and conditions</p>
+              {!isDesktop && (
+                <div className="auth-toggle">
+                  <button
+                    className="toggle-btn"
+                    onClick={() => setShowSignup((prev) => !prev)}
+                    aria-label={showSignup ? 'Switch to Log In' : 'Switch to Sign Up'}
+                    type="button"
+                  >
+                    {showSignup ? 'Switch to Log In' : 'Switch to Sign Up'}
+                  </button>
+                </div>
+              )}
+              <div className="form-container">
+                {(isDesktop || showSignup) && (
+                  <div className="signup-form">
+                    <form onSubmit={handleRegularSignup}>
+                      <input
+                        placeholder="Name"
+                        value={regularSignupForm.name}
+                        onChange={(e) => setRegularSignupForm({ ...regularSignupForm, name: e.target.value })}
+                        required
+                        aria-label="Name"
+                        type="text"
+                      />
+                      <input
+                        placeholder="Email"
+                        type="email"
+                        value={regularSignupForm.email}
+                        onChange={(e) => setRegularSignupForm({ ...regularSignupForm, email: e.target.value })}
+                        required
+                        aria-label="Email"
+                      />
+                      <input
+                        placeholder="Username"
+                        value={regularSignupForm.username}
+                        onChange={(e) => setRegularSignupForm({ ...regularSignupForm, username: e.target.value })}
+                        required
+                        aria-label="Username"
+                        type="text"
+                      />
+                      <input
+                        placeholder="Password"
+                        type="password"
+                        value={regularSignupForm.password}
+                        onChange={(e) => setRegularSignupForm({ ...regularSignupForm, password: e.target.value })}
+                        required
+                        aria-label="Password"
+                      />
+                      <button type="submit" className="signup-btn" disabled={isLoading}>
+                        Sign Up
+                      </button>
+                    </form>
+                  </div>
+                )}
+                {(isDesktop || !showSignup) && (
+                  <div className="login-form">
+                    <form onSubmit={handleRegularLogin}>
+                      <input
+                        placeholder="Email"
+                        type="email"
+                        value={regularLoginForm.email}
+                        onChange={(e) => setRegularLoginForm({ ...regularLoginForm, email: e.target.value })}
+                        required
+                        aria-label="Email"
+                      />
+                      <input
+                        placeholder="Password"
+                        type="password"
+                        value={regularLoginForm.password}
+                        onChange={(e) => setRegularLoginForm({ ...regularLoginForm, password: e.target.value })}
+                        required
+                        aria-label="Password"
+                      />
+                      <button type="submit" disabled={isLoading}>
+                        Log In
+                      </button>
+                    </form>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-        )}
-        {(isDesktop || !showSignup) && (
-          <div className="login-form">
-            <form onSubmit={handleRegularLogin}>
-              <input
-                placeholder="Email"
-                type="email"
-                value={regularLoginForm.email}
-                onChange={(e) => setRegularLoginForm({ ...regularLoginForm, email: e.target.value })}
-                required
-                aria-label="Email"
-              />
-              <input
-                placeholder="Password"
-                type="password"
-                value={regularLoginForm.password}
-                onChange={(e) => setRegularLoginForm({ ...regularLoginForm, password: e.target.value })}
-                required
-                aria-label="Password"
-              />
-              <button type="submit" disabled={isLoading}>
-                Log In
-              </button>
-            </form>
-          </div>
-        )}
-      </div>
-    </div>
-  </div>
         ) : (
           <div className="regular-dashboard">
             <img src="/logo.png" alt="MindSprout Logo" className="logo" />
@@ -1511,32 +1460,31 @@ const handleDeleteReport = async (reportId) => {
                     <p>No mood data yet. Start a chat session to track your mood!</p>
                   )}
                 </div>
-            
                 <div className="starlit-guidance">
-  <h3>Starlit Guidance</h3>
-  <div className="guidance-table-container">
-    {starlitGuidance ? (
-      <table className="guidance-table">
-        <thead>
-          <tr>
-            <th>What Should I Embrace</th>
-            <th>What Should I Let Go Of</th>
-          </tr>
-        </thead>
-        <tbody>
-          {starlitGuidance.embrace.slice(0, 3).map((embraceWord, index) => (
-            <tr key={index}>
-              <td>{embraceWord}</td>
-              <td>{starlitGuidance.letGo[index] || 'N/A'}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    ) : (
-      <p>Loading guidance...</p>
-    )}
-  </div>
-</div>
+                  <h3>Starlit Guidance</h3>
+                  <div className="guidance-table-container">
+                    {starlitGuidance ? (
+                      <table className="guidance-table">
+                        <thead>
+                          <tr>
+                            <th>What Should I Embrace</th>
+                            <th>What Should I Let Go Of</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {starlitGuidance.embrace.slice(0, 3).map((embraceWord, index) => (
+                            <tr key={index}>
+                              <td>{embraceWord}</td>
+                              <td>{starlitGuidance.letGo[index] || 'N/A'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <p>Loading guidance...</p>
+                    )}
+                  </div>
+                </div>
                 <button onClick={handleLogout} className="logout-btn">
                   <img src="/icons/logout.png" alt="Logout" className="icon" />
                   Log Out
@@ -1645,17 +1593,17 @@ const handleDeleteReport = async (reportId) => {
                 ) : (
                   <div className="quiz">
                     <h2>Chat</h2>
-                    <p>
                     <h3 className="chat-subheading">Chat With Pal</h3>
-    <p className="chat-description">
-      Complete the quiz to have an in-depth chat with Pal. Make sure to check your summaries to gain profound insights into your chat session.
-    </p>
+                    <p className="chat-description">
+                      Complete the quiz to have an in-depth chat with Pal. Make sure to check your summaries to gain profound insights into your chat session.
+                    </p>
+                    <p>
                       You have {tranquilTokens} Tranquil Tokens.{' '}
                       {tranquilTokens < 1 && tokenRegenTime
                         ? `Next token in ${formatTime(
                             Math.max(0, Math.floor((tokenRegenTime - new Date()) / 1000))
                           )}`
-                        : 'Tokens regenerate every 24 hours.'}  
+                        : 'Tokens regenerate every 24 hours.'}
                     </p>
                     {tranquilTokens > 0 ? (
                       <button onClick={handleStartQuiz}>Start Quiz</button>
@@ -1935,31 +1883,29 @@ const handleDeleteReport = async (reportId) => {
                   <div className="token-card">
                     <h3>1 Token</h3>
                     <p>£0.99</p>
-                    <button onClick={() => handlePurchaseTokens(1, 'tranquil_tokens_1')}>Buy Now</button>
+                    <button onClick={() => handlePurchaseTokens('1_token.')} disabled={isLoading}>Buy Now</button>
                   </div>
                   <div className="token-card highlighted">
-  <h3>5 Token Pack</h3>
-  <p className="original-price">£3.99</p>
-  <p className="sale-price">£1.39</p>
-  <p className="best-value">Sale - BEST VALUE</p>
-  <button onClick={() => handlePurchaseTokens(5, 'tranquil_tokens_5')} disabled={isLoading}>
-    Buy Now
-  </button>
-</div>
+                    <h3>5 Token Pack</h3>
+                    <p className="original-price">£3.99</p>
+                    <p className="sale-price">£1.39</p>
+                    <p className="best-value">Sale - BEST VALUE</p>
+                    <button onClick={() => handlePurchaseTokens('5_token.')} disabled={isLoading}>Buy Now</button>
+                  </div>
                   <div className="token-card">
                     <h3>10 Tokens</h3>
                     <p>£6.99</p>
-                    <button onClick={() => handlePurchaseTokens(10, 'tranquil_tokens_10')}>Buy Now</button>
+                    <button onClick={() => handlePurchaseTokens('10_token.')} disabled={isLoading}>Buy Now</button>
                   </div>
                   <div className="token-card">
                     <h3>50 Tokens</h3>
                     <p>£19.99</p>
-                    <button onClick={() => handlePurchaseTokens(50, 'tranquil_tokens_50')}>Buy Now</button>
+                    <button onClick={() => handlePurchaseTokens('50_token.')} disabled={isLoading}>Buy Now</button>
                   </div>
                   <div className="token-card">
                     <h3>100 Tokens</h3>
                     <p>£29.99</p>
-                    <button onClick={() => handlePurchaseTokens(100, 'tranquil_tokens_100')}>Buy Now</button>
+                    <button onClick={() => handlePurchaseTokens('100_token.')} disabled={isLoading}>Buy Now</button>
                   </div>
                 </div>
               </div>
@@ -1989,7 +1935,7 @@ const handleDeleteReport = async (reportId) => {
                 aria-label="View Journal"
                 aria-pressed={activeTab === 'journal'}
               >
-                <img src="/icons/journal.png" alt="Journal" className="icon" />
+                <img src="/icons/journal.png"                 alt="Journal" className="icon" />
                 <span>Journal</span>
               </button>
               <button
